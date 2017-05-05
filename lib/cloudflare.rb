@@ -1,0 +1,84 @@
+require 'json'
+module Cloudflare
+
+
+  API_BASE    = "https://api.cloudflare.com/client/v4/".freeze
+  ORG_ID      = "7f86e0ad68da283973e812b9d6ecf24d".freeze #Fixme: also variable
+
+  # different class for each hunk of the api
+
+  class Zone
+    BASE_URI = "zones/"
+    def initialize(params = {})
+      params[:base_uri] = params[:zone_id].nil? ? BASE_URI : BASE_URI + params[:zone_id]
+      @cf_client = CfClient.new(params)
+    end
+
+    # TODO: deal with pagination
+    def list(params = {})
+      @cf_client.get(params)
+
+    end
+
+    def create(args = {})
+      raise ("zone name required") if args[:name].nil?
+      args = args["organization"] = {"id": ORG_ID, "name": args[:name], "jump_start": false,  "status": "active", "permisssions": ["#zones:read"]}
+      @cf_client.post
+    end
+  end
+
+  class Organization
+    BASE_URI = ""
+  end
+
+  class CloudflareIps
+    BASE_URI = ""
+  end
+
+  class User
+    BASE_URI = ""
+  end
+end
+
+
+private
+
+class CfClient
+
+  require 'faraday'
+  require 'byebug' #Fixme
+
+  def initialize(base_uri)
+    @connection ||= build_client(base_uri)
+  end
+
+  def build_client(params)
+    full_uri = Cloudflare::API_BASE + params[:base_uri]
+    client = Faraday.new(:url => full_uri)
+    client.headers["X-Auth-Key"] = params[:auth_key]
+    client.headers["X-Auth-Email"] = params[:email]
+    client.headers["Content-Type"] =  "application/json"
+    client
+  end
+
+  def post(payload)
+    response = @connection.post { |request| request.body = payload }
+    raise ("api returned #{response.body}") unless response.status == 200
+    JSON.parse(response.body)
+  end
+
+  # bad params dont' seem to bother the api, but may wana validate
+  def get(params)
+    params.merge({per_page: 50})
+    response = @connection.get { |req| req.params = params}
+    raise ("api returned #{response.body}") unless response.status == 200
+    JSON.parse(response.body)
+  end
+
+  def patch
+  end
+
+  def delete
+  end
+
+end
