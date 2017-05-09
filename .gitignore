@@ -51,3 +51,6 @@ build-iPhoneSimulator/
 
 #bye byebug
 .byebug*
+
+#vim stuff
+*.swp
