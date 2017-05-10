@@ -1,3 +1,8 @@
+PATH
+  remote: .
+  specs:
+    zendesk_cloudflare (0.0.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -50,6 +55,7 @@ DEPENDENCIES
   rubocop
   single_cov
   webmock
+  zendesk_cloudflare!
 
 BUNDLED WITH
    1.14.4

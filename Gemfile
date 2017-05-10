@@ -10,3 +10,4 @@ gem 'single_cov'
 gem 'rubocop'
 gem 'rake'
 gem 'byebug'
+gem 'zendesk_cloudflare', path: "./"
