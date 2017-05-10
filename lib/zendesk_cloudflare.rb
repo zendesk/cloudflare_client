@@ -105,7 +105,7 @@ class CloudflareClient
       request.url(API_BASE + path) unless path.nil?
       request.body = data.to_json
     end
-    raise (result.body) unless result.status == 200
+    raise ("#{JSON.parse(result.body).dig("errors").first}") unless result.status == 200
     JSON.parse(result.body)
   end
 
@@ -114,7 +114,7 @@ class CloudflareClient
       request.url(API_BASE + path) unless path.nil?
       request.params = params unless params.nil?
     end
-    raise (result.body) unless result.status == 200
+    raise ("#{JSON.parse(result.body).dig("errors").first}") unless result.status == 200
     JSON.parse(result.body)
   end
 
@@ -122,7 +122,7 @@ class CloudflareClient
     result = @cf_client.put do |request|
       request.url(API_BASE + path) unless path.nil?
     end
-    raise (result.body) unless result.status == 200
+    raise ("#{JSON.parse(result.body).dig("errors").first}") unless result.status == 200
     JSON.parse(result.body)
   end
 
@@ -131,7 +131,7 @@ class CloudflareClient
       request.url(API_BASE + path) unless path.nil?
       request.body = data.to_json unless data.empty?
     end
-    raise (result.body) unless result.status == 200
+    raise ("#{JSON.parse(result.body).dig("errors").first}") unless result.status == 200
     JSON.parse(result.body)
   end
 
@@ -140,7 +140,7 @@ class CloudflareClient
       request.url(API_BASE + path) unless path.nil?
       request.body = data.to_json unless data.empty?
     end
-    raise (result.body) unless result.status == 200
+    raise ("#{JSON.parse(result.body).dig("errors").first}") unless result.status == 200
     JSON.parse(result.body)
   end
 end
