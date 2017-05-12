@@ -33,6 +33,8 @@ class CloudflareClient
   # create's a zone with a given name
   # create_zone(name: name_of_zone, jump_start: true|false (default true), organization: {id: org_id, name: org_name})
   def create_zone(name: nil, jump_start: true, organization: {id: nil, name: nil})
+    raise("Zone name required") if name.nil?
+    raise("Org information  required") if organization[:id].nil?
     org_data = organization.merge({status: "active", permissions: ["#zones:read"]})
     data = {name: name, jump_start: jump_start, organization: org_data}
     cf_post(path: "/zones", data: data)
@@ -69,7 +71,7 @@ class CloudflareClient
 
   def purge_zone_cache(zone_id: nil, tags: [], files: [], purge_everything: nil)
     raise ("zone_id required") if zone_id.nil?
-    if !purge_everything.nil? && (!tags.empty? || !files.empty?)
+    if purge_everything.nil? && (tags.empty? && files.empty?)
       raise ("specify a combination tags[], files[] or purge_everything")
     end
     data = {}

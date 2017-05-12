@@ -1,5 +1,5 @@
 
 desc "Test"
 task :test do
-  sh "mtest test/cloudflare_test.rb"
+  sh "mtest test/zendesk_cloudflare_test.rb"
 end

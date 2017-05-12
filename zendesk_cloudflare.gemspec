@@ -1,6 +1,6 @@
 name = "zendesk_cloudflare"
 
-Gem::Specification.new name, "0.0.0" do |s|
+Gem::Specification.new name, "1.0.0" do |s|
   s.summary = "lightweight cloudflare api client"
   s.authors = ["ian waters"]
   s.email = "iwaters@zendesk.com"
