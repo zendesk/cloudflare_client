@@ -60,7 +60,7 @@ class FakeServer
       loop do
         begin
           socket = TCPSocket.new('localhost', @port)
-          socket.close if socket
+          socket&.close
           return
         rescue Errno::ECONNREFUSED
         end
@@ -78,6 +78,6 @@ class FakeServer
   end
 
   def shutdown
-    @server.shutdown if @server
+    @server&.shutdown
   end
 end
