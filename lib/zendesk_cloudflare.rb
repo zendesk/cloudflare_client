@@ -6,6 +6,43 @@ class CloudflareClient
   require 'byebug'
 
   API_BASE    = "https://api.cloudflare.com/client/v4".freeze
+  POSSIBLE_API_SETTINGS = [
+    "advanced_ddos",
+    "always_online",
+    "automatic_https_rewrites",
+    "browser_cache_ttl",
+    "browser_check",
+    "cache_level",
+    "challenge_ttl",
+    "development_mode",
+    "email_obfuscation",
+    "hotlink_protection",
+    "ip_geolocation",
+    "ipv6",
+    "minify",
+    "mobile_redirect",
+    "mirage",
+    "origin_error_page_pass_thru",
+    "opportunistic_encryption",
+    "polish",
+    "webp",
+    "prefetch_preload",
+    "response_buffering",
+    "rocket_loader",
+    "security_header",
+    "security_level",
+    "server_side_exclude",
+    "sort_query_string_for_cache",
+    "ssl",
+    "tls_1_2_only",
+    "tls_1_3",
+    "tls_client_auth",
+    "true_client_ip_header",
+    "waf",
+    "http2",
+    "pseudo_ipv4",
+    "websockets"
+  ]
 
   def initialize(auth_key: nil, email: nil)
     raise ("Missing auth_key") if auth_key.nil?
@@ -34,7 +71,7 @@ class CloudflareClient
   # create_zone(name: name_of_zone, jump_start: true|false (default true), organization: {id: org_id, name: org_name})
   def create_zone(name: nil, jump_start: true, organization: {id: nil, name: nil})
     raise("Zone name required") if name.nil?
-    raise("Org information  required") if organization[:id].nil?
+    raise("Organization information required") if organization[:id].nil?
     org_data = organization.merge({status: "active", permissions: ["#zones:read"]})
     data = {name: name, jump_start: jump_start, organization: org_data}
     cf_post(path: "/zones", data: data)
@@ -44,7 +81,7 @@ class CloudflareClient
   # request another zone activation (ssl) check
   # zone_activation_check(zone_id: id_of_your_zone)
   def zone_activation_check(zone_id: nil)
-    raise ("Zone id required") if zone_id.nil?
+    raise ("zone_id required") if zone_id.nil?
     cf_put(path: "/zones/#{zone_id}/activation_check")
   end
 
@@ -52,7 +89,7 @@ class CloudflareClient
   # return all the details for a given zone_id
   # zone_details(zone_id: id_of_my_zone
   def zone_details(zone_id: nil)
-    raise ("Zone id required") if zone_id.nil?
+    raise ("zone_id required") if zone_id.nil?
     cf_get(path: "/zones/#{zone_id}")
   end
 
@@ -61,7 +98,7 @@ class CloudflareClient
   # NOTE: some of these options require an enterprise account
   # edit_zone(zone_id: id_of_zone, paused: true|false, vanity_name_servers: ['ns1.foo.bar', 'ns2.foo.bar'], plan: {id: plan_id})
   def edit_zone(zone_id: nil, paused: nil, vanity_name_servers: [], plan: {id: nil})
-    raise ("Zone id required") if zone_id.nil?
+    raise ("zone_id required") if zone_id.nil?
     data = {}
     data[:paused] = paused unless paused.nil?
     data[:vanity_name_servers] = vanity_name_servers unless vanity_name_servers.empty?
@@ -69,6 +106,9 @@ class CloudflareClient
     cf_patch(path: "/zones/#{zone_id}", data: data)
   end
 
+  ##
+  # various zone caching controlls.
+  # supploy an array of tags, or files, or the purge_everything bool
   def purge_zone_cache(zone_id: nil, tags: [], files: [], purge_everything: nil)
     raise ("zone_id required") if zone_id.nil?
     if purge_everything.nil? && (tags.empty? && files.empty?)
@@ -89,6 +129,38 @@ class CloudflareClient
     cf_delete(path: "/zones/#{zone_id}")
   end
 
+  # zone settings section of the api
+
+  ##
+  # return all settings for a given zone
+  def zone_settings(zone_id: nil)
+    raise ("zone_id required") if zone_id.nil?
+    cf_get(path: "/zones/#{zone_id}/settings")
+  end
+
+  ##
+  # there are a lot of settings that can be returned.
+  def zone_setting(zone_id: nil, name: nil)
+    raise ("zone_id required") if zone_id.nil?
+    raise ("setting_name not valid") if name.nil? || !valid_setting?(name)
+    cf_get(path: "/zones/#{zone_id}/settings/#{name}")
+  end
+
+  ##
+  # update 1 or more settings in a zone
+  # settings: [{name: value: true},{name: "value"}...]
+  # https://api.cloudflare.com/#zone-settings-properties
+  def update_zone_settings(zone_id: nil, settings: [])
+    raise ("zone_id required") if zone_id.nil?
+    data = settings.map do |setting|
+      raise ("setting_name \"#{setting[:name]}\" not valid") unless valid_setting?(setting[:name])
+      {id: setting[:name], value: setting[:value]}
+    end
+    data = {'items': data}
+    cf_patch(path: "/zones/#{zone_id}/settings", data: data)
+  end
+
+  # DNS methods
 
   private
   def build_client(params)
@@ -144,5 +216,11 @@ class CloudflareClient
     end
     raise ("#{JSON.parse(result.body).dig("errors").first}") unless result.status == 200
     JSON.parse(result.body)
+  end
+
+  def valid_setting?(name = nil)
+    return false if name.nil?
+    return false unless POSSIBLE_API_SETTINGS.include?(name)
+    true
   end
 end
