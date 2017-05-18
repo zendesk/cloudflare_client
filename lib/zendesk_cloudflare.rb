@@ -3,6 +3,7 @@
 class CloudflareClient
   require 'json'
   require 'faraday'
+  require 'date'
   require 'byebug'
 
   API_BASE = 'https://api.cloudflare.com/client/v4'.freeze
@@ -252,7 +253,35 @@ class CloudflareClient
     cf_get(path: "/zones/#{zone_id}/railguns/#{id}/diagnose")
   end
 
-  #TODO: zone_analytics
+  ##
+  # connect or disconnect a railgun
+  def connect_railgun(zone_id: nil, id: nil, connected: nil)
+    zone_id_check(zone_id)
+    raise ("railgun id required") if id.nil?
+    raise ("connected must be true or false") if connected.nil?
+    data = {connected: connected}
+    cf_patch(path: "/zones/#{zone_id}/railguns/#{id}", data: data)
+  end
+
+  ##
+  # zone analytics (free, pro, business, enterprise)
+
+  ##
+  # return dashboard data for a given zone or colo
+  def zone_analytics_dashboard(zone_id: nil)
+    zone_id_check(zone_id)
+    cf_get(path: "/zones/#{zone_id}/analytics/dashboard")
+  end
+
+  ##
+  # creturn analytics for colos for a time window.
+  # since and untill must be RFC 3339 timestamps
+  def colo_analytics(zone_id: nil, since_ts: nil, until_ts: nil)
+    zone_id_check(zone_id)
+    raise("since_ts must be a valid timestamp") if since_ts.nil? || !date_rfc3339?(since_ts)
+    raise("until_ts must be a valid timestamp") if until_ts.nil? || !date_rfc3339?(until_ts)
+    cf_get(path: "/zones/#{zone_id}/analytics/dashboard")
+  end
 
   #TODO: dns analyitics
 
@@ -295,6 +324,19 @@ class CloudflareClient
   #TODO: org load balancer pools
   #TODO: load balancers
   private
+
+  def date_rfc3339?(ts)
+    begin
+      DateTime.rfc3339(ts)
+    rescue ArgumentError
+      return false
+    end
+    true
+  end
+
+  def zone_id_check(zone_id)
+    raise ("zone_id required") if zone_id.nil?
+  end
 
   def build_client(params)
     raise('Missing auth_key') if params[:auth_key].nil?

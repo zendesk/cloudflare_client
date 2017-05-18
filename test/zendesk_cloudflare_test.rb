@@ -222,6 +222,8 @@ describe CloudflareClient do
         to_return(response_body(SUCCESSFULL_RAILGUN_DETAILS))
       stub_request(:get, "https://api.cloudflare.com/client/v4/zones/abc1234/railguns/e928d310693a83094309acf9ead50448/diagnose").
         to_return(response_body(SUCCESSFULL_RAILGUN_DIAG))
+      stub_request(:patch, "https://api.cloudflare.com/client/v4/zones/abc1234/railguns/e928d310693a83094309acf9ead50448").
+        to_return(response_body(SUCCESSFULL_RAILGUN_UPDATE))
     end
 
     it "fails to list railguns" do
@@ -250,6 +252,43 @@ describe CloudflareClient do
     it "tests railgun connection" do
       client.test_railgun_connection(zone_id: 'abc1234', id: 'e928d310693a83094309acf9ead50448').
         must_equal(JSON.parse(SUCCESSFULL_RAILGUN_DIAG))
+    end
+    it "fails to connect/disconnect a railgun" do
+      e = assert_raises(RuntimeError) { client.connect_railgun }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.connect_railgun(zone_id: 'abc1234') }
+      e.message.must_equal('railgun id required')
+      e = assert_raises(RuntimeError) { client.connect_railgun(zone_id: 'abc1234', id: 'e928d310693a83094309acf9ead50448') }
+      e.message.must_equal('connected must be true or false')
+      client.connect_railgun(zone_id: 'abc1234', id: 'e928d310693a83094309acf9ead50448', connected: true).
+        must_equal(JSON.parse(SUCCESSFULL_RAILGUN_UPDATE))
+    end
+  end
+
+  describe "zone analytics" do
+    before do
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/abc1234/analytics/dashboard").
+        to_return(response_body(SUCCESSFULL_ZONE_ANALYTICS_DASHBOARD))
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/abc1234/analytics/dashboard").
+        to_return(response_body(SUCCESSFULL_ZONE_ANALYTICS_DASHBOARD))
+    end
+
+    it "fails to return zone analytics dashboard" do
+        e = assert_raises(RuntimeError) { client.zone_analytics_dashboard }
+        e.message.must_equal('zone_id required')
+    end
+    it "returns zone analytics dashboard" do
+      client.zone_analytics_dashboard(zone_id: 'abc1234').
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_ANALYTICS_DASHBOARD))
+    end
+    it "fails to return colo analytics" do
+        e = assert_raises(RuntimeError) { client.colo_analytics }
+        e.message.must_equal('zone_id required')
+        e = assert_raises(RuntimeError) { client.colo_analytics(zone_id: 'abc1234', since_ts: 'blah') }
+        e.message.must_equal('since_ts must be a valid timestamp')
+        e = assert_raises(RuntimeError) { client.colo_analytics(zone_id: 'abc1234', since_ts: '2015-01-01T12:23:00Z', until_ts: 'blah') }
+        e.message.must_equal('until_ts must be a valid timestamp')
+        client.colo_analytics(zone_id: 'abc1234', since_ts: '2015-01-01T12:23:00Z', until_ts: '2015-02-01T12:23:00Z')
     end
   end
 end
