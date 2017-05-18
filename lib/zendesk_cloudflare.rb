@@ -131,8 +131,6 @@ class CloudflareClient
     cf_delete(path: "/zones/#{zone_id}")
   end
 
-  # zone settings section of the api
-
   ##
   # return all settings for a given zone
   def zone_settings(zone_id: nil)
@@ -162,14 +160,151 @@ class CloudflareClient
     cf_patch(path: "/zones/#{zone_id}/settings", data: data)
   end
 
+  ##
   # DNS methods
 
+  ##
+  # Create a dns record
+  def create_dns_record(zone_id: nil, name: nil, type: nil, content: nil)
+    raise("Must specificy zone_id, name, type, and content") if (zone_id.nil? || name.nil? || type.nil? || content.nil?)
+    data = {name: name, type: type, content: content}
+    cf_post(path: "/zones/#{zone_id}/dns_records", data: data)
+  end
+
+  ##
+  # list/search for dns records in a given zone
+  def dns_records(zone_id: nil, name: nil, content: nil, per_page: 50, page_no: 1, order: "type", match: "all", type: nil)
+    raise("zone_id required") if zone_id.nil?
+    raise("match must be either all | any") unless (match == "all" || match == "any")
+    params = {per_page: per_page, page: page_no, order: order}
+    params[:name]     = name unless name.nil?
+    params[:content]  = content unless content.nil?
+    params[:type]     = type unless type.nil?
+    cf_get(path: "/zones/#{zone_id}/dns_records", params: params)
+  end
+
+  ##
+  # details for a given dns_record
+  def dns_record(zone_id: nil, id: nil)
+    raise("zone_id required") if zone_id.nil?
+    raise("dns record id required") if id.nil?
+    cf_get(path: "/zones/#{zone_id}/dns_records/#{id}")
+  end
+
+  ##
+  # update a dns record.
+  # zone_id, id, type, and name are all required.  ttl and proxied are optional
+  def update_dns_record(zone_id: nil, id: nil, type: nil, name: nil, content: nil, ttl: nil, proxied: nil)
+    raise("zone_id required") if zone_id.nil?
+    raise("id required") if id.nil?
+    raise("must suply type, name, and content") if (type.nil? || name.nil? || content.nil?)
+    data = {type: type, name: name, content: content}
+    data[:ttl] = ttl unless ttl.nil?
+    data[:proxied] = proxied unless proxied.nil?
+    cf_put(path: "/zones/#{zone_id}/dns_records/#{id}", data: data)
+  end
+
+  ##
+  # delete a dns record
+  # zone_id, id, type, and name are all required.  ttl and proxied are optional
+  def delete_dns_record(zone_id: nil, id: nil)
+    raise("zone_id required") if zone_id.nil?
+    raise("id required") if id.nil?
+    cf_delete(path: "/zones/#{zone_id}/dns_records/#{id}")
+  end
+
+  ##
+  # import a BIND formatted zone file
+#  def import_zone_file(zone_id: nil, path_to_file: nil)
+#    # FIXME: not tested
+#    raise("zone_id required") if zone_id.nil?
+#    raise("full path of file to import") if path_to_file.nil?
+#    # TODO: ensure that this is a bind file?
+#    raise("import file_name does not exist") if File.exists?(path_to_file)
+#    data = { file: Faraday::UploadIO.new(path_to_file, 'multipart/form-data') }
+#    cf_post(path: "/v4/zones/#{zone_id}/dns_records/import", data: data)
+#  end
+
+
+  ##
+  # Railgun connections
+
+  ##
+  # available railguns
+  def available_railguns(zone_id: nil)
+    raise ("zone_id required") if zone_id.nil?
+    cf_get(path: "/zones/#{zone_id}/railguns")
+  end
+
+  ##
+  # details of a single railgun
+  def railgun_details(zone_id: nil, id: nil)
+    raise ("zone_id required") if zone_id.nil?
+    raise ("railgun id required") if id.nil?
+    cf_get(path: "/zones/#{zone_id}/railguns/#{id}")
+  end
+
+  ##
+  # test a railgun connection
+  def test_railgun_connection(zone_id: nil, id: nil)
+    raise ("zone_id required") if zone_id.nil?
+    raise ("railgun id required") if id.nil?
+    cf_get(path: "/zones/#{zone_id}/railguns/#{id}/diagnose")
+  end
+
+  #TODO: zone_analytics
+
+  #TODO: dns analyitics
+
+  #TODO: railgun
+
+  #TODO: custom_pages_for_a_zone
+
+  #TODO: custom ssl for a zon
+
+  #TODO: custom_hostnames
+
+  #TODO: keyless_ssl
+
+  #TODO: page_rules_for_a_zone
+  #TODO: rate_limits_for_a_zone
+  #TODO: firewall_access_rules_for_a_zone
+  #TODO: waf_rule_packages
+  #TODO: waf_rule_groups
+  #TODO: waf_rules
+  #TODO: analyze_certificate
+  #TODO: certificate_packs
+  #TODO: ssl_verification
+  #TODO: zone_subscription
+  #TODO: organizations
+  #TODO: org members
+  #TODO: org invites
+  #TODO: org roles
+  #TODO: org level firewall rules
+  #TODO: org railgun
+  #TODO: cloudflare CA
+  #TODO: virtual DNS users
+  #TODO: virtual DNS org
+  #TODO: virtual DNS Analytics users
+  #TODO: virtual DNS Analytics org
+  #TODO: cloudflare IPs
+  #TODO: AML
+  #TODO: load balancer monitors
+  #TODO: load balancer pools
+  #TODO: org load balancer monitors
+  #TODO: org load balancer pools
+  #TODO: load balancers
   private
 
   def build_client(params)
     raise('Missing auth_key') if params[:auth_key].nil?
     raise('Missing auth email') if params[:email].nil?
-    client = Faraday.new(url:  API_BASE)
+    # we need multipart form encoding for some of these operations
+    client = Faraday.new(url:  API_BASE) do |conn|
+      conn.request :multipart
+      conn.request :url_encoded
+      conn.adapter :net_http
+    end
     client.headers['X-Auth-Key'] = params[:auth_key]
     client.headers['X-Auth-Email'] = params[:email]
     client.headers['Content-Type'] = 'application/json'
@@ -195,9 +330,10 @@ class CloudflareClient
     JSON.parse(result.body)
   end
 
-  def cf_put(path: nil)
+  def cf_put(path: nil, data: nil)
     result = @cf_client.put do |request|
       request.url(API_BASE + path) unless path.nil?
+      request.body = data.to_json unless data.nil?
     end
     raise(JSON.parse(result.body).dig('errors').first.to_s) unless result.status == 200
     JSON.parse(result.body)
