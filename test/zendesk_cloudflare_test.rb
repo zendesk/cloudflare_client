@@ -1,6 +1,6 @@
 # rubocop:disable LineLength
 require_relative "test_helper"
-require_relative "test_vars"
+require_relative "fixtures/stub_api_responses.rb"
 SingleCov.covered!
 
 require 'zendesk_cloudflare'
@@ -61,42 +61,55 @@ describe CloudflareClient do
         must_equal(JSON.parse(SUCCESSFULL_ZONE_QUERY))
     end
     it "fails to create a zone when missing a name" do
-      e = assert_raises(RuntimeError) { client.create_zone(organization: { id: 'thisismyorgid', name: 'fish barrel and a smoking gun' }) }
+      e = assert_raises(ArgumentError) { client.create_zone(organization: { id: 'thisismyorgid', name: 'fish barrel and a smoking gun' }) }
+      e.message.must_equal("missing keyword: name")
+      e = assert_raises(RuntimeError) { client.create_zone(name: nil, organization: { id: 'thisismyorgid', name: 'fish barrel and a smoking gun' }) }
       e.message.must_equal("Zone name required")
     end
-    it "fails to create a zone when missing org data" do
-      e = assert_raises(RuntimeError) { client.create_zone(name: 'foobar.com') }
-      e.message.must_equal("Organization information required")
-    end
     it "fails to delete a zone" do
-      e = assert_raises(RuntimeError) { client.delete_zone }
+      e = assert_raises(ArgumentError) { client.delete_zone }
+      e.message.must_equal("missing keyword: zone_id")
+      e = assert_raises(RuntimeError) { client.delete_zone(zone_id: nil) }
       e.message.must_equal("zone_id required")
     end
     it "deletes a zone" do
       client.delete_zone(zone_id: "abc1234").must_equal(JSON.parse(SUCCESSFULL_ZONE_DELETE))
     end
+    it "fails to request a zone activation check" do
+      e = assert_raises(ArgumentError) { client.zone_activation_check }
+      e.message.must_equal("missing keyword: zone_id")
+      e = assert_raises(RuntimeError) { client.zone_activation_check(zone_id: nil) }
+      e.message.must_equal("zone_id required")
+    end
     it "requests zone activcation check succeedes" do
       client.zone_activation_check(zone_id: '1234abcd')
     end
-    it "requests zone activcation check fails" do
-      e = assert_raises(RuntimeError) { client.zone_activation_check }
+    it "lists all zones" do
+      client.zones.must_equal(JSON.parse(SUCCESSFULL_ZONE_QUERY))
+    end
+    it "lists zones with a given name" do
+      client.zones(name: "testzonename.com").must_equal(JSON.parse(SUCCESSFULL_ZONE_QUERY))
+    end
+    it "fails lists zones with an invalid status" do
+      e = assert_raises(RuntimeError) { client.zones(status: "foobar") }
+      e.message.must_equal('status must be one of ["active", "pending", "initializing", "moved", "deleted", "deactivated", "read only"]')
+    end
+    it "lists zones with a given status" do
+      client.zones(status: "active").must_equal(JSON.parse(SUCCESSFULL_ZONE_QUERY))
+    end
+    it "it fails to get an existing zone" do
+      e = assert_raises(ArgumentError) { client.zone }
+      e.message.must_include("missing keyword: zone_id")
+      e = assert_raises(RuntimeError) { client.zone(zone_id: nil) }
       e.message.must_equal("zone_id required")
     end
-    it "lists all zones" do
-      client.list_zones.must_equal(JSON.parse(SUCCESSFULL_ZONE_QUERY))
-    end
-    it "searches for a single zone" do
-      client.list_zones(name: "testzonename.com").must_equal(JSON.parse(SUCCESSFULL_ZONE_QUERY))
-    end
     it "returns details for a single zone" do
-      client.zone_details(zone_id: "1234abc").must_equal(JSON.parse(SUCCESSFULL_ZONE_QUERY))
-    end
-    it "fails when getting details for a non-existent zone" do
-      e = assert_raises(RuntimeError) { client.zone_details(zone_id: "shouldfail") }
-      e.message.must_include("identifier is invalid")
+      client.zone(zone_id: "1234abc").must_equal(JSON.parse(SUCCESSFULL_ZONE_QUERY))
     end
     it "fails to edit an existing zone" do
-      e = assert_raises(RuntimeError) { client.edit_zone }
+      e = assert_raises(ArgumentError) { client.edit_zone }
+      e.message.must_equal("missing keyword: zone_id")
+      e = assert_raises(RuntimeError) { client.edit_zone(zone_id: nil) }
       e.message.must_equal("zone_id required")
     end
     it "edits and existing zone" do
@@ -104,6 +117,10 @@ describe CloudflareClient do
         dig("result", "name_servers").must_equal(["ns1.foo.com", "ns2.foo.com"])
     end
     it "fails to purge the cache on a zone" do
+      e = assert_raises(ArgumentError) { client.purge_zone_cache }
+      e.message.must_include("missing keyword: zone_id")
+      e = assert_raises(RuntimeError) { client.purge_zone_cache(zone_id: nil) }
+      e.message.must_include("zone_id required")
       e = assert_raises(RuntimeError) { client.purge_zone_cache(zone_id: 'abc1234') }
       e.message.must_include("specify a combination tags[], files[] or purge_everything")
     end
@@ -120,28 +137,30 @@ describe CloudflareClient do
         must_equal(JSON.parse(SUCCESSFULL_ZONE_CACHE_PURGE))
     end
     it "fails to get all settings for a zone " do
-      e = assert_raises(RuntimeError) { client.zone_settings }
+      e = assert_raises(ArgumentError) { client.zone_settings }
+      e.message.must_equal("missing keyword: zone_id")
+      e = assert_raises(RuntimeError) { client.zone_settings(zone_id: nil) }
       e.message.must_equal("zone_id required")
     end
     it "gets all settings for a zone" do
       client.zone_settings(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_ZONE_QUERY))
     end
-    it "fails to get settings when missing a zone_id" do
-      e = assert_raises(RuntimeError) { client.zone_setting(name: "always_online") }
+    it "fails to get settings for a zone" do
+      e = assert_raises(ArgumentError) { client.zone_setting }
+      e.message.must_equal("missing keywords: zone_id, name")
+      e = assert_raises(RuntimeError) { client.zone_setting(zone_id: nil, name: 'response_buffering') }
       e.message.must_equal("zone_id required")
-    end
-    it "fails when trying to get an invalid setting" do
       e = assert_raises(RuntimeError) { client.zone_setting(zone_id: 'abc1234', name: "foobar") }
       e.message.must_equal("setting_name not valid")
     end
     it "gets a setting for a zone" do
       client.zone_setting(zone_id: 'abc1234', name: "always_online")
     end
-    it "fails to update a zone setting when missing zone_id" do
-      e = assert_raises(RuntimeError) { client.update_zone_settings }
+    it "fails to update zone setting" do
+      e = assert_raises(ArgumentError) { client.update_zone_settings }
+      e.message.must_equal("missing keyword: zone_id")
+      e = assert_raises(RuntimeError) { client.update_zone_settings(zone_id: nil) }
       e.message.must_equal("zone_id required")
-    end
-    it "fails to update a zone setting when settings are invalid" do
       e = assert_raises(RuntimeError) { client.update_zone_settings(zone_id: "abc1234", settings: [{name: 'not_a_valid_setting', value: "yes"}]) }
       e.message.must_equal("setting_name \"not_a_valid_setting\" not valid")
     end
@@ -164,16 +183,20 @@ describe CloudflareClient do
         to_return(response_body(SUCCESSFULL_DNS_DELETE))
     end
 
-    it "fails to create a dns record because of missing params" do
-      e = assert_raises(RuntimeError) { client.create_dns_record(zone_id: "abc1234") }
-      e.message.must_equal("Must specificy zone_id, name, type, and content")
+    it "fails to create a dns record" do
+      e = assert_raises(ArgumentError) { client.create_dns_record() }
+      e.message.must_equal("missing keywords: zone_id, name, type, content")
+      e = assert_raises(RuntimeError) { client.create_dns_record(zone_id: "abc1234", name: 'blah', type: 'foo', content: 'content') }
+      e.message.must_equal('type must be one of ["A", "AAAA", "CNAME", "TXT", "SRV", "LOC", "MX", "NS", "SPF", "read only"]')
     end
     it "creates a dns record" do
       client.create_dns_record(zone_id: 'abc1234', name: 'foobar.com', type: 'CNAME', content: '192.168.1.1').
         must_equal(JSON.parse(SUCCESSFULL_DNS_CREATE))
     end
     it "fails to list dns records" do
-      e = assert_raises(RuntimeError) { client.dns_records }
+      e = assert_raises(ArgumentError) { client.dns_records }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.dns_records(zone_id: nil) }
       e.message.must_equal("zone_id required")
     end
     it "list dns records" do
@@ -181,9 +204,11 @@ describe CloudflareClient do
         must_equal(JSON.parse(SUCCESSFULL_DNS_QUERY))
     end
     it "fails to list a specific dns record" do
-      e = assert_raises(RuntimeError) { client.dns_record }
+      e = assert_raises(ArgumentError) { client.dns_record }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.dns_record(zone_id: nil, id: 'foo') }
       e.message.must_equal("zone_id required")
-      e = assert_raises(RuntimeError) { client.dns_record(zone_id: 'abc1234') }
+      e = assert_raises(RuntimeError) { client.dns_record(zone_id: 'abc1234', id: nil) }
       e.message.must_equal("dns record id required")
     end
     it "returns a specfic dns record" do
@@ -191,21 +216,25 @@ describe CloudflareClient do
         must_equal(JSON.parse(SUCCESSFULL_DNS_QUERY))
     end
     it "fails to update a record" do
-      e = assert_raises(RuntimeError) { client.update_dns_record }
+      e = assert_raises(ArgumentError) { client.update_dns_record }
+      e.message.must_equal('missing keywords: zone_id, id, type, name, content')
+
+      e = assert_raises(RuntimeError) { client.update_dns_record(zone_id: nil, id: 'foo', name: 'foo', type: 'foo', content: 'foo') }
       e.message.must_equal("zone_id required")
-      e = assert_raises(RuntimeError) { client.update_dns_record(zone_id: 'abc1234') }
-      e.message.must_equal("id required")
-      e = assert_raises(RuntimeError) { client.update_dns_record(zone_id: 'abc1234', id: 'somebigid') }
-      e.message.must_equal("must suply type, name, and content")
+      e = assert_raises(RuntimeError) { client.update_dns_record(zone_id: 'abc1234', id: nil, name: 'foo', type: 'foo', content: 'foo') }
+      e.message.must_equal('dns record id required')
+
     end
     it "updates a dns record" do
       client.update_dns_record(zone_id: 'abc1234', id: 'somebigid', type: 'CNAME', name: 'foobar', content: '10.1.1.1').
         must_equal(JSON.parse(SUCCESSFULL_DNS_UPDATE))
     end
     it "fails to delete a dns record" do
-      e = assert_raises(RuntimeError) { client.delete_dns_record }
+      e = assert_raises(ArgumentError) { client.delete_dns_record }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.delete_dns_record(zone_id: nil, id: 'foo') }
       e.message.must_equal("zone_id required")
-      e = assert_raises(RuntimeError) { client.delete_dns_record(zone_id: 'abc1234') }
+      e = assert_raises(RuntimeError) { client.delete_dns_record(zone_id: 'abc1234', id: nil) }
       e.message.must_equal("id required")
     end
     it "deletes a dns record" do
@@ -214,7 +243,7 @@ describe CloudflareClient do
     end
   end
 
-  describe "railgun operations" do
+  describe "railgun connection operations" do
     before do
       stub_request(:get, "https://api.cloudflare.com/client/v4/zones/abc1234/railguns").
         to_return(response_body(SUCCESSFULL_RAILGUN_LIST))
@@ -226,27 +255,33 @@ describe CloudflareClient do
         to_return(response_body(SUCCESSFULL_RAILGUN_UPDATE))
     end
 
-    it "fails to list railguns" do
-      e = assert_raises(RuntimeError) { client.available_railguns }
+    it "fails to list railgun connection" do
+      e = assert_raises(ArgumentError) { client.railgun_connections }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.railgun_connections(zone_id: nil) }
       e.message.must_equal("zone_id required")
     end
     it "lists railguns" do
-      client.available_railguns(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_RAILGUN_LIST))
+      client.railgun_connections(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_RAILGUN_LIST))
     end
-    it "fails to get railguns details" do
-      e = assert_raises(RuntimeError) { client.railgun_details }
+    it "fails to get railgun connection details" do
+      e = assert_raises(ArgumentError) { client.railgun_connection }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.railgun_connection(zone_id: nil, id: 'foo') }
       e.message.must_equal("zone_id required")
-      e = assert_raises(RuntimeError) { client.railgun_details(zone_id: 'abc1234') }
-      e.message.must_equal("railgun id required")
+      e = assert_raises(RuntimeError) { client.railgun_connection(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal("railgun id required", id: nil)
     end
-    it "railguns details" do
-      client.railgun_details(zone_id: 'abc1234', id: 'e928d310693a83094309acf9ead50448').
+    it "railguns connection details" do
+      client.railgun_connection(zone_id: 'abc1234', id: 'e928d310693a83094309acf9ead50448').
         must_equal(JSON.parse(SUCCESSFULL_RAILGUN_DETAILS))
     end
     it "fails to test a railgun connection" do
-      e = assert_raises(RuntimeError) { client.test_railgun_connection }
+      e = assert_raises(ArgumentError) { client.test_railgun_connection }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.test_railgun_connection(zone_id: nil, id: 'foo') }
       e.message.must_equal("zone_id required")
-      e = assert_raises(RuntimeError) { client.test_railgun_connection(zone_id: 'abc1234') }
+      e = assert_raises(RuntimeError) { client.test_railgun_connection(zone_id: 'abc1234', id: nil) }
       e.message.must_equal('railgun id required')
     end
     it "tests railgun connection" do
@@ -254,27 +289,35 @@ describe CloudflareClient do
         must_equal(JSON.parse(SUCCESSFULL_RAILGUN_DIAG))
     end
     it "fails to connect/disconnect a railgun" do
-      e = assert_raises(RuntimeError) { client.connect_railgun }
+      e = assert_raises(ArgumentError) { client.connect_railgun }
+      e.message.must_equal('missing keywords: zone_id, id, connected')
+      e = assert_raises(RuntimeError) { client.connect_railgun(zone_id: nil, id: 'foo', connected: true) }
       e.message.must_equal('zone_id required')
-      e = assert_raises(RuntimeError) { client.connect_railgun(zone_id: 'abc1234') }
+      e = assert_raises(RuntimeError) { client.connect_railgun(zone_id: 'abc1234', id: nil, connected: true) }
       e.message.must_equal('railgun id required')
-      e = assert_raises(RuntimeError) { client.connect_railgun(zone_id: 'abc1234', id: 'e928d310693a83094309acf9ead50448') }
+      e = assert_raises(RuntimeError) { client.connect_railgun(zone_id: 'abc1234', id: 'e928d310693a83094309acf9ead50448', connected: nil) }
       e.message.must_equal('connected must be true or false')
+    end
+    it "connects a railgun" do
       client.connect_railgun(zone_id: 'abc1234', id: 'e928d310693a83094309acf9ead50448', connected: true).
+        must_equal(JSON.parse(SUCCESSFULL_RAILGUN_UPDATE))
+      client.connect_railgun(zone_id: 'abc1234', id: 'e928d310693a83094309acf9ead50448', connected: false).
         must_equal(JSON.parse(SUCCESSFULL_RAILGUN_UPDATE))
     end
   end
 
   describe "zone analytics" do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/abc1234/analytics/dashboard").
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/analytics/dashboard').
         to_return(response_body(SUCCESSFULL_ZONE_ANALYTICS_DASHBOARD))
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/abc1234/analytics/dashboard").
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/analytics/dashboard').
         to_return(response_body(SUCCESSFULL_ZONE_ANALYTICS_DASHBOARD))
     end
 
     it "fails to return zone analytics dashboard" do
-        e = assert_raises(RuntimeError) { client.zone_analytics_dashboard }
+        e = assert_raises(ArgumentError) { client.zone_analytics_dashboard }
+        e.message.must_equal('missing keyword: zone_id')
+        e = assert_raises(RuntimeError) { client.zone_analytics_dashboard(zone_id: nil) }
         e.message.must_equal('zone_id required')
     end
     it "returns zone analytics dashboard" do
@@ -282,13 +325,663 @@ describe CloudflareClient do
         must_equal(JSON.parse(SUCCESSFULL_ZONE_ANALYTICS_DASHBOARD))
     end
     it "fails to return colo analytics" do
-        e = assert_raises(RuntimeError) { client.colo_analytics }
+        e = assert_raises(ArgumentError) { client.colo_analytics }
+        e.message.must_equal('missing keyword: zone_id')
+        e = assert_raises(RuntimeError) { client.colo_analytics(zone_id: nil) }
         e.message.must_equal('zone_id required')
         e = assert_raises(RuntimeError) { client.colo_analytics(zone_id: 'abc1234', since_ts: 'blah') }
         e.message.must_equal('since_ts must be a valid timestamp')
         e = assert_raises(RuntimeError) { client.colo_analytics(zone_id: 'abc1234', since_ts: '2015-01-01T12:23:00Z', until_ts: 'blah') }
         e.message.must_equal('until_ts must be a valid timestamp')
         client.colo_analytics(zone_id: 'abc1234', since_ts: '2015-01-01T12:23:00Z', until_ts: '2015-02-01T12:23:00Z')
+    end
+  end
+
+  describe "dns analytics" do
+    before do
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/dns_analytics/report').
+        to_return(response_body(SUCCESSFULL_DNS_ANALYTICS_TABLE))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/dns_analytics/report/bytime?limit=100&since=2015-01-01T12:23:00Z&time_delta=hour&until=2017-01-01T12:23:00Z').
+        to_return(response_body(SUCCESSFULL_DNS_ANALYTICS_BY_TIME))
+    end
+    it "fails to return dns_analytics table" do
+      e = assert_raises(ArgumentError) { client.dns_analytics_table }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.dns_analytics_table(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+    end
+    it "returns dns analytics" do
+      client.dns_analytics_table(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_DNS_ANALYTICS_TABLE))
+    end
+    it "fails to return dns bytime analytics" do
+      e = assert_raises(ArgumentError) { client.dns_analytics_bytime}
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.dns_analytics_bytime(zone_id: nil)}
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.dns_analytics_bytime(zone_id: 'abc1234', since_ts: 'foo')}
+      e.message.must_equal('since_ts must be a valid timestamp')
+      e = assert_raises(RuntimeError) { client.dns_analytics_bytime(zone_id: 'abc1234', since_ts: '2015-01-01T12:23:00Z', until_ts: 'foo')}
+      e.message.must_equal('until_ts must be a valid timestamp')
+      client.dns_analytics_bytime(zone_id: 'abc1234', since_ts: '2015-01-01T12:23:00Z', until_ts: '2017-01-01T12:23:00Z').
+        must_equal(JSON.parse(SUCCESSFULL_DNS_ANALYTICS_BY_TIME))
+    end
+  end
+
+  describe "railgun api" do
+    before do
+      stub_request(:post, 'https://api.cloudflare.com/client/v4/railguns').
+        to_return(response_body(SUCCESSFULL_RAILGUN_CREATION))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/railguns?direction=desc&page=1&per_page=50').
+        to_return(response_body(SUCCESSFULL_RAILGUN_LIST))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/railguns/somerailgunid').
+        to_return(response_body(SUCCESSFULL_RAILGUN_DETAILS))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/railguns/somerailgunid/zones').
+        to_return(response_body(SUCCESSFULL_RAILGUN_ZONES))
+      stub_request(:patch, 'https://api.cloudflare.com/client/v4/railguns/abc1234').
+        to_return(response_body(SUCCESSFULL_RAILGUN_STATUS))
+      stub_request(:delete, 'https://api.cloudflare.com/client/v4/railguns/abc1234').
+        to_return(response_body(SUCCESSFULL_RAILGUN_DELETE))
+    end
+
+    it "fails to create a railgun with missing name" do
+      e = assert_raises(ArgumentError) { client.create_railgun }
+      e.message.must_equal('missing keyword: name')
+      e = assert_raises(RuntimeError) { client.create_railgun(name: nil) }
+      e.message.must_equal("Railgun name cannot be nil")
+    end
+    it "creates a railgun" do
+      client.create_railgun(name: 'foobar').
+        must_equal(JSON.parse(SUCCESSFULL_RAILGUN_CREATION))
+    end
+    it "fails to lists all railguns" do
+      e = assert_raises(RuntimeError) { client.railguns(direction: 'foo')}
+      e.message.must_equal('direction must be either desc | asc')
+    end
+    it "lists all railguns" do
+      client.railguns.must_equal(JSON.parse(SUCCESSFULL_RAILGUN_LIST))
+    end
+    it "fails to get railgun details" do
+      e = assert_raises(ArgumentError) { client.railgun }
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.railgun(id: nil) }
+      e.message.must_equal('must provide the id of the railgun')
+    end
+    it "get a railgun's details" do
+      client.railgun(id: 'somerailgunid').must_equal(JSON.parse(SUCCESSFULL_RAILGUN_DETAILS))
+    end
+    it "fails to get zones for a railgun" do
+      e = assert_raises(ArgumentError) { client.railgun_zones}
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.railgun_zones(id: nil)}
+      e.message.must_equal('must provide the id of the railgun')
+    end
+    it "gets zones connected to a railgun" do
+      client.railgun_zones(id: 'somerailgunid').must_equal(JSON.parse(SUCCESSFULL_RAILGUN_ZONES))
+    end
+    it "fails to change the status of a railgun" do
+      e = assert_raises(ArgumentError) { client.railgun_enabled }
+      e.message.must_equal('missing keywords: id, enabled')
+      e = assert_raises(RuntimeError) { client.railgun_enabled(id: nil, enabled: true) }
+      e.message.must_equal('must provide the id of the railgun')
+      e = assert_raises(RuntimeError) { client.railgun_enabled(id: 'abc1234', enabled: 'foobar') }
+      e.message.must_equal('enabled must be true | false')
+    end
+    it "enables a railgun" do
+      client.railgun_enabled(id: 'abc1234', enabled: true).must_equal(JSON.parse(SUCCESSFULL_RAILGUN_STATUS))
+    end
+    it "fails to delete a railgun" do
+      e = assert_raises(ArgumentError) { client.delete_railgun }
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.delete_railgun(id: nil) }
+      e.message.must_equal('must provide the id of the railgun')
+    end
+    it "deletes a railgun" do
+      client.delete_railgun(id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_RAILGUN_DELETE))
+    end
+  end
+
+  describe "custom_pages" do
+    before do
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_pages').
+        to_return(response_body(SUCCESSFULL_CUSTOM_PAGES))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_pages/footothebar').
+        to_return(response_body(SUCCESSFULL_CUSTOM_PAGE_DETAIL))
+      stub_request(:put, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_pages/footothebar').
+        to_return(response_body(SUCCESSFULL_CUSTOM_PAGE_UPDATE))
+    end
+
+    it "fails to list custom pages" do
+      e = assert_raises(ArgumentError) { client.custom_pages }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.custom_pages(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+    end
+    it "lists custom pages" do
+      client.custom_pages(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_CUSTOM_PAGES))
+    end
+    it "fails to get details for a custom page" do
+      e = assert_raises(ArgumentError) { client.custom_page }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.custom_page(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.custom_page(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id must not be nil')
+    end
+    it "gets details for a custom page" do
+      client.custom_page(zone_id: 'abc1234', id: 'footothebar').must_equal(JSON.parse(SUCCESSFULL_CUSTOM_PAGE_DETAIL))
+    end
+    it "fails to update a custom page" do
+      e = assert_raises(ArgumentError) { client.update_custom_page }
+      e.message.must_equal('missing keywords: zone_id, id, url, state')
+      e = assert_raises(RuntimeError) { client.update_custom_page(zone_id: nil, id: '1234', url: 'foo.bar', state: 'default') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.update_custom_page(zone_id: 'abc1234', id: nil, url: 'foo.bar', state: 'default') }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_custom_page(zone_id: 'abc1234', id: '1234', url: nil, state: 'default') }
+      e.message.must_equal('url required')
+      e = assert_raises(RuntimeError) { client.update_custom_page(zone_id: 'abc1234', id: 'footothebar', url: 'http://foo.bar', state: 'whateverman') }
+      e.message.must_equal('state must be either default | customized')
+    end
+    it "updates a custom page" do
+      client.update_custom_page(zone_id: 'abc1234', id: 'footothebar', url: 'http://foo.bar', state: 'customized').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_PAGE_UPDATE))
+    end
+  end
+
+  describe "custom_ssl for a zone" do
+    before do
+      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_certificates').
+        to_return(response_body(SUCCESSFULL_CUSTOM_SSL))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_certficates?direction=asc&match=all&page=1&per_page=50').
+        to_return(response_body(SUCCESSFULL_CUSTOM_SSL_LIST))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_certificates/footothebar').
+        to_return(response_body(SUCCESSFULL_CUSTOM_SSL_CONFIG))
+      stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_certificates/foo').
+        to_return(response_body(SUCCESSFULL_CUSTOM_SSL_CONFIG_UPDATE))
+      stub_request(:put, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_certificates/prioritize').
+        to_return(response_body(SUCCESSFULL_CUSTOM_SSL_UPDATE_PRIORITY))
+      stub_request(:delete, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_certificates/7e7b8deba8538af625850b7b2530034c').
+        to_return(response_body(SUCCESSFULL_CUSTOM_SSL_DELETE))
+    end
+
+    it "fails to create custom ssl for a zone" do
+      e = assert_raises(ArgumentError) { client.create_custom_ssl }
+      e.message.must_equal('missing keywords: zone_id, certificate, private_key')
+      e = assert_raises(RuntimeError) { client.create_custom_ssl(zone_id: nil, private_key: 'foo', certificate: 'bar') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.create_custom_ssl(zone_id: 'abc1234', private_key: nil, certificate: 'bar') }
+      e.message.must_equal('private_key required')
+      e = assert_raises(RuntimeError) { client.create_custom_ssl(zone_id: 'abc1234', private_key: 'foo', certificate: nil) }
+      e.message.must_equal('certificate required')
+      e = assert_raises(RuntimeError) { client.create_custom_ssl(zone_id: 'abc1234', certificate: 'foo', private_key: 'bar', bundle_method: 'foobar') }
+      e.message.must_equal('bundle_method must be one of ["ubiquitous", "optimal", "force"]')
+    end
+    it "creates custom ssl for a zone" do
+      client.create_custom_ssl(zone_id: 'abc1234', certificate: 'blahblah', private_key: 'pkstring', bundle_method: 'force').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_SSL))
+    end
+    it "fails to list all custom ssl configurations" do
+      e = assert_raises(ArgumentError) { client.ssl_configurations }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.ssl_configurations(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.ssl_configurations(zone_id: 'abc1234', order: 'foo') }
+      e.message.must_equal('order must be one of ["status", "issuer", "priority", "expires_on"]')
+      e = assert_raises(RuntimeError) { client.ssl_configurations(zone_id: 'abc1234', order: 'status', direction: 'foo') }
+      e.message.must_equal('direction must be asc || desc')
+      e = assert_raises(RuntimeError) { client.ssl_configurations(zone_id: 'abc1234', order: 'status', direction: 'asc', match: 'foo') }
+      e.message.must_equal('match must be all || any')
+      e = assert_raises(RuntimeError) { client.ssl_configurations(zone_id: 'abc1234', order: 'status', direction: 'desc', match: 'foo') }
+      e.message.must_equal('match must be all || any')
+    end
+    it "lists all custom ssl configurations" do
+      client.ssl_configurations(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_CUSTOM_SSL_LIST))
+    end
+    it "fails to get details for a custom configuration" do
+      e = assert_raises(ArgumentError) { client.ssl_configuration }
+      e.message.must_equal('missing keywords: zone_id, configuration_id')
+      e = assert_raises(RuntimeError) { client.ssl_configuration(zone_id: nil, configuration_id: 'foo') }
+      e.message.must_equal("zone_id required")
+      e = assert_raises(RuntimeError) { client.ssl_configuration(zone_id: 'abc1234', configuration_id: nil) }
+      e.message.must_equal("ssl configuration id required")
+    end
+    it "returns details of a custom ssl configuration" do
+      client.ssl_configuration(zone_id: 'abc1234', configuration_id: 'footothebar').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_SSL_CONFIG))
+    end
+    it "fails to update a custom ssl config" do
+      e = assert_raises(ArgumentError) { client.update_ssl_configuration }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.update_ssl_configuration(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.update_ssl_configuration(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_ssl_configuration(zone_id: 'abc1234', id: 'foo', certificate: 'here', private_key: 'found', bundle_method: 'foo') }
+      e.message.must_equal('bundle_method must be one of ["ubiquitous", "optimal", "force"]')
+    end
+    it "updates a custom ssl config" do
+      client.update_ssl_configuration(zone_id: 'abc1234', id: 'foo', certificate: 'here', private_key: 'found', bundle_method: 'force').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_SSL_CONFIG_UPDATE))
+    end
+    it "fails to prioritize_ssl_configurations" do
+      e = assert_raises(ArgumentError) { client.prioritize_ssl_configurations }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.prioritize_ssl_configurations(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.prioritize_ssl_configurations(zone_id: 'abc1234') }
+      e.message.must_equal('must provide an array of certifiates and priorities')
+    end
+    it "updates the prioritiy of custom ssl certificates" do
+      client.prioritize_ssl_configurations(zone_id: 'abc1234', data: [{id: 'abcd', priority: 12}, {id: 'foo', priority: 1}]).
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_SSL_UPDATE_PRIORITY))
+    end
+    it "fails to delete a custom ssl configuration" do
+      e = assert_raises(ArgumentError) { client.delete_ssl_configuration }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.delete_ssl_configuration(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.delete_ssl_configuration(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "deletes a custom ssl configuration"  do
+      client.delete_ssl_configuration(zone_id: 'abc1234', id: '7e7b8deba8538af625850b7b2530034c').
+          must_equal(JSON.parse(SUCCESSFULL_CUSTOM_SSL_DELETE))
+    end
+  end
+
+  describe "custom_hostnames" do
+    before do
+      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames').
+        to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_CREATE))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames?direction=desc&hostname=foobar&order=ssl&page=1&per_page=50&ssl=0').
+        to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames?direction=desc&id=12345&order=ssl&page=1&per_page=50&ssl=0').
+        to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames/someid').
+        to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_DETAIL))
+      stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames/foo').
+        to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_UPDATE))
+      stub_request(:delete, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames/foo').
+        to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_DELETE))
+    end
+
+    it "fails to create a custom_hostname" do
+      e = assert_raises(ArgumentError) { client.create_custom_hostname }
+      e.message.must_equal('missing keywords: zone_id, hostname')
+      e = assert_raises(RuntimeError) { client.create_custom_hostname(zone_id: nil, hostname: 'petethecat') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.create_custom_hostname(zone_id: 'abc1234', hostname: nil) }
+      e.message.must_equal('hostname required')
+      e = assert_raises(RuntimeError) { client.create_custom_hostname(zone_id: 'abc1234', hostname: 'footothebar', method: 'snail') }
+      e.message.must_equal('method must be one of ["http", "email", "cname"]')
+      e = assert_raises(RuntimeError) { client.create_custom_hostname(zone_id: 'abc1234', hostname: 'footothebar', type: 'snail') }
+      e.message.must_equal('type must be either dv or read only')
+    end
+    it "creates a custom hostname" do
+      client.create_custom_hostname(zone_id: 'abc1234', hostname: 'somerandomhost').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_CREATE))
+    end
+    it "fails to list custom hostnames" do
+      e = assert_raises(ArgumentError) { client.custom_hostnames }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.custom_hostnames(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.custom_hostnames(zone_id: 'abc1234') }
+      e.message.must_equal('hostname or id requried')
+    end
+    it "lists custom_hostnames" do
+      client.custom_hostnames(zone_id: 'abc1234', hostname: 'foobar').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
+      client.custom_hostnames(zone_id: 'abc1234', id: '12345').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
+    end
+    it "fails to get details for a custom hostname" do
+      e = assert_raises(ArgumentError) { client.custom_hostname }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.custom_hostname(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.custom_hostname(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "returns details for a custom hostname" do
+      client.custom_hostname(zone_id: 'abc1234', id: 'someid').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_DETAIL))
+    end
+    it "fails to update a custom_hostname" do
+      e = assert_raises(ArgumentError) { client.update_custom_hostname }
+      e.message.must_equal('missing keywords: zone_id, id, method, type')
+      e = assert_raises(RuntimeError) { client.update_custom_hostname(zone_id: nil, id: 'foo', method: 'bar', type: 'cat') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.update_custom_hostname(zone_id: 'abc1234', id: nil, method: 'bar', type: 'cat') }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_custom_hostname(zone_id: 'abc1234', id: 'foo', method: 'bar', type: 'cat') }
+      e.message.must_equal('method must be one of ["http", "email", "cname"]')
+      e = assert_raises(RuntimeError) { client.update_custom_hostname(zone_id: 'abc1234', id: 'foo', method: 'http', type: 'cat') }
+      e.message.must_equal('type must be one of ["read only", "dv"]')
+    end
+    it "udpates a custom hostname" do
+      client.update_custom_hostname(zone_id: 'abc1234', id: 'foo', method: 'http', type: 'dv').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_UPDATE))
+    end
+    it "fails to delete a custom_hostname" do
+      e = assert_raises(ArgumentError) { client.delete_custom_hostname }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.delete_custom_hostname(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.delete_custom_hostname(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "deletes a custom_hostname" do
+      client.delete_custom_hostname(zone_id: 'abc1234', id: 'foo').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_DELETE))
+    end
+  end
+
+  describe "keyless ssl" do
+    before do
+      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/keyless_certificates').
+        to_return(response_body(SUCCESSFULL_KEYLESS_SSL_CREATE))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/keyless_certificates').
+        to_return(response_body(SUCCESSFULL_KEYLESS_SSL_LIST))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zons/abc1234/keyless_certificates/4d2844d2ce78891c34d0b6c0535a291e').
+        to_return(response_body(SUCCESSFULL_KEYLESS_SSL_DETAIL))
+      stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/keyless_certificates/blah').
+        to_return(response_body(SUCCESSFULL_KEYLESS_SSL_UPDATE))
+      stub_request(:delete, 'https://api.cloudflare.com/client/v4/zones/abc1234/keyless_certificates/somekeylessid').
+        to_return(response_body(SUCCESSFULL_KEYLESS_SSL_DELETE))
+    end
+
+    it "fails to create a keyless ssl config" do
+      e = assert_raises(ArgumentError) { client.create_keyless_ssl_config }
+      e.message.must_equal('missing keywords: zone_id, host, port, certificate')
+      e = assert_raises(RuntimeError) { client.create_keyless_ssl_config(zone_id: nil, host: 'foo', port: 1234, certificate: 'bar') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.create_keyless_ssl_config(zone_id: 'abc1234', host: nil, port: 1234, certificate: 'bar') }
+      e.message.must_equal('host required')
+      e = assert_raises(RuntimeError) { client.create_keyless_ssl_config(zone_id: 'abc1234', host: 'foo', port: 1234, certificate: nil) }
+      e.message.must_equal('certificate required')
+      e = assert_raises(RuntimeError) { client.create_keyless_ssl_config(zone_id: 'abc1234', host: 'foobar', port: 1234, certificate: 'cert data', bundle_method: 'foo')}
+      e.message.must_equal('valid bundle methods are ["ubiquitous", "optimal", "force"]')
+    end
+    it "creates a keyless ssl config" do
+      client.create_keyless_ssl_config(zone_id: 'abc1234', host: 'foobar', certificate: 'cert data', port: 1245).
+        must_equal(JSON.parse(SUCCESSFULL_KEYLESS_SSL_CREATE))
+    end
+    it "fails to list keyless_ssl_configs" do
+      e = assert_raises(ArgumentError) { client.keyless_ssl_configs }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.keyless_ssl_configs(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+    end
+    it "lists all keyless ssl configs" do
+      client.keyless_ssl_configs(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_KEYLESS_SSL_LIST))
+    end
+    it "fails to list details of a keless_ssl_config" do
+      e = assert_raises(ArgumentError) { client.keyless_ssl_config }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.keyless_ssl_config(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.keyless_ssl_config(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "lists details of a keyless_ssl_config" do
+      client.keyless_ssl_config(zone_id: 'abc1234', id: '4d2844d2ce78891c34d0b6c0535a291e').
+        must_equal(JSON.parse(SUCCESSFULL_KEYLESS_SSL_DETAIL))
+    end
+    it "fails to update a keyless_ssl_config" do
+      e = assert_raises(ArgumentError) { client.update_keyless_ssl_config }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.update_keyless_ssl_config(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.update_keyless_ssl_config(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_keyless_ssl_config(zone_id: 'abc1234', id: 'blah', enabled: 'foo') }
+      e.message.must_equal('enabled must be true||false')
+    end
+    it "updates a keyless ssl config)" do
+      client.update_keyless_ssl_config(zone_id: 'abc1234', id: 'blah', enabled: true, host: 'foo.com', port: 1234).
+        must_equal(JSON.parse(SUCCESSFULL_KEYLESS_SSL_UPDATE))
+    end
+    it "fails to delete a keyless ssl config" do
+      e = assert_raises(ArgumentError) { client.delete_keyless_ssl_config }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.delete_keyless_ssl_config(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.delete_keyless_ssl_config(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "deletes a keyless ssl config" do
+      client.delete_keyless_ssl_config(zone_id: 'abc1234', id: 'somekeylessid').
+        must_equal(JSON.parse(SUCCESSFULL_KEYLESS_SSL_DELETE))
+    end
+  end
+
+  describe "page rules" do
+    before do
+      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/pagerules').
+        to_return(response_body(SUCCESSFULL_ZONE_PAGE_RULE_CREATE))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/pagerules?direction=asc&match=any&order=status&status=active').
+        to_return(response_body(SUCCESSFULL_ZONE_PAGE_RULE_LIST))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/pagerules/9a7806061c88ada191ed06f989cc3dac').
+        to_return(response_body(SUCCESSFULL_ZONE_PAGE_RULE_DETAIL))
+      stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/pagerules/9a7806061c88ada191ed06f989cc3dac').
+        to_return(response_body(SUCCESSFULL_ZONE_PAGE_RULE_DETAIL))
+      stub_request(:delete, 'https://api.cloudflare.com/client/v4/zones/abc1234/pagerules/9a7806061c88ada191ed06f989cc3dac').
+        to_return(response_body(SUCCESSFULL_ZONE_PAGE_RULE_DELETE))
+    end
+
+    it "fails to create a custom page rule" do
+      e = assert_raises(ArgumentError) { client.create_zone_page_rule }
+      e.message.must_equal('missing keywords: zone_id, targets, actions')
+      e = assert_raises(RuntimeError) { client.create_zone_page_rule(zone_id: nil, targets: ['a'], actions: ['b']) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.create_zone_page_rule(zone_id: 'abc1234', targets: 'foo', actions: ['b']) }
+      e.message.must_equal('targets must be an array of targes https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule')
+      e = assert_raises(RuntimeError) { client.create_zone_page_rule(zone_id: 'abc1234', targets: [], actions: ['b']) }
+      e.message.must_equal('targets must be an array of targes https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule')
+      e = assert_raises(RuntimeError) { client.create_zone_page_rule(zone_id: 'abc1234', targets: [{foo: 'bar'}], actions: 'blah' ) }
+      e.message.must_equal('actions must be an array of actions https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule')
+      e = assert_raises(RuntimeError) { client.create_zone_page_rule(zone_id: 'abc1234', targets: [{foo: 'bar'}], actions: [] ) }
+      e.message.must_equal('actions must be an array of actions https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule')
+      e = assert_raises(RuntimeError) { client.create_zone_page_rule(zone_id: 'abc1234', targets: [{foo: 'bar'}], actions: [{foo: 'bar'}], status: 'boo' ) }
+      e.message.must_equal('status must be disabled||active')
+    end
+    it "creates a custom page rule" do
+      client.create_zone_page_rule(zone_id: 'abc1234', targets: [{foo: 'bar'}], actions: [{foo: 'bar'}], status: 'active' ).
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_PAGE_RULE_CREATE))
+    end
+    it "fails to list all the page rules for a zone" do
+      e = assert_raises(ArgumentError) { client.zone_page_rules }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.zone_page_rules(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.zone_page_rules(zone_id: 'abc1234', status: 'foo') }
+      e.message.must_equal('status must be either active||disabled')
+      e = assert_raises(RuntimeError) { client.zone_page_rules(zone_id: 'abc1234', status: 'active', order: 'foo') }
+      e.message.must_equal('order must be either status||priority')
+      e = assert_raises(RuntimeError) { client.zone_page_rules(zone_id: 'abc1234', status: 'active', order: 'status', direction: 'foo') }
+      e.message.must_equal('direction must be either asc||desc')
+      e = assert_raises(RuntimeError) { client.zone_page_rules(zone_id: 'abc1234', status: 'active', order: 'status', direction: 'asc', match: 'foo') }
+      e.message.must_equal('match must be either any||all')
+    end
+    it "lists all the page rules for a zone" do
+      client.zone_page_rules(zone_id: 'abc1234', status: 'active', order: 'status', direction: 'asc', match: 'any').
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_PAGE_RULE_LIST))
+    end
+    it "fails to get details for a page rule" do
+      e = assert_raises(ArgumentError) { client.zone_page_rule }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.zone_page_rule(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.zone_page_rule(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "gets details for a page rule" do
+      client.zone_page_rule(zone_id: 'abc1234', id: '9a7806061c88ada191ed06f989cc3dac').
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_PAGE_RULE_DETAIL))
+    end
+    it "fails to udpate a zone page rule" do
+      e = assert_raises(ArgumentError) { client.update_zone_page_rule }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.update_zone_page_rule(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.update_zone_page_rule(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_zone_page_rule(zone_id: 'abc1234', id: 'foobar', targets: 'foo') }
+      e.message.must_equal('targets must be an array of targes https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule')
+      e = assert_raises(RuntimeError) { client.update_zone_page_rule(zone_id: 'abc1234', id: 'foobar', targets: []) }
+      e.message.must_equal('targets must be an array of targes https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule')
+      e = assert_raises(RuntimeError) { client.update_zone_page_rule(zone_id: 'abc1234', id: 'foobar', targets: [{blah: 'blah'}]) }
+      e.message.must_equal('actions must be an array of actions https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule')
+      e = assert_raises(RuntimeError) { client.update_zone_page_rule(zone_id: 'abc1234', id: 'foobar', targets: [{blah: 'blah'}], actions: 'foo') }
+      e.message.must_equal('actions must be an array of actions https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule')
+      e = assert_raises(RuntimeError) { client.update_zone_page_rule(zone_id: 'abc1234', id: 'foobar', targets: [{blah: 'blah'}], actions: [{blah: 'blah'}], status: 'blargh') }
+      e.message.must_equal('status must be disabled||active')
+    end
+    it "udpates a zone page rule" do
+      client.update_zone_page_rule(zone_id: 'abc1234', id: '9a7806061c88ada191ed06f989cc3dac', targets: [{blah: 'blah'}], actions: [{blah: 'blah'}]).
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_PAGE_RULE_DETAIL))
+    end
+    it "fails to delete a zone page rule" do
+      e = assert_raises(ArgumentError) { client.delete_zone_page_rule }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.delete_zone_page_rule(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.delete_zone_page_rule(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('zone page rule id required')
+    end
+    it "deletes a zone page rule" do
+      client.delete_zone_page_rule(zone_id: 'abc1234', id: '9a7806061c88ada191ed06f989cc3dac').
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_PAGE_RULE_DELETE))
+    end
+  end
+
+  describe "zone rate limits" do
+    before do
+      stub_request(:get, 'https://api.cloudflare.com/client/v4zones/abc1234?page=1&per_page=50').
+        to_return(response_body(SUCCESSFULL_ZONE_RATE_LIMITS_LIST))
+      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/rate_limits').
+        to_return(response_body(SUCCESSFULL_ZONE_RATE_LIMITS_CREATE))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/rate_limits/372e67954025e0ba6aaa6d586b9e0b59').
+        to_return(response_body(SUCCESSFULL_ZONE_RATE_LIMITS_DETAIL))
+      stub_request(:put, 'https://api.cloudflare.com/client/v4/zones/abc1234/rate_limits/372e67954025e0ba6aaa6d586b9e0b59').
+        to_return(response_body(SUCCESSFULL_ZONE_RATE_LIMITS_UPDATE))
+      stub_request(:delete, 'https://api.cloudflare.com/client/v4/zones/abc1234/rate_limits/372e67954025e0ba6aaa6d586b9e0b59').
+        to_return(response_body(SUCCESSFULL_ZONE_RATE_LIMITS_DELETE))
+    end
+
+    it "fails to list rate limits for a zone" do
+      e = assert_raises(ArgumentError) { client.zone_rate_limits }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.zone_rate_limits(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+    end
+    it "lists rate limits for a zone" do
+      client.zone_rate_limits(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_ZONE_RATE_LIMITS_LIST))
+    end
+    it "fails to create a zone rate limit" do
+      e = assert_raises(ArgumentError) { client.create_zone_rate_limit }
+      e.message.must_equal('missing keywords: zone_id, match, threshold, period, action')
+      e = assert_raises(RuntimeError) { client.create_zone_rate_limit(zone_id: nil, match: {}, action: {}, threshold: 1, period: 2) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.create_zone_rate_limit(zone_id: 'abc1234', match: 'foo', action: {}, threshold: 1, period: 2) }
+      e.message.must_equal('match must be a match object https://api.cloudflare.com/#rate-limits-for-a-zone-create-a-ratelimit')
+      e = assert_raises(RuntimeError) { client.create_zone_rate_limit(zone_id: 'abc1234', match: {}, action: 'foo', threshold: 1, period: 2) }
+      e.message.must_equal('action must be a action object https://api.cloudflare.com/#rate-limits-for-a-zone-create-a-ratelimit')
+
+      e = assert_raises(RuntimeError) { client.create_zone_rate_limit(zone_id: 'abc1234', match: {}, action: {}, threshold: 'foo', period: 2) }
+      e.message.must_equal('threshold must be between 1 86400')
+      e = assert_raises(RuntimeError) { client.create_zone_rate_limit(zone_id: 'abc1234', match: {}, action: {}, threshold: 0, period: 2) }
+      e.message.must_equal('threshold must be between 1 86400')
+      e = assert_raises(RuntimeError) { client.create_zone_rate_limit(zone_id: 'abc1234', match: {}, action: {}, threshold: 1, period: 'foo') }
+      e.message.must_equal('period must be between 1 86400')
+      e = assert_raises(RuntimeError) { client.create_zone_rate_limit(zone_id: 'abc1234', match: {}, action: {}, threshold: 1, period: 0) }
+      e.message.must_equal('period must be between 1 86400')
+      e = assert_raises(RuntimeError) { client.create_zone_rate_limit(zone_id: 'abc1234', match: {}, action: {}, threshold: 2, period: 1, disabled: 'foo') }
+      e = assert_raises(RuntimeError) { client.create_zone_rate_limit(zone_id: 'abc1234', match: {}, action: {}, threshold: 2, period: 1, disabled: 'blah') }
+      e.message.must_equal('disabled must be true || false')
+    end
+    it "creates a zone rate limit" do
+      client.create_zone_rate_limit(zone_id: 'abc1234', match: {}, action: {}, threshold: 2, disabled: true, period: 30).
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_RATE_LIMITS_CREATE))
+    end
+    it "fails to return details for a zone rate limit" do
+      e = assert_raises(ArgumentError) { client.zone_rate_limit }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.zone_rate_limit(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.zone_rate_limit(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "returns details for a zone rate limit" do
+      client.zone_rate_limit(zone_id: 'abc1234', id: '372e67954025e0ba6aaa6d586b9e0b59').
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_RATE_LIMITS_DETAIL))
+    end
+    it "fails to update a zone rate limit" do
+      e = assert_raises(ArgumentError) { client.update_zone_rate_limit }
+      e.message.must_equal('missing keywords: zone_id, id, match, threshold, period, action')
+      e = assert_raises(RuntimeError) { client.update_zone_rate_limit(zone_id: nil, id: nil, match: nil, threshold: nil, period: nil, action: nil) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.update_zone_rate_limit(zone_id: 'abc1234', id: nil, match: nil, threshold: nil, period: nil, action: nil) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_zone_rate_limit(zone_id: 'abc1234', id: 'bar', match: nil, threshold: nil, period: nil, action: nil) }
+      e.message.must_equal('match must be a match object https://api.cloudflare.com/#rate-limits-for-a-zone-create-a-ratelimit')
+      e = assert_raises(RuntimeError) { client.update_zone_rate_limit(zone_id: 'abc1234', id: 'bar', match: {}, threshold: 1, period: nil, action: nil) }
+      e.message.must_equal('action must be a action object https://api.cloudflare.com/#rate-limits-for-a-zone-create-a-ratelimit')
+      e = assert_raises(RuntimeError) { client.update_zone_rate_limit(zone_id: 'abc1234', id: 'bar', match: {}, threshold: nil, period: nil, action: nil) }
+      e.message.must_equal('threshold must be between 1 86400')
+      e = assert_raises(RuntimeError) { client.update_zone_rate_limit(zone_id: 'abc1234', id: 'bar', match: {}, threshold: nil, period: nil, action: nil) }
+      e.message.must_equal('threshold must be between 1 86400')
+      e = assert_raises(RuntimeError) { client.update_zone_rate_limit(zone_id: 'abc1234', id: 'foobar', match: {}, action: {}, threshold: 50, period: 'foo') }
+      e.message.must_equal('period must be between 1 86400')
+      e = assert_raises(RuntimeError) { client.update_zone_rate_limit(zone_id: 'abc1234', id: 'foobar', match: {}, action: {}, threshold: 50, period: 200, disabled: 'foo') }
+      e.message.must_equal('disabled must be true || false')
+    end
+    it "updates a zone rate limit" do
+      client.update_zone_rate_limit(zone_id: 'abc1234', id: '372e67954025e0ba6aaa6d586b9e0b59', match: {}, action: {}, threshold: 50, period: 100, disabled: false, description: 'foo to the bar').
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_RATE_LIMITS_UPDATE))
+    end
+    it "fails to delete a zone ratelimit" do
+      e = assert_raises(ArgumentError) { client.delete_zone_rate_limit }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.delete_zone_rate_limit(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.delete_zone_rate_limit(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('zone rate limit id required')
+    end
+    it "deletes a zone ratelimit" do
+      client.delete_zone_rate_limit(zone_id: 'abc1234', id: '372e67954025e0ba6aaa6d586b9e0b59').
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_RATE_LIMITS_DELETE))
+    end
+  end
+
+  describe "firwall access rules" do
+    before do
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/access_rules/rules?configuration_target=country&direction=asc&match=all&mode=block&page=1&per_page=50&scope_type=zone').
+        to_return(response_body(SUCCESSFULL_FIREWALL_LIST))
+    end
+
+    it "fails to list firewall access rules" do
+      e = assert_raises(RuntimeError) { client.firewall_access_rules }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.firewall_access_rules(zone_id: 'abc1234', mode: 'foo') }
+      e.message.must_equal('mode can only be one of block, challenge, whitelist')
+      e = assert_raises(RuntimeError) { client.firewall_access_rules(zone_id: 'abc1234', mode: 'block', match: 'foo') }
+      e.message.must_equal('match can only be one either all || any')
+      e = assert_raises(RuntimeError) { client.firewall_access_rules(zone_id: 'abc1234', mode: 'block', match: 'all', scope_type: 'foo') }
+      e.message.must_equal('scope_type can only be one of user, organization, zone')
+      e = assert_raises(RuntimeError) { client.firewall_access_rules(zone_id: 'abc1234', mode: 'block', match: 'all', scope_type: 'zone', configuration_target: 'foo') }
+      e.message.must_equal('configuration_target can only be one ["ip", "ip_range", "country"]')
+      e = assert_raises(RuntimeError) { client.firewall_access_rules(zone_id: 'abc1234', mode: 'block', match: 'all', scope_type: 'zone', configuration_target: 'country', direction: 'foo') }
+      e.message.must_equal('direction must be either asc || desc')
+    end
+    it "lists firewall access rules" do
+      client.firewall_access_rules(zone_id: 'abc1234', mode: 'block', match: 'all', scope_type: 'zone', configuration_target: 'country', direction: 'asc').
+        must_equal(JSON.parse(SUCCESSFULL_FIREWALL_LIST))
+    end
+    it "fails to create a firewall access rule" do
+      e = assert_raises(RuntimeError) { client.create_firewall_access_rule }
+      e.message.must_equal('zone_id required')
     end
   end
 end

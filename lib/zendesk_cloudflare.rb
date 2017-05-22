@@ -58,12 +58,15 @@ class CloudflareClient
   # list_zones will either list all zones or search for zones based on params
   # results are paginated!
   # list_zones(name: name_of_zone, status: active|pending, page: page_no)
-  def list_zones(name: nil, status: nil, per_page: 50, page: 1)
+  def zones(name: nil, status: nil, per_page: 50, page: 1)
     params = {}
     params[:per_page] = per_page
     params[:page]     = page
     params[:name]     = name unless name.nil?
-    params[:status]   = status unless status.nil?
+    unless status.nil?
+      valid_statuss = ['active', 'pending', 'initializing', 'moved', 'deleted', 'deactivated', 'read only']
+      raise("status must be one of #{valid_statuss.flatten}") unless valid_statuss.include?(status)
+    end
     cf_get(path: '/zones', params: params)
   end
 
@@ -71,18 +74,19 @@ class CloudflareClient
   # create's a zone with a given name
   # create_zone(name: name_of_zone, jump_start: true|false (default true),
   # organization: {id: org_id, name: org_name})
-  def create_zone(name: nil, jump_start: true, organization: { id: nil, name: nil })
+  def create_zone(name:, jump_start: true, organization: { id: nil, name: nil })
     raise('Zone name required') if name.nil?
-    raise('Organization information required') if organization[:id].nil?
-    org_data = organization.merge(status: 'active', permissions: ['#zones:read'])
+    unless organization[:id].nil? && organization[:name].nil
+      org_data = organization.merge(status: 'active', permissions: ['#zones:read'])
+    end
     data = { name: name, jump_start: jump_start, organization: org_data }
     cf_post(path: '/zones', data: data)
   end
 
   ##
   # request another zone activation (ssl) check
-  # zone_activation_check(zone_id: id_of_your_zone)
-  def zone_activation_check(zone_id: nil)
+  # zone_activation_check(zone_id:)
+  def zone_activation_check(zone_id:)
     raise('zone_id required') if zone_id.nil?
     cf_put(path: "/zones/#{zone_id}/activation_check")
   end
@@ -90,7 +94,7 @@ class CloudflareClient
   ##
   # return all the details for a given zone_id
   # zone_details(zone_id: id_of_my_zone
-  def zone_details(zone_id: nil)
+  def zone(zone_id:)
     raise('zone_id required') if zone_id.nil?
     cf_get(path: "/zones/#{zone_id}")
   end
@@ -100,7 +104,7 @@ class CloudflareClient
   # NOTE: some of these options require an enterprise account
   # edit_zone(zone_id: id_of_zone, paused: true|false,
   # vanity_name_servers: ['ns1.foo.bar', 'ns2.foo.bar'], plan: {id: plan_id})
-  def edit_zone(zone_id: nil, paused: nil, vanity_name_servers: [], plan: { id: nil })
+  def edit_zone(zone_id:, paused: nil, vanity_name_servers: [], plan: { id: nil })
     raise('zone_id required') if zone_id.nil?
     data = {}
     data[:paused] = paused unless paused.nil?
@@ -112,7 +116,7 @@ class CloudflareClient
   ##
   # various zone caching controlls.
   # supploy an array of tags, or files, or the purge_everything bool
-  def purge_zone_cache(zone_id: nil, tags: [], files: [], purge_everything: nil)
+  def purge_zone_cache(zone_id:, tags: [], files: [], purge_everything: nil)
     raise('zone_id required') if zone_id.nil?
     if purge_everything.nil? && (tags.empty? && files.empty?)
       raise('specify a combination tags[], files[] or purge_everything')
@@ -127,21 +131,21 @@ class CloudflareClient
   ##
   # delete a given zone
   # delete_zone(zone_id: id_of_zone
-  def delete_zone(zone_id: nil)
+  def delete_zone(zone_id:)
     raise('zone_id required') if zone_id.nil?
     cf_delete(path: "/zones/#{zone_id}")
   end
 
   ##
   # return all settings for a given zone
-  def zone_settings(zone_id: nil)
+  def zone_settings(zone_id:)
     raise('zone_id required') if zone_id.nil?
     cf_get(path: '/zones/#{zone_id}/settings')
   end
 
   ##
   # there are a lot of settings that can be returned.
-  def zone_setting(zone_id: nil, name: nil)
+  def zone_setting(zone_id:, name:)
     raise('zone_id required') if zone_id.nil?
     raise('setting_name not valid') if name.nil? || !valid_setting?(name)
     cf_get(path: "/zones/#{zone_id}/settings/#{name}")
@@ -151,7 +155,7 @@ class CloudflareClient
   # update 1 or more settings in a zone
   # settings: [{name: value: true},{name: 'value'}...]
   # https://api.cloudflare.com/#zone-settings-properties
-  def update_zone_settings(zone_id: nil, settings: [])
+  def update_zone_settings(zone_id:, settings: [])
     raise('zone_id required') if zone_id.nil?
     data = settings.map do |setting|
       raise("setting_name \"#{setting[:name]}\" not valid") unless valid_setting?(setting[:name])
@@ -161,20 +165,23 @@ class CloudflareClient
     cf_patch(path: "/zones/#{zone_id}/settings", data: data)
   end
 
+  #TODO: zone_rate_plans
+
   ##
   # DNS methods
 
   ##
   # Create a dns record
-  def create_dns_record(zone_id: nil, name: nil, type: nil, content: nil)
-    raise("Must specificy zone_id, name, type, and content") if (zone_id.nil? || name.nil? || type.nil? || content.nil?)
+  def create_dns_record(zone_id:, name:, type:, content:, ttl: nil, proxied: nil)
+    valid_types = ['A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'LOC', 'MX', 'NS', 'SPF', 'read only']
+    raise ("type must be one of #{valid_types.flatten}") unless valid_types.include?(type)
     data = {name: name, type: type, content: content}
     cf_post(path: "/zones/#{zone_id}/dns_records", data: data)
   end
 
   ##
   # list/search for dns records in a given zone
-  def dns_records(zone_id: nil, name: nil, content: nil, per_page: 50, page_no: 1, order: "type", match: "all", type: nil)
+  def dns_records(zone_id:, name: nil, content: nil, per_page: 50, page_no: 1, order: "type", match: "all", type: nil)
     raise("zone_id required") if zone_id.nil?
     raise("match must be either all | any") unless (match == "all" || match == "any")
     params = {per_page: per_page, page: page_no, order: order}
@@ -186,18 +193,21 @@ class CloudflareClient
 
   ##
   # details for a given dns_record
-  def dns_record(zone_id: nil, id: nil)
-    raise("zone_id required") if zone_id.nil?
-    raise("dns record id required") if id.nil?
+  def dns_record(zone_id:, id:)
+    id_check("zone_id", zone_id)
+    id_check("dns record id", id)
     cf_get(path: "/zones/#{zone_id}/dns_records/#{id}")
   end
 
   ##
   # update a dns record.
   # zone_id, id, type, and name are all required.  ttl and proxied are optional
-  def update_dns_record(zone_id: nil, id: nil, type: nil, name: nil, content: nil, ttl: nil, proxied: nil)
-    raise("zone_id required") if zone_id.nil?
-    raise("id required") if id.nil?
+  def update_dns_record(zone_id:, id:, type:, name:, content:, ttl: nil, proxied: nil)
+    id_check('zone_id', zone_id)
+    id_check('dns record id', id)
+    id_check('dns record type', type)
+    id_check('dns record name', name)
+    id_check('dns record content', content)
     raise("must suply type, name, and content") if (type.nil? || name.nil? || content.nil?)
     data = {type: type, name: name, content: content}
     data[:ttl] = ttl unless ttl.nil?
@@ -208,7 +218,7 @@ class CloudflareClient
   ##
   # delete a dns record
   # zone_id, id, type, and name are all required.  ttl and proxied are optional
-  def delete_dns_record(zone_id: nil, id: nil)
+  def delete_dns_record(zone_id:, id:)
     raise("zone_id required") if zone_id.nil?
     raise("id required") if id.nil?
     cf_delete(path: "/zones/#{zone_id}/dns_records/#{id}")
@@ -232,14 +242,14 @@ class CloudflareClient
 
   ##
   # available railguns
-  def available_railguns(zone_id: nil)
-    raise ("zone_id required") if zone_id.nil?
+  def railgun_connections(zone_id:)
+    id_check('zone_id', zone_id)
     cf_get(path: "/zones/#{zone_id}/railguns")
   end
 
   ##
   # details of a single railgun
-  def railgun_details(zone_id: nil, id: nil)
+  def railgun_connection(zone_id:, id:)
     raise ("zone_id required") if zone_id.nil?
     raise ("railgun id required") if id.nil?
     cf_get(path: "/zones/#{zone_id}/railguns/#{id}")
@@ -247,7 +257,7 @@ class CloudflareClient
 
   ##
   # test a railgun connection
-  def test_railgun_connection(zone_id: nil, id: nil)
+  def test_railgun_connection(zone_id:, id:)
     raise ("zone_id required") if zone_id.nil?
     raise ("railgun id required") if id.nil?
     cf_get(path: "/zones/#{zone_id}/railguns/#{id}/diagnose")
@@ -255,10 +265,10 @@ class CloudflareClient
 
   ##
   # connect or disconnect a railgun
-  def connect_railgun(zone_id: nil, id: nil, connected: nil)
-    zone_id_check(zone_id)
+  def connect_railgun(zone_id:, id:, connected:)
+    id_check("zone_id", zone_id)
     raise ("railgun id required") if id.nil?
-    raise ("connected must be true or false") if connected.nil?
+    raise ("connected must be true or false") if (connected != true && connected != false)
     data = {connected: connected}
     cf_patch(path: "/zones/#{zone_id}/railguns/#{id}", data: data)
   end
@@ -268,36 +278,491 @@ class CloudflareClient
 
   ##
   # return dashboard data for a given zone or colo
-  def zone_analytics_dashboard(zone_id: nil)
-    zone_id_check(zone_id)
+  def zone_analytics_dashboard(zone_id:)
+    id_check("zone_id", zone_id)
     cf_get(path: "/zones/#{zone_id}/analytics/dashboard")
   end
 
   ##
   # creturn analytics for colos for a time window.
   # since and untill must be RFC 3339 timestamps
-  def colo_analytics(zone_id: nil, since_ts: nil, until_ts: nil)
-    zone_id_check(zone_id)
+  # TODO: support continuous
+  def colo_analytics(zone_id:, since_ts: nil, until_ts: nil)
+    id_check("zone_id", zone_id)
     raise("since_ts must be a valid timestamp") if since_ts.nil? || !date_rfc3339?(since_ts)
     raise("until_ts must be a valid timestamp") if until_ts.nil? || !date_rfc3339?(until_ts)
     cf_get(path: "/zones/#{zone_id}/analytics/dashboard")
   end
 
-  #TODO: dns analyitics
+  ##
+  # DNS analytics
 
-  #TODO: railgun
+  ##
+  # return a table of analytics
+  def dns_analytics_table(zone_id:)
+    id_check("zone_id", zone_id)
+    cf_get(path: "/zones/#{zone_id}/dns_analytics/report")
+  end
 
-  #TODO: custom_pages_for_a_zone
+  ##
+  # return analytics by time
+  def dns_analytics_bytime(zone_id:, dimensions: [], metrics: [], sort: [], filters: [], since_ts: nil, until_ts: nil, limit: 100, time_delta: "hour")
+    id_check("zone_id", zone_id)
+    # TODO: what are valid dimensions?
+    # TODO: what are valid metrics?
+    unless since_ts.nil?
+      raise("since_ts must be a valid timestamp") if !date_rfc3339?(since_ts)
+    end
+    unless until_ts.nil?
+      raise("until_ts must be a valid timestamp") if !date_rfc3339?(until_ts)
+    end
+    params = {limit: limit, time_delta: time_delta}
+    params["since"] = since_ts
+    params["until"] = until_ts
+    cf_get(path: "/zones/#{zone_id}/dns_analytics/report/bytime", params: params)
+  end
 
-  #TODO: custom ssl for a zon
+  ##
+  # Railgun methods
 
-  #TODO: custom_hostnames
+  ##
+  # create_railgun(name: 'name of railgun')
+  def create_railgun(name:)
+    raise ("Railgun name cannot be nil") if name.nil?
+    data = {name: name}
+    cf_post(path: '/railguns', data: data)
+  end
 
-  #TODO: keyless_ssl
+  ##
+  # Get all the railguns
+  def railguns(page: 1, per_page: 50, direction: "desc")
+    raise ("direction must be either desc | asc") if (direction != "desc" && direction != "asc")
+    params = {page: page, per_page: per_page, direction: direction}
+    cf_get(path: '/railguns', params: params)
+  end
 
-  #TODO: page_rules_for_a_zone
-  #TODO: rate_limits_for_a_zone
-  #TODO: firewall_access_rules_for_a_zone
+  ##
+  # Get a single railgun
+  def railgun(id:)
+    raise ("must provide the id of the railgun") if id.nil?
+    cf_get(path: "/railguns/#{id}")
+  end
+
+  ##
+  # Get CF zones associated with a railgun
+  def railgun_zones(id:)
+    raise ("must provide the id of the railgun") if id.nil?
+    cf_get(path: "/railguns/#{id}/zones")
+  end
+
+  ##
+  # Get CF zones associated with a railgun
+  def railgun_enabled(id:, enabled:)
+    raise ("must provide the id of the railgun") if id.nil?
+    raise ("enabled must be true | false") if id.nil? || (enabled != false && enabled != true)
+    data = {enabled: enabled}
+    cf_patch(path: "/railguns/#{id}", data: data)
+  end
+
+  ##
+  # delete a railgun
+  def delete_railgun(id:)
+    raise ("must provide the id of the railgun") if id.nil?
+    cf_delete(path: "/railguns/#{id}")
+  end
+
+  ##
+  # Custom pages for a zone
+  ##
+  # custom_pages list all avaialble custom_pages
+  def custom_pages(zone_id:)
+    id_check("zone_id", zone_id)
+    cf_get(path: "/zones/#{zone_id}/custom_pages")
+  end
+
+  ##
+  # custom_page details
+  def custom_page(zone_id:, id:)
+    id_check("zone_id", zone_id)
+    raise("id must not be nil") if id.nil?
+    cf_get(path: "/zones/#{zone_id}/custom_pages/#{id}")
+  end
+
+  ##
+  # update_custom_page
+  def update_custom_page(zone_id:, id:, url:, state:)
+    id_check("zone_id", zone_id)
+    id_check("id", id)
+    id_check("url", url)
+    raise("state must be either default | customized") if state != 'default' && state != 'customized'
+    data = {url: url, state: state}
+    cf_put(path: "/zones/#{zone_id}/custom_pages/#{id}", data: data)
+  end
+
+  ##
+  # Custom SSL for a zone
+
+  ##
+  # create custom ssl for a zone
+  def create_custom_ssl(zone_id:, certificate:, private_key:, bundle_method: nil)
+    id_check("zone_id", zone_id)
+    valid_methods = ['ubiquitous', 'optimal', 'force']
+    id_check('certificate', certificate)
+    id_check('private_key', private_key)
+    raise("bundle_method must be one of #{valid_methods.flatten}") if !valid_methods.include?(bundle_method)
+    # TODO: validate the cert/key using openssl?  Could be difficult if they are
+    # privately generated
+    data = {certificate: certificate, private_key: private_key}
+    cf_post(path: "/zones/#{zone_id}/custom_certificates", data: data)
+  end
+
+  ##
+  # list custom ssl configurations
+  def ssl_configurations(zone_id:, page: 1, per_page: 50, order: "priority", direction: "asc", match: "all")
+    id_check("zone_id", zone_id)
+    valid_orders = ['status', 'issuer', 'priority', 'expires_on']
+    raise ("order must be one of #{valid_orders.flatten}") unless valid_orders.include?(order)
+    raise ('direction must be asc || desc') unless (direction == 'asc' || direction == 'desc')
+    raise ('match must be all || any') unless (match == 'any' || match == 'all')
+    params = {page: page, per_page: per_page}
+    params[:match] = match
+    params[:direction] = direction
+    cf_get(path: "/zones/#{zone_id}/custom_certficates", params: params)
+  end
+
+  ##
+  # details of a single config
+  def ssl_configuration(zone_id:, configuration_id:)
+    id_check("zone_id", zone_id)
+    raise("ssl configuration id required") if configuration_id.nil?
+    cf_get(path: "/zones/#{zone_id}/custom_certificates/#{configuration_id}")
+  end
+
+  ##
+  # updates a custom ssl record
+  def update_ssl_configuration(zone_id:, id:, private_key: nil, certificate: nil, bundle_method: nil)
+    id_check("zone_id", zone_id)
+    id_check("id", id)
+    valid_methods = ['ubiquitous', 'optimal', 'force']
+    id_check("private_key must be provided") if private_key.nil?
+    raise("bundle_method must be one of #{valid_methods.flatten}") if !valid_methods.include?(bundle_method)
+    data = {private_key: private_key, certificate: certificate, bundle_method: bundle_method}
+    cf_patch(path: "/zones/#{zone_id}/custom_certificates/#{id}", data: data)
+  end
+
+  ##
+  # re-prioritize ssl certs data = [{id: "cert_id", priority: 2}, {id: "cert_id", priority: 1}]
+  def prioritize_ssl_configurations(zone_id:, data: [])
+    id_check("zone_id", zone_id)
+    raise("must provide an array of certifiates and priorities") if data.empty?
+    cf_put(path: "/zones/#{zone_id}/custom_certificates/prioritize", data: data)
+  end
+
+  ##
+  # delete a custom ssl cert
+  def delete_ssl_configuration(zone_id:, id:)
+    id_check("zone_id", zone_id)
+    id_check("id", id)
+    cf_delete(path: "/zones/#{zone_id}/custom_certificates/#{id}")
+  end
+
+  ##
+  # custom_hostnames
+
+  ##
+  # create custom_hostname
+  # Note, custom_metadata may only work for enterprise or better customers
+  def create_custom_hostname(zone_id:, hostname:, method: 'http', type: 'dv', custom_metadata: {})
+    #FIXME: implement checks for the custom_metedata/find out of it's going to be exposed to anyone else
+#"custom_metadata":{"origin_override":"hostname.zendesk.com"}
+#"custom_metadata":{"hsts_enabled":"true"}
+#"custom_metadata":{"hsts_enabled":"true","custom_maxage":value}
+    id_check("zone_id", zone_id)
+    id_check('hostname', hostname)
+    valid_http_values = %w[http email cname]
+    raise("method must be one of #{valid_http_values.flatten}") unless valid_http_values.include?(method)
+    raise("type must be either dv or read only") unless (type == 'dv' || type == 'read only')
+    data = {hostname: hostname, ssl: {method: method, type: type}}
+    data[:custom_metadata] = custom_metadata unless custom_metadata.empty?
+    cf_post(path: "/zones/#{zone_id}/custom_hostnames", data: data)
+  end
+
+  ##
+  # list custom_hostnames
+  def custom_hostnames(zone_id:, hostname: nil, id: nil, page: 1, per_page: 50, order: "ssl", direction: "desc", ssl: 0)
+    id_check("zone_id", zone_id)
+    raise("hostname or id requried") if hostname.nil? && id.nil?
+    raise("order must be ssl or ssl_status") if (order != "ssl" && order != "ssl_status")
+    raise("direction must be either asc or desc)") if (direction != 'asc' && direction != 'desc')
+    raise("ssl must be either 0 or 1") if (ssl != 0 && ssl != 1)
+    params = {page: page, per_page: per_page, order: order, direction: direction, ssl: ssl}
+    hostname.nil? ? params[:id] = id : params[:hostname] = hostname
+    cf_get(path: "/zones/#{zone_id}/custom_hostnames", params: params)
+  end
+
+  ##
+  # details of a custom hostname
+  def custom_hostname(zone_id:, id:)
+    id_check("zone_id", zone_id)
+    id_check("id", id)
+    cf_get(path: "/zones/#{zone_id}/custom_hostnames/#{id}")
+  end
+
+  ##
+  # update a custom hosntame
+  def update_custom_hostname(zone_id:, id:, method:, type:)
+    valid_methods = %w[http email cname]
+    valid_types = ['read only', 'dv']
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    raise("method must be one of #{valid_methods.flatten}") unless valid_methods.include?(method)
+    raise("type must be one of #{valid_types.flatten}") unless valid_types.include?(type)
+    data = {ssl: {method: method, type: type}}
+    cf_patch(path: "/zones/#{zone_id}/custom_hostnames/#{id}", data: data)
+  end
+
+  ##
+  # delete a custom hostname and ssl certs
+  def delete_custom_hostname(zone_id:, id:)
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    cf_delete(path: "/zones/#{zone_id}/custom_hostnames/#{id}")
+  end
+
+  ##
+  # keyless_ssl
+
+  ##
+  # create a keyless ssl config
+  def create_keyless_ssl_config(zone_id:, host:, port:, certificate:, name: nil, bundle_method: "ubiquitous")
+    id_check("zone_id", zone_id)
+    valid_bundle_methods = %w[ubiquitous optimal force]
+    raise('host required') if host.nil?
+    raise('certificate required') if certificate.nil?
+    raise("valid bundle methods are #{valid_bundle_methods.flatten}") unless valid_bundle_methods.include?(bundle_method)
+    data = {host: host, port: port, certificate: certificate, bundle_method: bundle_method}
+    data[:name] = name + ' Keyless SSL' unless name.nil?
+    cf_post(path: "/zones/#{zone_id}/keyless_certificates", data: data)
+  end
+
+  ##
+  # list all the keyless ssl configs
+  def keyless_ssl_configs(zone_id:)
+    id_check("zone_id", zone_id)
+    cf_get(path: "/zones/#{zone_id}/keyless_certificates")
+  end
+
+  ##
+  # details of a keyless_ssl_config
+  def keyless_ssl_config(zone_id:, id:)
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    cf_get(path: "/zons/#{zone_id}/keyless_certificates/#{id}")
+  end
+
+  ##
+  # updates a keyless ssl config
+  def update_keyless_ssl_config(zone_id:, id:, host: nil, name: nil, port: nil, enabled: nil)
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    unless enabled.nil?
+      raise ("enabled must be true||false") unless (enabled == true || enabled == false)
+    end
+    data = {}
+    data[:host] = host unless host.nil?
+    data[:name] = host + " Keyless ssl" unless name.nil?
+    data[:port] = port unless name.nil?
+    data[:enabled] = port unless enabled.nil?
+    cf_patch(path: "/zones/#{zone_id}/keyless_certificates/#{id}", data: data)
+  end
+
+  ##
+  # delete a custom_ssl_config
+  def delete_keyless_ssl_config(zone_id:, id:)
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    cf_delete(path: "/zones/#{zone_id}/keyless_certificates/#{id}")
+  end
+
+  ##
+  # page_rules_for_a_zone
+
+  ##
+  # create zone_page_rule
+  def create_zone_page_rule(zone_id:, targets:, actions:, priority: 1, status: 'disabled')
+    id_check("zone_id", zone_id)
+    if (!targets.is_a?(Array) || targets.empty?)
+      raise("targets must be an array of targes https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule")
+    end
+    if (!actions.is_a?(Array) || actions.empty?)
+      raise("actions must be an array of actions https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule")
+    end
+    raise("status must be disabled||active") if (status != "disabled" && status != "active")
+    data = {targets: targets, actions: actions, priority: priority, status: status}
+    cf_post(path: "/zones/#{zone_id}/pagerules", data: data)
+  end
+
+  ##
+  # list all the page rules for a zone
+  def zone_page_rules(zone_id:, status: 'disabled', order: 'priority', direction: 'desc', match: 'all')
+    id_check("zone_id", zone_id)
+    raise ('status must be either active||disabled') unless (status == 'active' || status == 'disabled')
+    raise ('order must be either status||priority') unless (order == 'status' || order == 'priority')
+    raise ('direction must be either asc||desc') unless (direction == 'asc' || direction == 'desc')
+    raise ('match must be either any||all') unless (match == 'any' || match == 'all')
+    params = {status: status, order: order, direction: direction, match: match}
+    cf_get(path: "/zones/#{zone_id}/pagerules", params: params)
+  end
+
+  ##
+  # page rule details
+  def zone_page_rule(zone_id:, id:)
+    id_check("zone_id", zone_id)
+    id_check('id', id)
+    cf_get(path: "/zones/#{zone_id}/pagerules/#{id}")
+  end
+
+  #TODO: do we need upate, looks the same as change
+
+  ##
+  # update a page rule
+  def update_zone_page_rule(zone_id:, id:, targets: [], actions: [], priority: 1, status: 'disabled')
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    if (!targets.is_a?(Array) || targets.empty?)
+      raise("targets must be an array of targes https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule")
+    end
+    if (!actions.is_a?(Array) || actions.empty?)
+      raise("actions must be an array of actions https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule")
+    end
+    raise("status must be disabled||active") if (status != "disabled" && status != "active")
+    data = {targets: targets, actions: actions, priority: priority, status: status}
+    cf_patch(path: "/zones/#{zone_id}/pagerules/#{id}", data: data)
+  end
+
+  ##
+  # delete a zone page rule
+  def delete_zone_page_rule(zone_id:, id:)
+    id_check("zone_id", zone_id)
+    raise ('zone page rule id required') if id.nil?
+    cf_delete(path: "/zones/#{zone_id}/pagerules/#{id}")
+  end
+
+  ##
+  # rate_limits_for_a_zone
+
+  ##
+  # list zone rate limits
+  def zone_rate_limits(zone_id:, page: 1, per_page: 50)
+    id_check("zone_id", zone_id)
+    params = {page: page, per_page: per_page}
+    cf_get(path: "zones/#{zone_id}", params: params)
+  end
+
+  ##
+  # Create a zone rate limit
+  def create_zone_rate_limit(zone_id:, match:, threshold:, period:, action:, id: nil, disabled: nil, description: nil, bypass: nil)
+    doc_url = 'https://api.cloudflare.com/#rate-limits-for-a-zone-create-a-ratelimit'
+    id_check("zone_id", zone_id)
+    raise("match must be a match object #{doc_url}") unless match.is_a?(Hash)
+    raise("action must be a action object #{doc_url}") unless action.is_a?(Hash)
+    raise('threshold must be between 1 86400') if (!threshold.is_a?(Integer) || !threshold.between?(1, 86400))
+    raise('period must be between 1 86400') if (!period.is_a?(Integer) || !period.between?(1, 86400))
+    unless disabled.nil?
+      raise('disabled must be true || false') unless (disabled == true || disabled == false)
+    end
+    data = {match: match, threshold: threshold, period: period, action: action}
+    # optional params
+    data[:id] = id unless id.nil?
+    data[:disabled] = disabled unless id.nil?
+    cf_post(path: "/zones/#{zone_id}/rate_limits", data: data)
+  end
+
+  ##
+  # get details for a zone rate limit
+  def zone_rate_limit(zone_id:, id:)
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    cf_get(path: "/zones/#{zone_id}/rate_limits/#{id}")
+  end
+
+  ##
+  # update zone rate limit
+  def update_zone_rate_limit(zone_id:, id:, match:, threshold:, period:, action:, disabled: nil, description: nil, bypass: nil)
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    doc_url = 'https://api.cloudflare.com/#rate-limits-for-a-zone-create-a-ratelimit'
+    raise("match must be a match object #{doc_url}") unless match.is_a?(Hash)
+    raise('threshold must be between 1 86400') if (!threshold.is_a?(Integer) || !threshold.between?(1, 86400))
+    raise("action must be a action object #{doc_url}") unless action.is_a?(Hash)
+    raise('period must be between 1 86400') if (!period.is_a?(Integer) || !period.between?(1, 86400))
+    unless disabled.nil?
+      raise('disabled must be true || false') unless (disabled == true || disabled == false)
+    end
+    data = {match: match, threshold: threshold, period: period, action: action}
+    # optional params
+    data[:id] = id unless id.nil?
+    data[:disabled] = disabled unless id.nil?
+    data[:description] = description unless description.nil?
+    cf_put(path: "/zones/#{zone_id}/rate_limits/#{id}", data: data)
+  end
+
+  ##
+  # delete zone rate limit
+  def delete_zone_rate_limit(zone_id:, id:)
+    id_check('zone_id', zone_id)
+    id_check('zone rate limit id', id)
+    cf_delete(path: "/zones/#{zone_id}/rate_limits/#{id}")
+  end
+
+  ##
+  # firewall_access_rules_for_a_zone
+  def firewall_access_rules(zone_id: nil, notes: nil, mode: nil, match: nil, scope_type: nil, configuration_value: nil, order: nil, page: 1, per_page: 50, configuration_target: nil, direction: 'desc')
+    id_check('zone_id', zone_id, )
+    params = {page: page, per_page: per_page}
+    params[:notes] = notes unless notes.nil?
+    unless mode.nil?
+      raise("mode can only be one of block, challenge, whitelist") unless %w[block challenge whitelist].include?(mode)
+      params[:mode] = mode
+    end
+    unless match.nil?
+      raise("match can only be one either all || any") unless %w[all any].include?(match)
+      params[:match] = match
+    end
+    unless scope_type.nil?
+      raise("scope_type can only be one of user, organization, zone") unless %w[user organization zone].include?(scope_type)
+      params[:scope_type] = scope_type
+    end
+    params[:configuration_value] = configuration_value unless configuration_value.nil?
+    unless configuration_target.nil?
+      possible_targets = %w[ip ip_range country]
+      unless (possible_targets.include?(configuration_target))
+        raise("configuration_target can only be one #{possible_targets.flatten}")
+      end
+      params[:configuration_target] = configuration_target
+    end
+    unless direction.nil?
+      raise("direction must be either asc || desc") unless %w[asc desc].include?(direction)
+      params[:direction] = direction
+    end
+    cf_get(path: "/zones/#{zone_id}/firewall/access_rules/rules", params: params)
+  end
+
+  ##
+  # create firewall access rule
+  def create_firewall_access_rule(zone_id: nil, mode: :nil, configuration: nil, notes: nil)
+    id_check('zone_id', zone_id)
+    rase("mode must be one of block, challenge, whitlist") unless %w[block challenge whitelist].include?(mode)
+    #TODO: add checking of the config object
+    #https://api.cloudflare.com/#firewall-access-rule-for-a-zone-create-access-rule
+    rase("configuration must be a valid configuration object") if (configuration.nil? || !configuration.is_a?(Hash))
+    data = {mode: mode, configuration: configuration}
+    data[:notes] = notes unless notes.nil?
+    cf_post(path: "/zones/#{zone_id}/firewall/access_rules/rules", data: data)
+  end
+
+
+
   #TODO: waf_rule_packages
   #TODO: waf_rule_groups
   #TODO: waf_rules
@@ -323,6 +788,7 @@ class CloudflareClient
   #TODO: org load balancer monitors
   #TODO: org load balancer pools
   #TODO: load balancers
+
   private
 
   def date_rfc3339?(ts)
@@ -334,8 +800,8 @@ class CloudflareClient
     true
   end
 
-  def zone_id_check(zone_id)
-    raise ("zone_id required") if zone_id.nil?
+  def id_check(name, id)
+    raise ("#{name} required") if id.nil?
   end
 
   def build_client(params)
