@@ -787,8 +787,43 @@ class CloudflareClient
     cf_delete(path: "/zones/#{zone_id}/firewall/access_rules/rules/#{id}")
   end
 
+  ##
+  # waf_rule_packages
+  def waf_rule_packages(zone_id:, name: nil, page: 1, per_page: 50, order: 'status', direction: 'desc', match: 'all')
+    id_check('zone_id', zone_id)
+    params = {page: page, per_page: per_page}
+    params[:name] = name unless name.nil?
+    raise ('order must be either status or name') unless (order == 'status' || order == 'name')
+    params[:order] = order
+    raise ('direction must be either asc or desc') unless (direction == "asc" || direction == "desc")
+    params[:direction] = direction
+    raise ('match must be either all or any') unless (match == "all" || match == "any")
+    params[:match] = match
+    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages", params: params)
+  end
 
-  #TODO: waf_rule_packages
+  ##
+  # details of a single package
+  def waf_rule_package(zone_id:, id:)
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{id}")
+  end
+
+  ##
+  # change anomoly detection of waf package
+  def change_waf_rule_anomoly_detection(zone_id:, id:, sensitivity: 'high', action_mode: 'challange')
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    raise('sensitivity must be one of high, low, off') unless %w[high low off].include?(sensitivity)
+    raise('action_mode must be one of simulate, block or challenge') unless %w[simulate block challenge].include?(action_mode)
+    data = {sensitivity: sensitivity, action_mode: action_mode}
+    cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{id}", data: data)
+  end
+
+
+
+  #
   #TODO: waf_rule_groups
   #TODO: waf_rules
   #TODO: analyze_certificate

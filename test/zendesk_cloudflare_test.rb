@@ -1035,6 +1035,60 @@ describe CloudflareClient do
       client.delete_firewall_access_rule(zone_id: 'abc1234', id: 'foo', cascade: 'basic').
         must_equal(JSON.parse(SUCCESSFULL_FIREWALL_DELETE))
     end
+  end
 
+  describe "waf rule packages" do
+    before do
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/waf/packages?direction=asc&match=any&name=bar&order=status&page=1&per_page=50').
+        to_return(response_body(SUCCESSFULL_WAF_RULE_PACKAGES_LIST))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/waf/packages/foo').
+        to_return(response_body(SUCCESSFULL_WAF_RULE_PACKAGES_DETAIL))
+      stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/waf/packages/foo').
+        to_return(response_body(SUCCESSFULL_WAF_RULE_PACKAGES_UPDATE))
+    end
+    it "fails to get waf rule packages" do
+      e = assert_raises(ArgumentError) { client.waf_rule_packages }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.waf_rule_packages(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.waf_rule_packages(zone_id: 'abc1234', order: 'foo') }
+      e.message.must_equal('order must be either status or name')
+      e = assert_raises(RuntimeError) { client.waf_rule_packages(zone_id: 'abc1234', order: 'status', direction: 'foo') }
+      e.message.must_equal('direction must be either asc or desc')
+      e = assert_raises(RuntimeError) { client.waf_rule_packages(zone_id: 'abc1234', order: 'status', direction: 'asc', match: 'foo') }
+      e.message.must_equal('match must be either all or any')
+    end
+    it "gets waf rule packages" do
+      client.waf_rule_packages(zone_id: 'abc1234', order: 'status', direction: 'asc', match: 'any', name: 'bar').
+        must_equal(JSON.parse(SUCCESSFULL_WAF_RULE_PACKAGES_LIST))
+    end
+    it "fails to get package details" do
+      e = assert_raises(ArgumentError) { client.waf_rule_package }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.waf_rule_package(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.waf_rule_package(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "gets a waf rule package" do
+      client.waf_rule_package(zone_id: 'abc1234', id: 'foo').
+        must_equal(JSON.parse(SUCCESSFULL_WAF_RULE_PACKAGES_DETAIL))
+    end
+    it "fails to change the anomoly detection settings of a waf package" do
+      e = assert_raises(ArgumentError) { client.change_waf_rule_anomoly_detection }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.change_waf_rule_anomoly_detection(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.change_waf_rule_anomoly_detection(zone_id: 'abc1234', id: nil) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.change_waf_rule_anomoly_detection(zone_id: 'abc1234', id: 'foo', sensitivity: 'bar') }
+      e.message.must_equal('sensitivity must be one of high, low, off')
+      e = assert_raises(RuntimeError) { client.change_waf_rule_anomoly_detection(zone_id: 'abc1234', id: 'foo', sensitivity: 'high', action_mode: 'bar') }
+      e.message.must_equal('action_mode must be one of simulate, block or challenge')
+    end
+    it "updates a waf rule package" do
+      client.change_waf_rule_anomoly_detection(zone_id: 'abc1234', id: 'foo', sensitivity: 'high', action_mode: 'challenge').
+        must_equal(JSON.parse(SUCCESSFULL_WAF_RULE_PACKAGES_UPDATE))
+    end
   end
 end
