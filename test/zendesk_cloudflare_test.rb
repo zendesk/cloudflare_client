@@ -959,10 +959,18 @@ describe CloudflareClient do
     before do
       stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/access_rules/rules?configuration_target=country&direction=asc&match=all&mode=block&page=1&per_page=50&scope_type=zone').
         to_return(response_body(SUCCESSFULL_FIREWALL_LIST))
+      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/access_rules/rules').
+        to_return(response_body(SUCCESSFULL_FIREWALL_CREATE_UPDATE))
+      stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/access_rules/rules/foo').
+        to_return(response_body(SUCCESSFULL_FIREWALL_CREATE_UPDATE))
+      stub_request(:delete, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/access_rules/rules/foo').
+        to_return(response_body(SUCCESSFULL_FIREWALL_DELETE))
     end
 
     it "fails to list firewall access rules" do
-      e = assert_raises(RuntimeError) { client.firewall_access_rules }
+      e = assert_raises(ArgumentError) { client.firewall_access_rules }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.firewall_access_rules(zone_id: nil) }
       e.message.must_equal('zone_id required')
       e = assert_raises(RuntimeError) { client.firewall_access_rules(zone_id: 'abc1234', mode: 'foo') }
       e.message.must_equal('mode can only be one of block, challenge, whitelist')
@@ -980,8 +988,53 @@ describe CloudflareClient do
         must_equal(JSON.parse(SUCCESSFULL_FIREWALL_LIST))
     end
     it "fails to create a firewall access rule" do
-      e = assert_raises(RuntimeError) { client.create_firewall_access_rule }
+      e = assert_raises(ArgumentError) { client.create_firewall_access_rule }
+      e.message.must_equal('missing keywords: zone_id, mode, configuration')
+      e = assert_raises(RuntimeError) { client.create_firewall_access_rule(zone_id: nil, mode: 'foo', configuration: {}) }
       e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.create_firewall_access_rule(zone_id: 'abc1234', mode: 'foo', configuration: 'foo') }
+      e.message.must_equal('mode must be one of block, challenge, whitlist')
+      e = assert_raises(RuntimeError) { client.create_firewall_access_rule(zone_id: 'abc1234', mode: 'block', configuration: 'foo') }
+      e.message.must_equal('configuration must be a valid configuration object')
+      e = assert_raises(RuntimeError) { client.create_firewall_access_rule(zone_id: 'abc1234', mode: 'block', configuration: {foo: 'bar'}) }
+      e.message.must_equal('configuration must contain valid a valid target and value')
+      e.message.must_equal('configuration must contain valid a valid target and value')
     end
+    it "creates a new firewall access rule" do
+      client.create_firewall_access_rule(
+        zone_id: 'abc1234',
+        mode: 'block',
+        configuration: {target: 'ip', value: '10.1.1.1'}
+      ).must_equal(JSON.parse(SUCCESSFULL_FIREWALL_CREATE_UPDATE))
+    end
+    it "fails to updates a firewall access rule" do
+      e = assert_raises(ArgumentError) { client.update_firewall_access_rule }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.update_firewall_access_rule(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.update_firewall_access_rule(zone_id: 'foo', id: nil) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_firewall_access_rule(zone_id: 'foo', id: 'bar', mode: 'foo') }
+      e.message.must_equal('mode must be one of block, challenge, whitlist')
+    end
+    it "updates a firewall access rule" do
+      client.update_firewall_access_rule(zone_id: 'abc1234', id: 'foo', mode: 'block', notes: 'foo to the bar').
+        must_equal(JSON.parse(SUCCESSFULL_FIREWALL_CREATE_UPDATE))
+    end
+    it "fails to delete a firewall access rule" do
+      e = assert_raises(ArgumentError) { client.delete_firewall_access_rule }
+      e.message.must_equal('missing keywords: zone_id, id')
+      e = assert_raises(RuntimeError) { client.delete_firewall_access_rule(zone_id: nil, id: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.delete_firewall_access_rule(zone_id: 'foo', id: nil) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.delete_firewall_access_rule(zone_id: 'foo', id: 'bar', cascade: 'cat') }
+      e.message.must_equal('cascade must be one of none, basic, aggressive')
+    end
+    it "deletes a firewall access rule" do
+      client.delete_firewall_access_rule(zone_id: 'abc1234', id: 'foo', cascade: 'basic').
+        must_equal(JSON.parse(SUCCESSFULL_FIREWALL_DELETE))
+    end
+
   end
 end

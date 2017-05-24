@@ -717,7 +717,7 @@ class CloudflareClient
 
   ##
   # firewall_access_rules_for_a_zone
-  def firewall_access_rules(zone_id: nil, notes: nil, mode: nil, match: nil, scope_type: nil, configuration_value: nil, order: nil, page: 1, per_page: 50, configuration_target: nil, direction: 'desc')
+  def firewall_access_rules(zone_id:, notes: nil, mode: nil, match: nil, scope_type: nil, configuration_value: nil, order: nil, page: 1, per_page: 50, configuration_target: nil, direction: 'desc')
     id_check('zone_id', zone_id, )
     params = {page: page, per_page: per_page}
     params[:notes] = notes unless notes.nil?
@@ -750,17 +750,42 @@ class CloudflareClient
 
   ##
   # create firewall access rule
-  def create_firewall_access_rule(zone_id: nil, mode: :nil, configuration: nil, notes: nil)
+  def create_firewall_access_rule(zone_id:, mode:, configuration:, notes: nil)
     id_check('zone_id', zone_id)
-    rase("mode must be one of block, challenge, whitlist") unless %w[block challenge whitelist].include?(mode)
-    #TODO: add checking of the config object
+    raise("mode must be one of block, challenge, whitlist") unless %w[block challenge whitelist].include?(mode)
     #https://api.cloudflare.com/#firewall-access-rule-for-a-zone-create-access-rule
-    rase("configuration must be a valid configuration object") if (configuration.nil? || !configuration.is_a?(Hash))
+    if configuration.is_a?(Hash)
+      raise("configuration must contain valid a valid target and value") unless configuration.keys.sort == [:target, :value]
+    else
+      raise("configuration must be a valid configuration object")
+    end
     data = {mode: mode, configuration: configuration}
     data[:notes] = notes unless notes.nil?
     cf_post(path: "/zones/#{zone_id}/firewall/access_rules/rules", data: data)
   end
 
+  ##
+  # updates firewall_access_rule
+  def update_firewall_access_rule(zone_id:, id:, mode: nil,  notes: nil)
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    unless mode.nil?
+      raise("mode must be one of block, challenge, whitlist") unless %w[block challenge whitelist].include?(mode)
+    end
+    data = {}
+    data[:mode] = mode unless mode. nil?
+    data[:notes] = notes unless notes.nil?
+    cf_patch(path: "/zones/#{zone_id}/firewall/access_rules/rules/#{id}", data: data)
+  end
+
+  ##
+  # delete a firewall access rule
+  def delete_firewall_access_rule(zone_id:, id:, cascade: 'none')
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    raise("cascade must be one of none, basic, aggressive") unless %w[none basic aggressive].include?(cascade)
+    cf_delete(path: "/zones/#{zone_id}/firewall/access_rules/rules/#{id}")
+  end
 
 
   #TODO: waf_rule_packages
