@@ -821,10 +821,37 @@ class CloudflareClient
     cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{id}", data: data)
   end
 
+  ##
+  # waf_rule_groups
+  def waf_rule_groups(zone_id:, package_identifier:, name: nil, mode: 'on', rules_count: 0, page: 1, per_page: 50, order: 'mode', direction: 'desc', match: 'all')
+    id_check('zone_id', zone_id)
+    id_check('package_identifier', package_identifier)
+    params = {page: page, per_page: per_page}
+    raise("mode must be one of on or off") if (mode != 'on' && mode != 'off')
+    params[:mode] = mode
+    #FIXME: rules_count doesn't make any sense, ask CF
+    raise('order must be one of mode or rules_count') if (order != 'mode' && order != 'rules_count')
+    params[:order] = order
+    raise('direction must be one of asc or desc') if (direction != 'asc' && direction != 'desc')
+    params[:direction] = direction
+    raise('match must be either all or any') if (match != 'any' && match != 'all')
+    params[:match] = match
+    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_identifier}/groups", params: params)
+  end
+
+  ##
+  # details of a waf rule group
+  def waf_rule_group(zone_id:, package_identifier:, id:)
+    id_check('zone_id', zone_id)
+    id_check('package_identifier', package_identifier)
+    id_check('id', id)
+    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_identifier}/groups/#{id}")
+  end
 
 
-  #
-  #TODO: waf_rule_groups
+
+
+
   #TODO: waf_rules
   #TODO: analyze_certificate
   #TODO: certificate_packs

@@ -1091,4 +1091,49 @@ describe CloudflareClient do
         must_equal(JSON.parse(SUCCESSFULL_WAF_RULE_PACKAGES_UPDATE))
     end
   end
+
+  describe "waf rule groups" do
+    before do
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/waf/packages/foobar/groups?direction=desc&match=all&mode=on&order=mode&page=1&per_page=50').
+        to_return(response_body(SUCCESSFULL_WAF_RULE_GROUPS_LIST))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/waf/packages/foo/groups/bar').
+        to_return(response_body(SUCCESSFULL_WAF_RULE_GROUPS_DETAIL))
+    end
+
+    it "fails to list waf rule groups" do
+      e = assert_raises(ArgumentError) { client.waf_rule_groups }
+      e.message.must_equal('missing keywords: zone_id, package_identifier')
+      e = assert_raises(RuntimeError) { client.waf_rule_groups(zone_id: nil, package_identifier: 'foo') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.waf_rule_groups(zone_id: 'abc1234', package_identifier: nil) }
+      e.message.must_equal('package_identifier required')
+      e = assert_raises(RuntimeError) { client.waf_rule_groups(zone_id: 'abc1234', package_identifier: 'foobar', mode: 'foo') }
+      e.message.must_equal('mode must be one of on or off')
+      e = assert_raises(RuntimeError) { client.waf_rule_groups(zone_id: 'abc1234', package_identifier: 'foobar', mode: 'on', order: 'foo') }
+      e.message.must_equal('order must be one of mode or rules_count')
+      e = assert_raises(RuntimeError) { client.waf_rule_groups(zone_id: 'abc1234', package_identifier: 'foobar', mode: 'on', order: 'mode', direction: 'foo') }
+      e.message.must_equal('direction must be one of asc or desc')
+      e = assert_raises(RuntimeError) { client.waf_rule_groups(zone_id: 'abc1234', package_identifier: 'foobar', mode: 'on', order: 'mode', direction: 'asc', match: 'foo') }
+      e.message.must_equal('match must be either all or any')
+    end
+    it "lists waf rule groups" do
+      client.waf_rule_groups(zone_id: 'abc1234', package_identifier: 'foobar').
+        must_equal(JSON.parse(SUCCESSFULL_WAF_RULE_GROUPS_LIST))
+    end
+    it "fails to get details for a single waf group" do
+      e = assert_raises(ArgumentError) { client.waf_rule_group }
+      e.message.must_equal('missing keywords: zone_id, package_identifier, id')
+      e = assert_raises(RuntimeError) { client.waf_rule_group(zone_id: nil, package_identifier: 'foo', id: 'bar') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.waf_rule_group(zone_id: 'abc1234', package_identifier: nil, id: 'bar') }
+      e.message.must_equal('package_identifier required')
+      e = assert_raises(RuntimeError) { client.waf_rule_group(zone_id: 'abc1234', package_identifier: 'foo', id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "gets details of a single waf group" do
+      client.waf_rule_group(zone_id: 'abc1234', package_identifier: 'foo', id: 'bar').
+        must_equal(JSON.parse(SUCCESSFULL_WAF_RULE_GROUPS_DETAIL))
+    end
+
+  end
 end
