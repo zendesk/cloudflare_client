@@ -823,9 +823,9 @@ class CloudflareClient
 
   ##
   # waf_rule_groups
-  def waf_rule_groups(zone_id:, package_identifier:, name: nil, mode: 'on', rules_count: 0, page: 1, per_page: 50, order: 'mode', direction: 'desc', match: 'all')
+  def waf_rule_groups(zone_id:, package_id:, name: nil, mode: 'on', rules_count: 0, page: 1, per_page: 50, order: 'mode', direction: 'desc', match: 'all')
     id_check('zone_id', zone_id)
-    id_check('package_identifier', package_identifier)
+    id_check('package_id', package_id)
     params = {page: page, per_page: per_page}
     raise("mode must be one of on or off") if (mode != 'on' && mode != 'off')
     params[:mode] = mode
@@ -836,30 +836,75 @@ class CloudflareClient
     params[:direction] = direction
     raise('match must be either all or any') if (match != 'any' && match != 'all')
     params[:match] = match
-    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_identifier}/groups", params: params)
+    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/groups", params: params)
   end
 
   ##
   # details of a waf rule group
-  def waf_rule_group(zone_id:, package_identifier:, id:)
+  def waf_rule_group(zone_id:, package_id:, id:)
     id_check('zone_id', zone_id)
-    id_check('package_identifier', package_identifier)
+    id_check('package_id', package_id)
     id_check('id', id)
-    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_identifier}/groups/#{id}")
+    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/groups/#{id}")
   end
 
   ##
   # updates a waf rule group
-  def update_waf_rule_group(zone_id:, package_identifier:, id:, mode: 'on')
+  def update_waf_rule_group(zone_id:, package_id:, id:, mode: 'on')
     id_check('zone_id', zone_id)
-    id_check('package_identifier', package_identifier)
+    id_check('package_id', package_id)
     id_check('id', id)
     raise('mode must be either on or off') if (mode != 'on' && mode != 'off')
-    cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_identifier}/groups/#{id}", data: {mode: mode})
+    cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/groups/#{id}", data: {mode: mode})
   end
 
 
-  #TODO: waf_rules
+  ##
+  # waf_rules
+
+  ##
+  # list waf rules
+  def waf_rules(zone_id:, package_id:, mode: {}, priority: nil, match: 'all', order: 'priority', page: 1, per_page: 50, group_id: nil, description: nil, direction: 'desc')
+    id_check('zone_id', zone_id)
+    id_check('package_id', package_id)
+    #FIXME: mode isn't documented in api, ask CF
+    #FIXME: priority is read only?, ask CF
+    params = {page: page, per_page: per_page}
+    match_check(match)
+    params[:match] = match
+    raise("order must be one of priority, group_id, description") unless %w[priority group_id description].include?(order)
+    params[:order] = order
+    params[:group_id] unless group_id.nil?
+    params[:description] unless description.nil?
+    direction_check(direction)
+    params[:direction] = direction
+    cf_get(path: "/zones/#{zone_id}/waf/packages/#{package_id}/rules", params: params)
+  end
+
+  ##
+  # get a single waf rule
+  def waf_rule(zone_id:, package_id:, id:)
+    id_check('zone_id', zone_id)
+    id_check('package_id', package_id)
+    id_check('id', id)
+    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/rules/#{id}")
+  end
+
+  ##
+  # update a waf rule
+  def update_waf_rule(zone_id:, package_id:, id:, mode: 'on')
+    id_check('zone_id', zone_id)
+    id_check('package_id', package_id)
+    id_check('id', id)
+    unless %w[default disable simulate block challenge on off].include?(mode)
+      raise("mode must be one of default, disable, simulate, block, challenge, on, off")
+    end
+    cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/rules/#{id}", data: {mode: mode})
+  end
+
+
+
+
   #TODO: analyze_certificate
   #TODO: certificate_packs
   #TODO: ssl_verification
@@ -884,6 +929,14 @@ class CloudflareClient
   #TODO: load balancers
 
   private
+
+  def direction_check(direction)
+    raise ("direction must be either asc or desc") if (direction != 'asc' && direction != 'desc')
+  end
+
+  def match_check(match)
+    raise ("match must be either all or any") if (match != 'all' && match != 'any')
+  end
 
   def date_rfc3339?(ts)
     begin
