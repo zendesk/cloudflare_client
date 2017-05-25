@@ -1215,4 +1215,24 @@ describe CloudflareClient do
         must_equal(JSON.parse(SUCCESSFULL_WAF_RULES_UPDATE))
     end
   end
+
+  describe "analyze certificate" do
+    before do
+      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/analyze').
+        to_return(response_body(SUCCESSFULL_CERT_ANALYZE))
+    end
+
+    it "fails to analyze a certificate" do
+      e = assert_raises(ArgumentError) { client.analyze_certificate }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.analyze_certificate(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.analyze_certificate(zone_id: 'abc1234', bundle_method: 'foo') }
+      e.message.must_equal('valid bundle methods are ["ubiquitous", "optimal", "force"]')
+    end
+    it "analyzies a certificate" do
+      client.analyze_certificate(zone_id: 'abc1234', certificate: 'bar', bundle_method: 'ubiquitous').
+        must_equal(JSON.parse(SUCCESSFULL_CERT_ANALYZE))
+    end
+  end
 end

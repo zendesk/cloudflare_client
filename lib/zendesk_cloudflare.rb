@@ -902,10 +902,23 @@ class CloudflareClient
     cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/rules/#{id}", data: {mode: mode})
   end
 
+  ##
+  #analyze_certificate
+
+  ##
+  # analyze a certificate
+  def analyze_certificate(zone_id:, certificate: nil, bundle_method: 'ubiquitous')
+    id_check('zone_id', zone_id)
+    data = {}
+    data[:certificate] = certificate unless certificate.nil?
+    bundle_method_check(bundle_method)
+    data[:bundle_method] = bundle_method
+    cf_post(path: "/zones/#{zone_id}/ssl/analyze", data: data)
+  end
 
 
 
-  #TODO: analyze_certificate
+
   #TODO: certificate_packs
   #TODO: ssl_verification
   #TODO: zone_subscription
