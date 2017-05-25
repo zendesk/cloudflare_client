@@ -1098,6 +1098,8 @@ describe CloudflareClient do
         to_return(response_body(SUCCESSFULL_WAF_RULE_GROUPS_LIST))
       stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/waf/packages/foo/groups/bar').
         to_return(response_body(SUCCESSFULL_WAF_RULE_GROUPS_DETAIL))
+      stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/firewall/waf/packages/foo/groups/bar').
+        to_return(response_body(SUCCESSFULL_WAF_RULE_GROUPS_UPDATE))
     end
 
     it "fails to list waf rule groups" do
@@ -1134,6 +1136,23 @@ describe CloudflareClient do
       client.waf_rule_group(zone_id: 'abc1234', package_identifier: 'foo', id: 'bar').
         must_equal(JSON.parse(SUCCESSFULL_WAF_RULE_GROUPS_DETAIL))
     end
-
+    it "fails to update a waf group" do
+      e = assert_raises(ArgumentError) { client.update_waf_rule_group }
+      e.message.must_equal('missing keywords: zone_id, package_identifier, id')
+      e = assert_raises(RuntimeError) { client.update_waf_rule_group(zone_id: nil, package_identifier: 'foo', id: 'bar') }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.update_waf_rule_group(zone_id: 'abc1234', package_identifier: nil, id: 'bar') }
+      e.message.must_equal('package_identifier required')
+      e = assert_raises(RuntimeError) { client.update_waf_rule_group(zone_id: 'abc1234', package_identifier: 'foo', id: nil) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_waf_rule_group(zone_id: 'abc1234', package_identifier: 'foo', id: 'bar', mode: 'blah') }
+      e.message.must_equal('mode must be either on or off')
+      client.update_waf_rule_group(zone_id: 'abc1234', package_identifier: 'foo', id: 'bar', mode: 'on')
+      client.update_waf_rule_group(zone_id: 'abc1234', package_identifier: 'foo', id: 'bar', mode: 'off')
+    end
+    it "updates a waf group" do
+      client.update_waf_rule_group(zone_id: 'abc1234', package_identifier: 'foo', id: 'bar', mode: 'off').
+        must_equal(JSON.parse(SUCCESSFULL_WAF_RULE_GROUPS_UPDATE))
+    end
   end
 end

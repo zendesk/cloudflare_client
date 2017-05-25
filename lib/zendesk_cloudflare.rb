@@ -848,8 +848,15 @@ class CloudflareClient
     cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_identifier}/groups/#{id}")
   end
 
-
-
+  ##
+  # updates a waf rule group
+  def update_waf_rule_group(zone_id:, package_identifier:, id:, mode: 'on')
+    id_check('zone_id', zone_id)
+    id_check('package_identifier', package_identifier)
+    id_check('id', id)
+    raise('mode must be either on or off') if (mode != 'on' && mode != 'off')
+    cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_identifier}/groups/#{id}", data: {mode: mode})
+  end
 
 
   #TODO: waf_rules
