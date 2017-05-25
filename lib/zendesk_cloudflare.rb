@@ -7,6 +7,8 @@ class CloudflareClient
   require 'byebug'
 
   API_BASE = 'https://api.cloudflare.com/client/v4'.freeze
+  VALID_BUNDLE_METHODS = %w[ubiquitous optimal force].freeze
+
   POSSIBLE_API_SETTINGS = %w[
     advanced_ddos
     always_online
@@ -406,13 +408,13 @@ class CloudflareClient
   # create custom ssl for a zone
   def create_custom_ssl(zone_id:, certificate:, private_key:, bundle_method: nil)
     id_check("zone_id", zone_id)
-    valid_methods = ['ubiquitous', 'optimal', 'force']
     id_check('certificate', certificate)
     id_check('private_key', private_key)
-    raise("bundle_method must be one of #{valid_methods.flatten}") if !valid_methods.include?(bundle_method)
+    bundle_method_check(bundle_method) unless bundle_method.nil?
     # TODO: validate the cert/key using openssl?  Could be difficult if they are
     # privately generated
     data = {certificate: certificate, private_key: private_key}
+    data[:bundle_method] = bundle_method unless bundle_method.nil?
     cf_post(path: "/zones/#{zone_id}/custom_certificates", data: data)
   end
 
@@ -443,9 +445,8 @@ class CloudflareClient
   def update_ssl_configuration(zone_id:, id:, private_key: nil, certificate: nil, bundle_method: nil)
     id_check("zone_id", zone_id)
     id_check("id", id)
-    valid_methods = ['ubiquitous', 'optimal', 'force']
     id_check("private_key must be provided") if private_key.nil?
-    raise("bundle_method must be one of #{valid_methods.flatten}") if !valid_methods.include?(bundle_method)
+    bundle_method_check(bundle_method)
     data = {private_key: private_key, certificate: certificate, bundle_method: bundle_method}
     cf_patch(path: "/zones/#{zone_id}/custom_certificates/#{id}", data: data)
   end
@@ -536,10 +537,9 @@ class CloudflareClient
   # create a keyless ssl config
   def create_keyless_ssl_config(zone_id:, host:, port:, certificate:, name: nil, bundle_method: "ubiquitous")
     id_check("zone_id", zone_id)
-    valid_bundle_methods = %w[ubiquitous optimal force]
     raise('host required') if host.nil?
     raise('certificate required') if certificate.nil?
-    raise("valid bundle methods are #{valid_bundle_methods.flatten}") unless valid_bundle_methods.include?(bundle_method)
+    bundle_method_check(bundle_method)
     data = {host: host, port: port, certificate: certificate, bundle_method: bundle_method}
     data[:name] = name + ' Keyless SSL' unless name.nil?
     cf_post(path: "/zones/#{zone_id}/keyless_certificates", data: data)
@@ -929,6 +929,12 @@ class CloudflareClient
   #TODO: load balancers
 
   private
+
+  def bundle_method_check(bundle_method)
+    unless VALID_BUNDLE_METHODS.include?(bundle_method)
+      raise("valid bundle methods are #{VALID_BUNDLE_METHODS.flatten}")
+    end
+  end
 
   def direction_check(direction)
     raise ("direction must be either asc or desc") if (direction != 'asc' && direction != 'desc')

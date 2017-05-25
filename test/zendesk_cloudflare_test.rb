@@ -514,7 +514,7 @@ describe CloudflareClient do
       e = assert_raises(RuntimeError) { client.create_custom_ssl(zone_id: 'abc1234', private_key: 'foo', certificate: nil) }
       e.message.must_equal('certificate required')
       e = assert_raises(RuntimeError) { client.create_custom_ssl(zone_id: 'abc1234', certificate: 'foo', private_key: 'bar', bundle_method: 'foobar') }
-      e.message.must_equal('bundle_method must be one of ["ubiquitous", "optimal", "force"]')
+      e.message.must_equal('valid bundle methods are ["ubiquitous", "optimal", "force"]')
     end
     it "creates custom ssl for a zone" do
       client.create_custom_ssl(zone_id: 'abc1234', certificate: 'blahblah', private_key: 'pkstring', bundle_method: 'force').
@@ -557,7 +557,7 @@ describe CloudflareClient do
       e = assert_raises(RuntimeError) { client.update_ssl_configuration(zone_id: 'abc1234', id: nil) }
       e.message.must_equal('id required')
       e = assert_raises(RuntimeError) { client.update_ssl_configuration(zone_id: 'abc1234', id: 'foo', certificate: 'here', private_key: 'found', bundle_method: 'foo') }
-      e.message.must_equal('bundle_method must be one of ["ubiquitous", "optimal", "force"]')
+      e.message.must_equal('valid bundle methods are ["ubiquitous", "optimal", "force"]')
     end
     it "updates a custom ssl config" do
       client.update_ssl_configuration(zone_id: 'abc1234', id: 'foo', certificate: 'here', private_key: 'found', bundle_method: 'force').
