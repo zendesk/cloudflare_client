@@ -1250,6 +1250,8 @@ describe CloudflareClient do
         to_return(response_body(SUCCESSFULL_CERT_PACK_LIST))
       stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/certificate_packs').
         to_return(response_body(SUCCESSFULL_CERT_PACK_ORDER))
+      stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/certificate_packs/foo').
+        to_return(response_body(SUCCESSFULL_CERT_PACK_LIST))
     end
 
     it "fails to list certificate packs " do
@@ -1269,8 +1271,22 @@ describe CloudflareClient do
       e.message.must_equal('hosts must be an array of hostnames')
     end
     it "orders certificate packs" do
-#      client.order_certificate_packs(zone_id: 'abc1234', hosts: ['foobar.com']).
-#        must_equal(JSON.parse(SUCCESSFULL_CERT_PACK_ORDER))
+      client.order_certificate_packs(zone_id: 'abc1234', hosts: ['foobar.com']).
+        must_equal(JSON.parse(SUCCESSFULL_CERT_PACK_ORDER))
+    end
+    it "fails to update a certificate pack" do
+      e = assert_raises(ArgumentError) { client.update_certificate_pack }
+      e.message.must_equal('missing keywords: zone_id, id, hosts')
+      e = assert_raises(RuntimeError) { client.update_certificate_pack(zone_id: nil, id: 'foo', hosts: ['bar']) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.update_certificate_pack(zone_id: 'abc1234', id: nil, hosts: ['bar']) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_certificate_pack(zone_id: 'abc1234', id: 'foo', hosts: []) }
+      e.message.must_equal('hosts must be an array of hosts')
+    end
+    it "updates a certifiate pack" do
+      client.update_certificate_pack(zone_id: 'abc1234', id: 'foo', hosts: ['footothebar']).
+        must_equal(JSON.parse(SUCCESSFULL_CERT_PACK_LIST))
     end
   end
 

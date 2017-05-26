@@ -947,7 +947,17 @@ class CloudflareClient
     end
     data = {host: [hosts]}
     # TODO: test against api
-    cf_post(path: "/zones/#{zone_id}/sl/certificate_packs", data: data)
+    cf_post(path: "/zones/#{zone_id}/ssl/certificate_packs", data: data)
+  end
+
+  ##
+  # edit a certificate pack
+  def update_certificate_pack(zone_id:, id:, hosts:)
+    id_check('zone_id', zone_id)
+    id_check('id', id)
+    raise('hosts must be an array of hosts') unless (hosts.is_a?(Array) && !hosts.empty?)
+    data = {hosts: hosts}
+    cf_patch(path: "/zones/#{zone_id}/ssl/certificate_packs/#{id}", data: data)
   end
 
 
