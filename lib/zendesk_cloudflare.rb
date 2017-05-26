@@ -960,8 +960,23 @@ class CloudflareClient
     cf_patch(path: "/zones/#{zone_id}/ssl/certificate_packs/#{id}", data: data)
   end
 
+  ##
+  #ssl_verification
 
-  #TODO: ssl_verification
+  ##
+  # get ssl verification
+  def ssl_verification(zone_id:, retry_verification: nil)
+    id_check('zone_id', zone_id)
+    unless retry_verification.nil?
+      raise("retry_verification is true or nil") unless retry_verification == true
+      params = {retry: true}
+    end
+    cf_get(path: "/zones/#{zone_id}/ssl/verification", params: params)
+  end
+
+
+
+  #
   #TODO: zone_subscription
   #TODO: organizations
   #TODO: org members

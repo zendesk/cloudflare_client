@@ -1288,6 +1288,26 @@ describe CloudflareClient do
       client.update_certificate_pack(zone_id: 'abc1234', id: 'foo', hosts: ['footothebar']).
         must_equal(JSON.parse(SUCCESSFULL_CERT_PACK_LIST))
     end
+
+    describe "zone verification" do
+      before do
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/verification').
+        to_return(response_body(SUCCESSFULL_VERIFY_SSL))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/verification?retry=true').
+        to_return(response_body(SUCCESSFULL_VERIFY_SSL))
+      end
+
+      it "fails to verify a zone" do
+        e = assert_raises(ArgumentError) { client.ssl_verification }
+        e.message.must_equal('missing keyword: zone_id')
+        e = assert_raises(RuntimeError) { client.ssl_verification(zone_id: nil)}
+        e.message.must_equal('zone_id required')
+      end
+      it "verifies a zone" do
+        client.ssl_verification(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_VERIFY_SSL))
+        client.ssl_verification(zone_id: 'abc1234', retry_verification: true).must_equal(JSON.parse(SUCCESSFULL_VERIFY_SSL))
+      end
+    end
   end
 
   describe "logs api" do
