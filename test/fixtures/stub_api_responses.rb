@@ -46,7 +46,7 @@ SUCCESSFULL_CUSTOM_SSL_DELETE = '{ "id": "7e7b8deba8538af625850b7b2530034c" }'
 SUCCESSFULL_CUSTOM_HOSTNAME_CREATE = '{ "success": true, "errors": [], "messages": [], "result": { "id": "0d89c70d-ad9f-4843-b99f-6cc0252067e9", "hostname": "app.example.com", "ssl": { "status": "pending_validation", "method": "http", "type": "dv", "cname_target": "dcv.digicert.com", "cname": "810b7d5f01154524b961ba0cd578acc2.app.example.com" } } }'.freeze
 SUCCESSFULL_CUSTOM_HOSTNAME_LIST = '{ "success": true, "errors": [], "messages": [], "result": [ { "id": "0d89c70d-ad9f-4843-b99f-6cc0252067e9", "hostname": "app.example.com", "ssl": { "status": "pending_validation", "method": "http", "type": "dv", "cname_target": "dcv.digicert.com", "cname": "810b7d5f01154524b961ba0cd578acc2.app.example.com" } } ], "result_info": { "page": 1, "per_page": 20, "count": 1, "total_count": 2000 } }'.freeze
 SUCCESSFULL_CUSTOM_HOSTNAME_DETAIL = '{ "success": true, "errors": [], "messages": [], "result": { "id": "0d89c70d-ad9f-4843-b99f-6cc0252067e9", "hostname": "app.example.com", "ssl": { "status": "pending_validation", "method": "http", "type": "dv", "cname_target": "dcv.digicert.com", "cname": "810b7d5f01154524b961ba0cd578acc2.app.example.com" } } }'.freeze
-SUCCESSFULL_CUSTOM_HOSTNAME_UPDATE = ' { "success": true, "errors": [], "messages": [], "result": { "id": "0d89c70d-ad9f-4843-b99f-6cc0252067e9", "hostname": "app.example.com", "ssl": { "status": "pending_validation", "method": "http", "type": "dv", "cname_target": "dcv.digicert.com", "cname": "810b7d5f01154524b961ba0cd578acc2.app.example.com" } } }'.freeze
+SUCCESSFULL_CUSTOM_HOSTNAME_UPDATE = '{ "success": true, "errors": [], "messages": [], "result": { "id": "0d89c70d-ad9f-4843-b99f-6cc0252067e9", "hostname": "app.example.com", "ssl": { "status": "pending_validation", "method": "http", "type": "dv", "cname_target": "dcv.digicert.com", "cname": "810b7d5f01154524b961ba0cd578acc2.app.example.com" } } }'.freeze
 SUCCESSFULL_CUSTOM_HOSTNAME_DELETE = '{ "id": "foo" }'.freeze
 
 # keyless ssl
@@ -82,12 +82,42 @@ SUCCESSFULL_WAF_RULE_PACKAGES_UPDATE = '{ "success": true, "errors": [], "messag
 # waf rule groups
 SUCCESSFULL_WAF_RULE_GROUPS_LIST = '{ "success": true, "errors": [], "messages": [], "result": [ { "id": "de677e5818985db1285d0e80225f06e5", "name": "Project Honey Pot", "description": "Group designed to protect against IP addresses that are a threat and typically used to launch DDoS attacks", "rules_count": 10, "modified_rules_count": 2, "package_id": "a25a9a7e9c00afc1fb2e0245519d725b", "mode": "on", "allowed_modes": [ "on", "off" ] } ], "result_info": { "page": 1, "per_page": 20, "count": 1, "total_count": 2000 } }'.freeze
 SUCCESSFULL_WAF_RULE_GROUPS_DETAIL = '{ "success": true, "errors": [], "messages": [], "result": { "id": "de677e5818985db1285d0e80225f06e5", "name": "Project Honey Pot", "description": "Group designed to protect against IP addresses that are a threat and typically used to launch DDoS attacks", "rules_count": 10, "modified_rules_count": 2, "package_id": "a25a9a7e9c00afc1fb2e0245519d725b", "mode": "on", "allowed_modes": [ "on", "off" ] } }'.freeze
-SUCCESSFULL_WAF_RULE_GROUPS_UPDATE = ' { "success": true, "errors": [], "messages": [], "result": { "id": "de677e5818985db1285d0e80225f06e5", "name": "Project Honey Pot", "description": "Group designed to protect against IP addresses that are a threat and typically used to launch DDoS attacks", "rules_count": 10, "modified_rules_count": 2, "package_id": "a25a9a7e9c00afc1fb2e0245519d725b", "mode": "on", "allowed_modes": [ "on", "off" ] } }'.freeze
+SUCCESSFULL_WAF_RULE_GROUPS_UPDATE = '{ "success": true, "errors": [], "messages": [], "result": { "id": "de677e5818985db1285d0e80225f06e5", "name": "Project Honey Pot", "description": "Group designed to protect against IP addresses that are a threat and typically used to launch DDoS attacks", "rules_count": 10, "modified_rules_count": 2, "package_id": "a25a9a7e9c00afc1fb2e0245519d725b", "mode": "on", "allowed_modes": [ "on", "off" ] } }'.freeze
 
 # waf rules
 SUCCESSFULL_WAF_RULES_LIST = '{ "success": true, "errors": [], "messages": [], "result": [ { "id": "f939de3be84e66e757adcdcb87908023", "description": "SQL injection prevention for SELECT statements", "priority": 5, "group": { "id": "de677e5818985db1285d0e80225f06e5", "name": "Project Honey Pot" }, "package_id": "a25a9a7e9c00afc1fb2e0245519d725b", "allowed_modes": [ "on", "off" ], "mode": "on" } ], "result_info": { "page": 1, "per_page": 20, "count": 1, "total_count": 2000 } }'.freeze
 SUCCESSFULL_WAF_RULES_DETAIL = '{ "success": true, "errors": [], "messages": [], "result": { "id": "f939de3be84e66e757adcdcb87908023", "description": "SQL injection prevention for SELECT statements", "priority": 5, "group": { "id": "de677e5818985db1285d0e80225f06e5", "name": "Project Honey Pot" }, "package_id": "a25a9a7e9c00afc1fb2e0245519d725b", "allowed_modes": [ "on", "off" ], "mode": "on" } }'.freeze
 SUCCESSFULL_WAF_RULES_UPDATE = '{ "success": true, "errors": [], "messages": [], "result": { "id": "f939de3be84e66e757adcdcb87908023", "description": "SQL injection prevention for SELECT statements", "priority": 5, "group": { "id": "de677e5818985db1285d0e80225f06e5", "name": "Project Honey Pot" }, "package_id": "a25a9a7e9c00afc1fb2e0245519d725b", "allowed_modes": [ "on", "off" ], "mode": "on" } }'.freeze
 
+# certifiate packs
+SUCCESSFULL_CERT_PACK_LIST = '{ "success": true, "errors": [], "messages": [], "result": [ { "id": "3822ff90-ea29-44df-9e55-21300bb9419b", "type": "custom", "hosts": [ "example.com", "www.example.com", "foo.example.com" ], "certificates": [ { "id": "7e7b8deba8538af625850b7b2530034c", "hosts": [ "example.com" ], "issuer": "GlobalSign", "signature": "SHA256WithRSA", "status": "active", "bundle_method": "ubiquitous", "zone_id": "023e105f4ecef8ad9ca31a8372d0c353", "uploaded_on": "2014-01-01T05:20:00Z", "modified_on": "2014-01-01T05:20:00Z", "expires_on": "2016-01-01T05:20:00Z", "priority": 1 } ], "primary_certificate": "7e7b8deba8538af625850b7b2530034c" } ], "result_info": { "page": 1, "per_page": 20, "count": 1, "total_count": 2000 } }'.freeze
+SUCCESSFULL_CERT_PACK_ORDER = '{ "success": true, "errors": [], "messages": [], "result": { "id": "3822ff90-ea29-44df-9e55-21300bb9419b", "type": "custom", "hosts": [ "example.com", "www.example.com", "foo.example.com" ], "certificates": [ { "id": "7e7b8deba8538af625850b7b2530034c", "hosts": [ "example.com" ], "issuer": "GlobalSign", "signature": "SHA256WithRSA", "status": "active", "bundle_method": "ubiquitous", "zone_id": "023e105f4ecef8ad9ca31a8372d0c353", "uploaded_on": "2014-01-01T05:20:00Z", "modified_on": "2014-01-01T05:20:00Z", "expires_on": "2016-01-01T05:20:00Z", "priority": 1 } ], "primary_certificate": "7e7b8deba8538af625850b7b2530034c" } }'.freeze
+
+
 # analyze certificates
-SUCCESSFULL_CERT_ANALYZE = ' { "success": true, "errors": [], "messages": [], "result": { "hosts": [ "example.com" ], "signature_algorithm": "SHA256WithRSA", "expires_on": "2016-01-01T05:20:00Z" } }'.freeze
+SUCCESSFULL_CERT_ANALYZE = '{ "success": true, "errors": [], "messages": [], "result": { "hosts": [ "example.com" ], "signature_algorithm": "SHA256WithRSA", "expires_on": "2016-01-01T05:20:00Z" } }'.freeze
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# analyze certificates
+SUCCESSFULL_LOG_MESSAGE = '{"brandId":100,"flags":2,"hosterId":0,"ownerId":6867707,"rayId":"36527575c4556dcc","securityLevel":"high","timestamp":"2017-05-26T17:29:49.724999936Z","unstable":null,"zoneId":49800427,"zoneName":"foo.com","zonePlan":"enterprise","client":{"asNum":21880,"country":"us","deviceType":"desktop","ip":"192.168.1.1","ipClass":"noRecord","srcPort":55616,"sslCipher":"NONE","sslFlags":0,"sslProtocol":"none"},"clientRequest":{"accept":"*/*","body":null,"bodyBytes":0,"bytes":86,"cookies":null,"dnt":"unset","flags":0,"headers":[],"httpHost":"support.foo.com","httpMethod":"GET","httpProtocol":"HTTP/1.1","referer":"","sslConnectionId":"","uri":"/","userAgent":"curl/7.51.0","signature":""},"edge":{"bbResult":"0","cacheResponseTime":0,"colo":4,"enabledFlags":0,"endTimestamp":"2017-05-26T17:29:49.733999872Z","flServerIp":"104.17.84.127","flServerName":"4f247","flServerPort":80,"pathingOp":"ban","pathingSrc":"user","pathingStatus":"rateLimit","startTimestamp":"2017-05-26T17:29:49.724999936Z","usedFlags":0,"rateLimit":{"ruleId":78776,"mitigationId":"AFq1zr89mfJtegf89OMQ0Q==","sourceId":"192.161.158.18","processedRules":[{"ruleId":78776,"ruleSrc":"user","status":"ban"}]},"dnsResponse":{"rcode":0,"error":"ok","cached":true,"duration":0,"errorMsg":"","overrideError":false}},"edgeResponse":{"bodyBytes":3304,"bytes":3731,"compressionRatio":0,"contentType":"text/html; charset=UTF-8","headers":null,"setCookies":null,"status":429}}'.freeze

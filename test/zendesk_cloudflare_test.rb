@@ -597,6 +597,8 @@ describe CloudflareClient do
         to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
       stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames?direction=desc&id=12345&order=ssl&page=1&per_page=50&ssl=0').
         to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames?direction=desc&order=ssl&page=1&per_page=50&ssl=0').
+        to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
       stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames/someid').
         to_return(response_body(SUCCESSFULL_CUSTOM_HOSTNAME_DETAIL))
       stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_hostnames/foo').
@@ -626,13 +628,15 @@ describe CloudflareClient do
       e.message.must_equal('missing keyword: zone_id')
       e = assert_raises(RuntimeError) { client.custom_hostnames(zone_id: nil) }
       e.message.must_equal('zone_id required')
-      e = assert_raises(RuntimeError) { client.custom_hostnames(zone_id: 'abc1234') }
-      e.message.must_equal('hostname or id requried')
+      e = assert_raises(RuntimeError) { client.custom_hostnames(zone_id: 'abc1234', hostname: 'foo', id: 'bar') }
+      e.message.must_equal('cannot use hostname and id')
     end
     it "lists custom_hostnames" do
       client.custom_hostnames(zone_id: 'abc1234', hostname: 'foobar').
         must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
       client.custom_hostnames(zone_id: 'abc1234', id: '12345').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
+      client.custom_hostnames(zone_id: 'abc1234').
         must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_LIST))
     end
     it "fails to get details for a custom hostname" do
@@ -649,7 +653,7 @@ describe CloudflareClient do
     end
     it "fails to update a custom_hostname" do
       e = assert_raises(ArgumentError) { client.update_custom_hostname }
-      e.message.must_equal('missing keywords: zone_id, id, method, type')
+      e.message.must_equal('missing keywords: zone_id, id')
       e = assert_raises(RuntimeError) { client.update_custom_hostname(zone_id: nil, id: 'foo', method: 'bar', type: 'cat') }
       e.message.must_equal('zone_id required')
       e = assert_raises(RuntimeError) { client.update_custom_hostname(zone_id: 'abc1234', id: nil, method: 'bar', type: 'cat') }
@@ -658,9 +662,13 @@ describe CloudflareClient do
       e.message.must_equal('method must be one of ["http", "email", "cname"]')
       e = assert_raises(RuntimeError) { client.update_custom_hostname(zone_id: 'abc1234', id: 'foo', method: 'http', type: 'cat') }
       e.message.must_equal('type must be one of ["read only", "dv"]')
+      e = assert_raises(RuntimeError) { client.update_custom_hostname(zone_id: 'abc1234', id: 'foo', method: 'http', type: 'dv', custom_metadata: 'bob') }
+      e.message.must_equal('custom_metadata must be an object')
     end
     it "udpates a custom hostname" do
       client.update_custom_hostname(zone_id: 'abc1234', id: 'foo', method: 'http', type: 'dv').
+        must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_UPDATE))
+      client.update_custom_hostname(zone_id: 'abc1234', id: 'foo', method: 'http', type: 'dv', custom_metadata: {origin_override: 'footothebar'}).
         must_equal(JSON.parse(SUCCESSFULL_CUSTOM_HOSTNAME_UPDATE))
     end
     it "fails to delete a custom_hostname" do
@@ -1233,6 +1241,90 @@ describe CloudflareClient do
     it "analyzies a certificate" do
       client.analyze_certificate(zone_id: 'abc1234', certificate: 'bar', bundle_method: 'ubiquitous').
         must_equal(JSON.parse(SUCCESSFULL_CERT_ANALYZE))
+    end
+  end
+
+  describe "certificate packs" do
+    before do
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/certificate_packs').
+        to_return(response_body(SUCCESSFULL_CERT_PACK_LIST))
+      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/certificate_packs').
+        to_return(response_body(SUCCESSFULL_CERT_PACK_ORDER))
+    end
+
+    it "fails to list certificate packs " do
+      e = assert_raises(ArgumentError) { client.certificate_packs }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.certificate_packs(zone_id: nil) }
+      e.message.must_equal('zone_id required')
+    end
+    it "lists certificate packs" do
+      client.certificate_packs(zone_id: 'abc1234').
+        must_equal(JSON.parse(SUCCESSFULL_CERT_PACK_LIST))
+    end
+    it "fails to order certificate packs" do
+      e = assert_raises(ArgumentError) { client.order_certificate_packs }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.order_certificate_packs(zone_id: 'abc1234', hosts: 'foo') }
+      e.message.must_equal('hosts must be an array of hostnames')
+    end
+    it "orders certificate packs" do
+#      client.order_certificate_packs(zone_id: 'abc1234', hosts: ['foobar.com']).
+#        must_equal(JSON.parse(SUCCESSFULL_CERT_PACK_ORDER))
+    end
+  end
+
+  describe "logs api" do
+    let(:valid_start_time) { 1495825365 }
+    let(:valid_end_time) { 1495825610 }
+    before do
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/logs/requests?start=1495825365').
+        to_return(response_body(SUCCESSFULL_LOG_MESSAGE))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/logs/requests?end=1495825610&start=1495825365').
+        to_return(response_body(SUCCESSFULL_LOG_MESSAGE))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/logs/requests/somerayid').
+        to_return(response_body(SUCCESSFULL_LOG_MESSAGE))
+      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/logs/requests/foo?count=5&end=1495825610&start_id=foo').
+        to_return(response_body(SUCCESSFULL_LOG_MESSAGE))
+    end
+
+    it "fails to get logs via timestamps" do
+      e = assert_raises(ArgumentError) { client.get_logs_by_time }
+      e.message.must_equal('missing keywords: zone_id, start_time')
+      e = assert_raises(RuntimeError) { client.get_logs_by_time(zone_id: nil, start_time: valid_start_time) }
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.get_logs_by_time(zone_id: 'abc1234', start_time: nil) }
+      e.message.must_equal('start_time required')
+    end
+    it "fails with invalid timestamps" do
+      e = assert_raises(RuntimeError) { client.get_logs_by_time(zone_id: 'abc1234', start_time: 'bob') }
+      e.message.must_equal('start_time must be a valid unix timestamp')
+      e = assert_raises(RuntimeError) { client.get_logs_by_time(zone_id: 'abc1234', start_time: valid_start_time, end_time: 'cat') }
+      e.message.must_equal('end_time must be a valid unix timestamp')
+    end
+    it "get's logs via timestamps" do
+      # note, these are raw not json encoded
+      client.get_logs_by_time(zone_id: 'abc1234', start_time: valid_start_time).
+        must_equal(SUCCESSFULL_LOG_MESSAGE)
+      client.get_logs_by_time(zone_id: 'abc1234', start_time: valid_start_time, end_time: valid_end_time).
+        must_equal(SUCCESSFULL_LOG_MESSAGE)
+    end
+    it "fails to get a log by rayid" do
+      e = assert_raises(ArgumentError) { client.get_log }
+      e.message.must_equal('missing keywords: zone_id, ray_id')
+    end
+    it "get's a log via rayid" do
+      client.get_log(zone_id: 'abc1234', ray_id: 'somerayid').must_equal(SUCCESSFULL_LOG_MESSAGE)
+    end
+    it "fails to get logs since a given ray_id" do
+      e = assert_raises(ArgumentError) { client.get_logs_since }
+      e.message.must_equal('missing keywords: zone_id, ray_id')
+      e = assert_raises(RuntimeError) { client.get_logs_since(zone_id: 'abc1234', ray_id: 'foo', end_time: 'bob') }
+      e.message.must_equal('end time must be a valid unix timestamp')
+    end
+    it "gets logs since a given ray_id" do
+      client.get_logs_since(zone_id: 'abc1234', ray_id: 'foo', end_time: valid_end_time, count: 5).
+        must_equal(SUCCESSFULL_LOG_MESSAGE)
     end
   end
 end

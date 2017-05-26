@@ -492,12 +492,15 @@ class CloudflareClient
   # list custom_hostnames
   def custom_hostnames(zone_id:, hostname: nil, id: nil, page: 1, per_page: 50, order: "ssl", direction: "desc", ssl: 0)
     id_check("zone_id", zone_id)
-    raise("hostname or id requried") if hostname.nil? && id.nil?
+    if (!hostname.nil? && !id.nil?)
+      raise("cannot use hostname and id")
+    end
     raise("order must be ssl or ssl_status") if (order != "ssl" && order != "ssl_status")
     raise("direction must be either asc or desc)") if (direction != 'asc' && direction != 'desc')
     raise("ssl must be either 0 or 1") if (ssl != 0 && ssl != 1)
     params = {page: page, per_page: per_page, order: order, direction: direction, ssl: ssl}
-    hostname.nil? ? params[:id] = id : params[:hostname] = hostname
+    params[:hostname] = hostname unless hostname.nil?
+    params[:id] = id unless id.nil?
     cf_get(path: "/zones/#{zone_id}/custom_hostnames", params: params)
   end
 
@@ -511,14 +514,21 @@ class CloudflareClient
 
   ##
   # update a custom hosntame
-  def update_custom_hostname(zone_id:, id:, method:, type:)
+  def update_custom_hostname(zone_id:, id:, method: nil, type: nil, custom_metadata: nil)
     valid_methods = %w[http email cname]
     valid_types = ['read only', 'dv']
     id_check('zone_id', zone_id)
     id_check('id', id)
-    raise("method must be one of #{valid_methods.flatten}") unless valid_methods.include?(method)
-    raise("type must be one of #{valid_types.flatten}") unless valid_types.include?(type)
-    data = {ssl: {method: method, type: type}}
+    data = {}
+    unless (type.nil? && method.nil?)
+      raise("method must be one of #{valid_methods.flatten}") unless valid_methods.include?(method)
+      raise("type must be one of #{valid_types.flatten}") unless valid_types.include?(type)
+      data[:ssl] = {method: method, type: type}
+    end
+    unless custom_metadata.nil?
+      raise("custom_metadata must be an object") unless custom_metadata.is_a?(Hash)
+      data[:custom_metadata] = custom_metadata
+    end
     cf_patch(path: "/zones/#{zone_id}/custom_hostnames/#{id}", data: data)
   end
 
@@ -919,7 +929,28 @@ class CloudflareClient
 
 
 
-  #TODO: certificate_packs
+  ##
+  # certificate_packs
+
+  ##
+  # list all certificate packs
+  def certificate_packs(zone_id:)
+    id_check('zone_id', zone_id)
+    cf_get(path: "/zones/#{zone_id}/ssl/certificate_packs")
+  end
+
+  ##
+  # re-order certificate packs
+  def order_certificate_packs(zone_id:, hosts: nil)
+    unless (hosts.nil?)
+      raise("hosts must be an array of hostnames") if (!hosts.is_a?(Array) || hosts.empty?)
+    end
+    data = {host: [hosts]}
+    # TODO: test against api
+    cf_post(path: "/zones/#{zone_id}/sl/certificate_packs", data: data)
+  end
+
+
   #TODO: ssl_verification
   #TODO: zone_subscription
   #TODO: organizations
@@ -940,8 +971,56 @@ class CloudflareClient
   #TODO: org load balancer monitors
   #TODO: org load balancer pools
   #TODO: load balancers
+  #
+
+  ##
+  # Logs. This isn't part of the documented api, but is needed functionality
+
+  #FIXME: make sure this covers all the logging cases
+
+  ##
+  # get logs using only timestamps
+  def get_logs_by_time(zone_id:, start_time:, end_time: nil, count: nil)
+    id_check('zone_id', zone_id)
+    id_check('start_time', start_time)
+    raise('start_time must be a valid unix timestamp') unless valid_timestamp?(start_time)
+    params = {start: start_time}
+    unless end_time.nil?
+      raise('end_time must be a valid unix timestamp') unless valid_timestamp?(end_time)
+      params[:end] = end_time
+    end
+    params[:count] = count unless count.nil?
+    cf_get(path: "/zones/#{zone_id}/logs/requests", params: params, raw: true)
+  end
+
+  ##
+  # get a single log entry by it's ray_id
+  def get_log(zone_id:, ray_id:)
+    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}", raw: true)
+  end
+
+  ##
+  # get all logs after a given ray_id.  end_time must be a valid unix timestamp
+  def get_logs_since(zone_id:, ray_id:, end_time: nil, count: nil)
+    params = {start_id: ray_id}
+    unless end_time.nil?
+      raise('end time must be a valid unix timestamp') unless valid_timestamp?(end_time)
+      params[:end] = end_time
+    end
+    params[:count] = count unless count.nil?
+    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}", params: params, raw: true)
+  end
 
   private
+
+  def valid_timestamp?(ts)
+    begin
+      Time.at(ts).to_datetime
+    rescue TypeError
+      return false
+    end
+    true
+  end
 
   def bundle_method_check(bundle_method)
     unless VALID_BUNDLE_METHODS.include?(bundle_method)
@@ -995,13 +1074,13 @@ class CloudflareClient
     JSON.parse(result.body)
   end
 
-  def cf_get(path: nil, params: {})
+  def cf_get(path: nil, params: {}, raw: nil)
     result = @cf_client.get do |request|
       request.url(API_BASE + path) unless path.nil?
       request.params = params unless params.nil?
     end
     raise(JSON.parse(result.body).dig('errors').first.to_s) unless result.status == 200
-    JSON.parse(result.body)
+    raw.nil? ? JSON.parse(result.body) : result.body
   end
 
   def cf_put(path: nil, data: nil)
@@ -1014,11 +1093,12 @@ class CloudflareClient
   end
 
   def cf_patch(path: nil, data: {})
+    valid_response_codes = [200, 202]
     result = @cf_client.patch do |request|
       request.url(API_BASE + path) unless path.nil?
       request.body = data.to_json unless data.empty?
     end
-    raise(JSON.parse(result.body).dig('errors').first.to_s) unless result.status == 200
+    raise(JSON.parse(result.body).dig('errors').first.to_s) unless valid_response_codes.include?(result.status)
     JSON.parse(result.body)
   end
 
