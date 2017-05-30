@@ -1553,6 +1553,56 @@ describe CloudflareClient do
     end
   end
 
+  describe "organzation level firewall rules" do
+    before do
+    stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/firewall/access_rules/rules?configuration_target=ip&configuration_value=IP&direction=asc&match=all&mode=block&order=mode&page=1&per_page=50").
+      to_return(response_body(SUCCESSFUL_ORG_FIREWALL_RULES_LIST))
+    stub_request(:post, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/firewall/access_rules/rules").
+      to_return(response_body(SUCCESSFUL_ORG_FIREWALL_RULES_CREATE))
+    stub_request(:delete, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/firewall/access_rules/rules/1234").
+      to_return(response_body(SUCCESSFUL_ORG_FIREWALL_RULES_DELETE))
+    end
+
+    it "fails to list organization level firwall rules" do
+      e = assert_raises(ArgumentError) { client.org_level_firewall_rules }
+      e.message.must_equal('missing keyword: org_id')
+      e = assert_raises(RuntimeError) { client.org_level_firewall_rules(org_id: nil) }
+      e.message.must_equal("org_id required")
+    end
+    it "lists organization level firewall rules" do
+      client.org_level_firewall_rules(org_id: valid_org_id, mode: 'block', match: 'all', configuration_value: 'IP', order: "mode", configuration_target: 'ip', direction: 'asc').
+        must_equal(JSON.parse(SUCCESSFUL_ORG_FIREWALL_RULES_LIST))
+    end
+    it "fails to create an org level access rule" do
+      e = assert_raises(ArgumentError) { client.create_org_access_rule }
+      e.message.must_equal('missing keyword: org_id')
+      e = assert_raises(RuntimeError) { client.create_org_access_rule(org_id: nil, mode: nil, configuration: nil) }
+      e.message.must_equal('org_id required')
+      e = assert_raises(RuntimeError) { client.create_org_access_rule(org_id: valid_org_id, mode: 'bob', configuration: nil) }
+      e.message.must_equal('mode must be one of block, challenge, whitelist')
+      e = assert_raises(RuntimeError) { client.create_org_access_rule(org_id: valid_org_id, mode: 'block', configuration: 'foo') }
+      e.message.must_equal('configuration must be a hash')
+      e = assert_raises(RuntimeError) { client.create_org_access_rule(org_id: valid_org_id, mode: 'block', configuration: {}) }
+      e.message.must_equal('configuration cannot be empty')
+    end
+    it "creates an org level access rules" do
+      client.create_org_access_rule(org_id: valid_org_id, mode: 'block', configuration: {foo: 'bar'}).
+        must_equal(JSON.parse(SUCCESSFUL_ORG_FIREWALL_RULES_CREATE))
+    end
+    it "fails to delete an org level access rule" do
+      e = assert_raises(ArgumentError) { client.delete_org_access_rule }
+      e.message.must_equal('missing keywords: org_id, id')
+      e = assert_raises(RuntimeError) { client.delete_org_access_rule(org_id: nil, id: nil) }
+      e.message.must_equal('org_id required')
+      e = assert_raises(RuntimeError) { client.delete_org_access_rule(org_id: valid_org_id, id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "deletes an org level access rule" do
+      client.delete_org_access_rule(org_id: valid_org_id, id: 1234).
+        must_equal(JSON.parse(SUCCESSFUL_ORG_FIREWALL_RULES_DELETE))
+    end
+  end
+
 
 
 

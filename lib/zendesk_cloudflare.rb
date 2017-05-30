@@ -1138,9 +1138,56 @@ class CloudflareClient
     cf_get(path: "/organizations/#{org_id}/roles/#{id}")
   end
 
+  ##
+  # org level firewall rules
+  #
+
+  ##
+  # list access rules
+  def org_level_firewall_rules(org_id:, notes: nil, mode: nil, match: 'all', configuration_value: nil, order: nil, page: 1, per_page: 50, configuration_target: nil, direction: "desc")
+    id_check('org_id', org_id)
+    params = {page: page, per_page: per_page}
+    unless mode.nil?
+      params[:mode] = mode if %w[block challenge whitelist].include?(mode)
+    end
+    params[:match] = match if (match == "all" || match == "any")
+    params[:configuration_value] = configuration_value if ['IP', 'range', 'country_code'].include?(configuration_value)
+    #FIXME: check this against the api
+    params[:order] = order if %w[configuration_target configuration_value mode].include?(order)
+    params[:configuration_target] = configuration_target if %w[ip range country ].include?(configuration_target)
+    params[:direction] = direction if (direction == 'asc' || direction == 'desc')
+    cf_get(path: "/organizations/#{org_id}/firewall/access_rules/rules", params: params)
+  end
+
+  ##
+  # list access rules
+  def create_org_access_rule(org_id:, mode: nil, configuration: nil, notes: nil)
+    id_check('org_id', org_id)
+    unless configuration.nil?
+      raise("configuration must be a hash") unless configuration.is_a?(Hash)
+      raise("configuration cannot be empty") if configuration.empty?
+    end
+    unless mode.nil?
+      raise "mode must be one of block, challenge, whitelist" unless %w[block challenge whitelist].include?(mode)
+    end
+    #TODO: validate config objects?
+    data = {}
+    data[:mode] = mode unless mode.nil?
+    data[:configuration] = configuration unless configuration.nil?
+    data[:notes] = notes unless notes.nil?
+    cf_post(path: "/organizations/#{org_id}/firewall/access_rules/rules", data: data)
+  end
+
+  ##
+  # delete org access rule
+  def delete_org_access_rule(org_id:, id:)
+    id_check('org_id', org_id)
+    id_check('id', id)
+    cf_delete(path: "/organizations/#{org_id}/firewall/access_rules/rules/#{id}")
+  end
 
 
-  #TODO: org level firewall rules
+
   #TODO: org railgun
   #TODO: cloudflare CA
   #TODO: virtual DNS users
