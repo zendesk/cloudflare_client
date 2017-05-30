@@ -976,9 +976,65 @@ class CloudflareClient
 
 
 
+  ##
+  #zone_subscription
+
+  ##
+  # get a zone subscription
+  # FIXME: seems to throw a 404
+  def zone_subscription(zone_id:)
+    id_check('zone_id', zone_id)
+    cf_get(path: "/zones/#{zone_id}/subscription")
+  end
+
+  ##
+  # create a zone subscriptions
+  # FIXME: api talks about lots of read only constrains
+  def create_zone_subscription(zone_id:, component_values: [], rate_plan: {}, zone: {}, state: nil, id: nil, frequency: nil)
+    id_check('zone_id', zone_id)
+    possible_states = %w[Trial Provisioned Paid AwaitingPayment Cancelled Failed Expired]
+    possible_frequencies = %w[weekly monthly quarterly yearly]
+    unless state.nil?
+      raise ("state must be one of #{possible_states.flatten}") unless possible_states.include?(state.capitalize)
+    end
+    unless frequency.nil?
+      raise ("frequency must be one of #{possible_frequencies.flatten}") unless possible_frequencies.include?(frequency)
+    end
+    data = {zone: zone, state: state, currency: 'USD', frequency: frequency}
+    cf_post(path: "/zones/#{zone_id}/subscription", data: data)
+  end
+
+  ##
+  # update a zone subscription
+  def update_zone_subscription(zone_id: )
+    #FIXME: more read-only questions abound
+  end
+
+
+  ##
+  #organizations
   #
-  #TODO: zone_subscription
-  #TODO: organizations
+
+  ##
+  # get an org's details
+  def organization(id:)
+    id_check('id', id)
+    cf_get(path: "/organizations/#{id}")
+  end
+
+  ##
+  # update a given org (only supports name)
+  def update_organization(id:, name: nil)
+    id_check('id', id)
+    data = {name: name} unless name.nil?
+    cf_patch(path: "/organizations/#{id}", data: data)
+  end
+
+
+
+
+
+  #
   #TODO: org members
   #TODO: org invites
   #TODO: org roles

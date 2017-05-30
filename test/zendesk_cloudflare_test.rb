@@ -1288,27 +1288,94 @@ describe CloudflareClient do
       client.update_certificate_pack(zone_id: 'abc1234', id: 'foo', hosts: ['footothebar']).
         must_equal(JSON.parse(SUCCESSFULL_CERT_PACK_LIST))
     end
+  end
 
-    describe "zone verification" do
-      before do
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/verification').
-        to_return(response_body(SUCCESSFULL_VERIFY_SSL))
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/verification?retry=true').
-        to_return(response_body(SUCCESSFULL_VERIFY_SSL))
-      end
+  describe "zone verification" do
+    before do
+    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/verification').
+      to_return(response_body(SUCCESSFULL_VERIFY_SSL))
+    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/verification?retry=true').
+      to_return(response_body(SUCCESSFULL_VERIFY_SSL))
+    end
 
-      it "fails to verify a zone" do
-        e = assert_raises(ArgumentError) { client.ssl_verification }
-        e.message.must_equal('missing keyword: zone_id')
-        e = assert_raises(RuntimeError) { client.ssl_verification(zone_id: nil)}
-        e.message.must_equal('zone_id required')
-      end
-      it "verifies a zone" do
-        client.ssl_verification(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_VERIFY_SSL))
-        client.ssl_verification(zone_id: 'abc1234', retry_verification: true).must_equal(JSON.parse(SUCCESSFULL_VERIFY_SSL))
-      end
+    it "fails to verify a zone" do
+      e = assert_raises(ArgumentError) { client.ssl_verification }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.ssl_verification(zone_id: nil)}
+      e.message.must_equal('zone_id required')
+    end
+    it "verifies a zone" do
+      client.ssl_verification(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_VERIFY_SSL))
+      client.ssl_verification(zone_id: 'abc1234', retry_verification: true).must_equal(JSON.parse(SUCCESSFULL_VERIFY_SSL))
     end
   end
+
+  describe "zone subscriptions" do
+    before do
+    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/subscription').
+      to_return(response_body(SUCCESSFULL_ZONE_SUBSCRIPTION))
+    stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/subscription').
+      to_return(response_body(SUCCESSFULL_ZONE_SUBSCRIPTION_CREATE))
+    end
+    it "fails to list zone subscriptions" do
+      e = assert_raises(ArgumentError) { client.zone_subscription }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.zone_subscription(zone_id: nil)}
+      e.message.must_equal('zone_id required')
+    end
+    it "gets a zone subscription" do
+      client.zone_subscription(zone_id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_ZONE_SUBSCRIPTION))
+    end
+    it "fails to create a zone subscription" do
+      e = assert_raises(ArgumentError) { client.create_zone_subscription }
+      e.message.must_equal('missing keyword: zone_id')
+      e = assert_raises(RuntimeError) { client.create_zone_subscription(zone_id: nil)}
+      e.message.must_equal('zone_id required')
+      e = assert_raises(RuntimeError) { client.create_zone_subscription(zone_id: 'abc1234', state: 'foo')}
+      e.message.must_equal('state must be one of ["Trial", "Provisioned", "Paid", "AwaitingPayment", "Cancelled", "Failed", "Expired"]')
+      e = assert_raises(RuntimeError) { client.create_zone_subscription(zone_id: 'abc1234', state: 'Failed', frequency: 'foo')}
+      e.message.must_equal('frequency must be one of ["weekly", "monthly", "quarterly", "yearly"]')
+    end
+    it "creates a zone subscription" do
+      client.create_zone_subscription(zone_id: 'abc1234', state: 'Failed', frequency: 'weekly').
+        must_equal(JSON.parse(SUCCESSFULL_ZONE_SUBSCRIPTION_CREATE))
+    end
+  end
+
+  describe "organizations" do
+    before do
+    stub_request(:get, 'https://api.cloudflare.com/client/v4/organizations/abc1234').
+      to_return(response_body(SUCCESSFULL_ORG_LIST))
+    stub_request(:patch, 'https://api.cloudflare.com/client/v4/organizations/abc1234').
+      to_return(response_body(SUCCESSFULL_ORG_UPDATE))
+    end
+
+    it "fails to get the details of an org" do
+      e = assert_raises(ArgumentError) { client.organization }
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.organization(id: nil)}
+      e.message.must_equal('id required')
+    end
+    it "get an org's details" do
+      client.organization(id: 'abc1234').must_equal(JSON.parse(SUCCESSFULL_ORG_LIST))
+    end
+    it "fails to update an org" do
+      e = assert_raises(ArgumentError) { client.update_organization }
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.update_organization(id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "updates an org" do
+      client.update_organization(id: 'abc1234', name: 'foobar.com').
+        must_equal(JSON.parse(SUCCESSFULL_ORG_UPDATE))
+    end
+
+  end
+
+
+
+
+
 
   describe "logs api" do
     let(:valid_start_time) { 1495825365 }
