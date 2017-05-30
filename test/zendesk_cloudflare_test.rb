@@ -1522,6 +1522,37 @@ describe CloudflareClient do
     end
   end
 
+  describe "organization roles" do
+    before do
+    stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/roles").
+      to_return(response_body(SUCCESSFUL_ORG_ROLES))
+    stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/roles/1234").
+      to_return(response_body(SUCCESSFUL_ORG_ROLE_DETAIL))
+    end
+
+    it "fails to list organization roles" do
+      e = assert_raises(ArgumentError) { client.organization_roles }
+      e.message.must_equal("missing keyword: org_id")
+      e = assert_raises(RuntimeError) { client.organization_roles(org_id: nil) }
+      e.message.must_equal('org_id required')
+    end
+    it "lists organization roles" do
+      client.organization_roles(org_id: valid_org_id).must_equal(JSON.parse(SUCCESSFUL_ORG_ROLES))
+    end
+    it "fails to get details of an organization role" do
+      e = assert_raises(ArgumentError) { client.organization_role }
+      e.message.must_equal("missing keywords: org_id, id")
+      e = assert_raises(RuntimeError) { client.organization_role(org_id: nil, id: nil) }
+      e.message.must_equal("org_id required")
+      e = assert_raises(RuntimeError) { client.organization_role(org_id: valid_org_id, id: nil) }
+      e.message.must_equal("id required")
+    end
+    it "gets details of an organization role" do
+      client.organization_role(org_id: valid_org_id, id: 1234).
+        must_equal(JSON.parse(SUCCESSFUL_ORG_ROLE_DETAIL))
+    end
+  end
+
 
 
 
