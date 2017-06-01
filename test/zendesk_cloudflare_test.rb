@@ -1603,6 +1603,97 @@ describe CloudflareClient do
     end
   end
 
+  describe "organization railguns" do
+    before do
+    stub_request(:post, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/railguns").
+      to_return(response_body(SUCCESSFUL_ORG_RAILGUN_CREATE))
+    stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/railguns?page=1&per_page=50&direction=desc").
+      to_return(response_body(SUCCESSFUL_ORG_RAILGUN_LIST))
+    stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/railguns/foobar").
+      to_return(response_body(SUCCESSFUL_ORG_RAILGUN_DETAILS))
+    stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/railguns/foobar/zones").
+      to_return(response_body(SUCCESSFUL_ORG_RAILGUN_ZONES))
+    stub_request(:patch, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/railguns/foobar").
+      to_return(response_body(SUCCESSFUL_ORG_RAILGUN_ENABLE))
+    stub_request(:delete, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/railguns/foobar").
+      to_return(response_body(SUCCESSFUL_ORG_RAILGUN_DELETE))
+    end
+
+    it "fails to create an org railgun" do
+      e = assert_raises(ArgumentError) { client.create_org_railguns }
+      e.message.must_equal('missing keywords: org_id, name')
+      e = assert_raises(RuntimeError) { client.create_org_railguns(org_id: nil, name: 'foo') }
+      e.message.must_equal('org_id required')
+      e = assert_raises(RuntimeError) { client.create_org_railguns(org_id: valid_org_id, name: nil) }
+      e.message.must_equal('name required')
+    end
+    it "creates an org railgun" do
+      client.create_org_railguns(org_id: valid_org_id, name: "some_name").
+        must_equal(JSON.parse(SUCCESSFUL_ORG_RAILGUN_CREATE))
+    end
+    it "fails to list an orgs railguns" do
+      e = assert_raises(ArgumentError) { client.org_railguns }
+      e.message.must_equal('missing keyword: org_id')
+      e = assert_raises(RuntimeError) { client.org_railguns(org_id: nil) }
+      e.message.must_equal('org_id required')
+      e = assert_raises(RuntimeError) { client.org_railguns(org_id: valid_org_id, direction: 'foobar') }
+      e.message.must_equal('direction must be either asc or desc')
+    end
+    it "lists an orgs railguns" do
+      client.org_railguns(org_id: valid_org_id).must_equal(JSON.parse(SUCCESSFUL_ORG_RAILGUN_LIST))
+    end
+    it "fails to get details for a railgun" do
+      e = assert_raises(ArgumentError) { client.org_railgun }
+      e.message.must_equal('missing keywords: org_id, id')
+      e = assert_raises(RuntimeError) { client.org_railgun(org_id: nil, id: 'foo') }
+      e.message.must_equal('org_id required')
+      e = assert_raises(RuntimeError) { client.org_railgun(org_id: valid_org_id, id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "gets details for an org railgun" do
+      client.org_railgun(org_id: valid_org_id, id: 'foobar').must_equal(JSON.parse(SUCCESSFUL_ORG_RAILGUN_DETAILS))
+    end
+    it "fails to get zones connected to an org railgun" do
+      e = assert_raises(ArgumentError) { client.org_railgun_connected_zones }
+      e.message.must_equal('missing keywords: org_id, id')
+      e = assert_raises(RuntimeError) { client.org_railgun_connected_zones(org_id: nil, id: 'foo') }
+      e.message.must_equal('org_id required')
+      e = assert_raises(RuntimeError) { client.org_railgun_connected_zones(org_id: valid_org_id, id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "gets zones connected to an org railgun" do
+      client.org_railgun_connected_zones(org_id: valid_org_id, id: 'foobar').
+        must_equal(JSON.parse(SUCCESSFUL_ORG_RAILGUN_ZONES))
+    end
+    it "fails to enable or disable a railgun" do
+      e = assert_raises(ArgumentError) { client.enable_org_railgun }
+      e.message.must_equal('missing keywords: org_id, id, enabled')
+      e = assert_raises(RuntimeError) { client.enable_org_railgun(org_id: nil, id: 'foobar', enabled: true) }
+      e.message.must_equal('org_id required')
+      e = assert_raises(RuntimeError) { client.enable_org_railgun(org_id: valid_org_id, id: nil, enabled: true) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.enable_org_railgun(org_id: valid_org_id, id: 'foobar', enabled: nil) }
+      e.message.must_equal('enabled required')
+      e = assert_raises(RuntimeError) { client.enable_org_railgun(org_id: valid_org_id, id: 'foobar', enabled: 'bob') }
+      e.message.must_equal('enabled must be true or false')
+    end
+    it "enables or disables a railgun" do
+      client.enable_org_railgun(org_id: valid_org_id, id: 'foobar', enabled: true).
+        must_equal(JSON.parse(SUCCESSFUL_ORG_RAILGUN_ENABLE))
+    end
+    it "fails to delete an org railgun" do
+      e = assert_raises(ArgumentError) { client.delete_org_railgun }
+      e.message.must_equal('missing keywords: org_id, id')
+      e = assert_raises(RuntimeError) { client.delete_org_railgun(org_id: nil, id: 'foobar') }
+      e.message.must_equal('org_id required')
+      e = assert_raises(RuntimeError) { client.delete_org_railgun(org_id: valid_org_id, id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "deltes an org railgun" do
+      client.delete_org_railgun(org_id: valid_org_id, id: 'foobar').
+        must_equal(JSON.parse(SUCCESSFUL_ORG_RAILGUN_DELETE))
+    end
+  end
 
 
 

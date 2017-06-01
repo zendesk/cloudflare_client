@@ -1186,9 +1186,66 @@ class CloudflareClient
     cf_delete(path: "/organizations/#{org_id}/firewall/access_rules/rules/#{id}")
   end
 
+  ##
+  # org railgun
+
+  ##
+  # list railguns
+  def create_org_railguns(org_id:, name:)
+    id_check('org_id', org_id)
+    id_check('name', name)
+    data = {name: name}
+    cf_post(path: "/organizations/#{org_id}/railguns", data: data)
+  end
+
+  ##
+  # list railguns
+  def org_railguns(org_id:, page: 1, per_page: 50, direction: 'desc')
+    id_check('org_id', org_id)
+    params = {page: page, per_page: per_page, direction: direction}
+    raise("direction must be either asc or desc") unless %w[asc desc].include?(direction)
+    cf_get(path: "/organizations/#{org_id}/railguns", params: params)
+  end
+
+  ##
+  # list railgun details
+  def org_railgun(org_id:, id:)
+    id_check('org_id', org_id)
+    id_check('id', id)
+    cf_get(path: "/organizations/#{org_id}/railguns/#{id}")
+  end
+
+  ##
+  # get zones connected to a given railgun
+  def org_railgun_connected_zones(org_id:, id:)
+    id_check('org_id', org_id)
+    id_check('id', id)
+    cf_get(path: "/organizations/#{org_id}/railguns/#{id}/zones")
+  end
+
+  ##
+  # enable or disable a railgun
+  def enable_org_railgun(org_id:, id:, enabled:)
+    id_check('org_id', org_id)
+    id_check('id', id)
+    id_check('enabled', enabled)
+    raise ('enabled must be true or false') unless (enabled == true || enabled == false)
+    cf_patch(path: "/organizations/#{org_id}/railguns/#{id}", data: {enabled: enabled})
+  end
+
+  ##
+  # delete an org railgun
+  def delete_org_railgun(org_id:, id:)
+    id_check('org_id', org_id)
+    id_check('id', id)
+    cf_delete(path: "/organizations/#{org_id}/railguns/#{id}")
+  end
 
 
-  #TODO: org railgun
+
+
+
+
   #TODO: cloudflare CA
   #TODO: virtual DNS users
   #TODO: virtual DNS org
