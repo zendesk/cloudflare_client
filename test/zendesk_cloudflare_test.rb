@@ -1310,7 +1310,8 @@ describe CloudflareClient do
     end
     it "verifies a zone" do
       client.ssl_verification(zone_id: valid_zone_id).must_equal(JSON.parse(SUCCESSFULL_VERIFY_SSL))
-      client.ssl_verification(zone_id: valid_zone_id, retry_verification: true).must_equal(JSON.parse(SUCCESSFULL_VERIFY_SSL))
+      client.ssl_verification(zone_id: valid_zone_id, retry_verification: true).
+        must_equal(JSON.parse(SUCCESSFULL_VERIFY_SSL))
     end
   end
 
@@ -1693,6 +1694,58 @@ describe CloudflareClient do
       client.delete_org_railgun(org_id: valid_org_id, id: 'foobar').
         must_equal(JSON.parse(SUCCESSFUL_ORG_RAILGUN_DELETE))
     end
+  end
+
+  describe "cloudflare CA" do
+    before do
+    stub_request(:get, "https://api.cloudflare.com/client/v4/certificates").
+      to_return(response_body(SUCCESSFUL_CERTS))
+    stub_request(:post, "https://api.cloudflare.com/client/v4/certificates").
+      to_return(response_body(SUCCESSFUL_CERTS_CREATE))
+    stub_request(:get, "https://api.cloudflare.com/client/v4/certificates/somecertid").
+      to_return(response_body(SUCCESSFUL_CERTS_DETAILS))
+    stub_request(:delete, "https://api.cloudflare.com/client/v4/certificates/somecertid").
+      to_return(response_body(SUCCESSFUL_CERTS_REVOKE))
+    end
+
+    it "lists cloudflare certs" do
+      client.certificates().must_equal(JSON.parse(SUCCESSFUL_CERTS))
+    end
+    it "fails to create a certificate" do
+      e = assert_raises(ArgumentError) { client.create_certificate }
+      e.message.must_equal('missing keyword: hostnames')
+      e = assert_raises(RuntimeError) { client.create_certificate(hostnames: 'foo') }
+      e.message.must_equal('hostnames must be an array')
+      e = assert_raises(RuntimeError) { client.create_certificate(hostnames: []) }
+      e.message.must_equal('hostnames cannot be empty')
+      e = assert_raises(RuntimeError) { client.create_certificate(hostnames: ['foobar.com'], requested_validity: 1) }
+      e.message.must_equal('requested_validity must be one of [7, 30, 90, 365, 730, 1095, 5475]')
+      e = assert_raises(RuntimeError) { client.create_certificate(hostnames: ['foobar.com'], requested_validity: 7, request_type: 'bob') }
+      e.message.must_equal('request type must be one of ["origin-rsa", "origin-ecc", "keyless-certificate"]')
+    end
+    it "creates a certificate" do
+      client.create_certificate(hostnames: ['foobar.com'], requested_validity: 7, request_type: 'origin-rsa', csr: 'foo').
+        must_equal(JSON.parse(SUCCESSFUL_CERTS_CREATE))
+    end
+    it "fails to get details of a certficiate" do
+      e = assert_raises(ArgumentError) { client.certificate }
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.certificate(id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "gets details for a certificate" do
+      client.certificate(id: 'somecertid').must_equal(JSON.parse(SUCCESSFUL_CERTS_DETAILS))
+    end
+    it "fails to revoke a certificate" do
+      e = assert_raises(ArgumentError) { client.revoke_certificate }
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.revoke_certificate(id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "revokes a certificate" do
+      client.revoke_certificate(id: 'somecertid').must_equal(JSON.parse(SUCCESSFUL_CERTS_REVOKE))
+    end
+
   end
 
 

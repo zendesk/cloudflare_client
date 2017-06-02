@@ -137,8 +137,11 @@ SUCCESSFUL_ORG_RAILGUN_ZONES = '{ "success": true, "errors": [], "messages": [],
 SUCCESSFUL_ORG_RAILGUN_ENABLE = '{ "success": true, "errors": [], "messages": [], "result": { "id": "e928d310693a83094309acf9ead50448", "name": "My Railgun", "status": "active", "enabled": true, "zones_connected": 2, "build": "b1234", "version": "2.1", "revision": "123", "activation_key": "e4edc00281cb56ebac22c81be9bac8f3", "activated_on": "2014-01-02T02:20:00Z", "created_on": "2014-01-01T05:20:00Z", "modified_on": "2014-01-01T05:20:00Z" } }'.freeze
 SUCCESSFUL_ORG_RAILGUN_DELETE = '{ "success": true, "errors": [], "messages": [], "result": { "id": "e928d310693a83094309acf9ead50448" } }'.freeze
 
-
-
+# cloudflare CA
+SUCCESSFUL_CERTS = '{ "success": true, "errors": [], "messages": [], "result": [ { "id": "3664634374038615934", "certificate": "-----BEGIN CERTIFICATE-----\n", "hostnames": [ "example.com", "*.example.com" ], "expires_on": "2014-01-01T05:20:00.12345Z", "request_type": "origin-rsa", "requested_validity": 5475, "csr": "-----BEGIN CERTIFICATE REQUEST" } ], "result_info": { "page": 1, "per_page": 20, "count": 1, "total_count": 2000 } }'.freeze
+SUCCESSFUL_CERTS_CREATE = '{ "success": true, "errors": [], "messages": [], "result": { "id": "3664634374038615934", "certificate": "-----BEGIN CERTIFICATE-----\n", "hostnames": [ "example.com", "*.example.com" ], "expires_on": "2014-01-01T05:20:00.12345Z", "request_type": "origin-rsa", "requested_validity": 5475, "csr": "-----BEGIN CERTIFICATE REQUEST-----\n" } }'.freeze
+SUCCESSFUL_CERTS_DETAILS = '{ "success": true, "errors": [], "messages": [], "result": { "id": "3664634374038615934", "certificate": "-----BEGIN CERTIFICATE-----\n", "hostnames": [ "example.com", "*.example.com" ], "expires_on": "2014-01-01T05:20:00.12345Z", "request_type": "origin-rsa", "requested_validity": 5475, "csr": "-----BEGIN CERTIFICATE REQUEST-----\n" } }'.freeze
+SUCCESSFUL_CERTS_REVOKE = '{ "success": true, "errors": [], "messages": [], "result": { "id": "3664634374038615934" } }'.freeze
 
 
 

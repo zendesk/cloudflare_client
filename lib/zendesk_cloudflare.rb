@@ -1241,12 +1241,51 @@ class CloudflareClient
     cf_delete(path: "/organizations/#{org_id}/railguns/#{id}")
   end
 
+  ##
+  # cloudflare CA
+
+  ##
+  # list certificates
+  def certificates(zone_id: nil)
+    cf_get(path: '/certificates', params: {zone_id: zone_id})
+  end
+
+  ##
+  # create a certificate
+  def create_certificate(hostnames:, requested_validity: 5475, request_type: 'origin-rsa', csr: nil)
+    raise('hostnames must be an array') unless hostnames.is_a?(Array)
+    raise('hostnames cannot be empty') if hostnames.empty?
+    possible_validity = [7, 30, 90, 365, 730, 1095, 5475]
+    unless possible_validity.include?(requested_validity)
+      raise("requested_validity must be one of #{possible_validity.flatten}")
+    end
+    possible_types = %w[origin-rsa origin-ecc keyless-certificate]
+    unless possible_types.include?(request_type)
+      raise("request type must be one of #{possible_types.flatten}")
+    end
+    data = {hostnames: hostnames, requested_validity: 5475, request_type: 'origin-rsa'}
+    data[:csr] = csr unless csr.nil?
+    cf_post(path: '/certificates', data: data)
+  end
+
+  ##
+  # details of a certificate
+  def certificate(id:)
+    id_check('id', id)
+    cf_get(path: "/certificates/#{id}")
+  end
+
+  ##
+  # revoke a cert
+  def revoke_certificate(id:)
+    #FIXME: what is the
+    id_check('id', id)
+    cf_delete(path: "/certificates/#{id}")
+  end
 
 
 
-
-
-  #TODO: cloudflare CA
+  #
   #TODO: virtual DNS users
   #TODO: virtual DNS org
   #TODO: virtual DNS Analytics users
@@ -1346,6 +1385,7 @@ class CloudflareClient
       conn.adapter :net_http
     end
     client.headers['X-Auth-Key'] = params[:auth_key]
+    client.headers['X-Auth-User-Service-Key	'] = params[:auth_key] #FIXME, is this always the same?
     client.headers['X-Auth-Email'] = params[:email]
     client.headers['Content-Type'] = 'application/json'
     client
@@ -1364,7 +1404,9 @@ class CloudflareClient
   def cf_get(path: nil, params: {}, raw: nil)
     result = @cf_client.get do |request|
       request.url(API_BASE + path) unless path.nil?
-      request.params = params unless params.nil?
+      unless params.nil?
+        request.params = params if params.values.any? { |i| !i.nil?}
+      end
     end
     raise(JSON.parse(result.body).dig('errors').first.to_s) unless result.status == 200
     raw.nil? ? JSON.parse(result.body) : result.body
