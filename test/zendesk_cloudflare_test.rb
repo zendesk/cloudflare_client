@@ -1750,72 +1750,137 @@ describe CloudflareClient do
   describe "virtual DNS" do
     before do
     stub_request(:get, "https://api.cloudflare.com/client/v4/user/virtual_dns").
-      to_return(response_body(SUCCESSFUL_USER_CLUSTER_LIST))
+      to_return(response_body(SUCCESSFUL_CLUSTER_LIST))
+    stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/virtual_dns").
+      to_return(response_body(SUCCESSFUL_CLUSTER_LIST))
     stub_request(:post, "https://api.cloudflare.com/client/v4/user/virtual_dns").
-      to_return(response_body(SUCCESSFUL_USER_CLUSTER_CREATE))
+      to_return(response_body(SUCCESSFUL_CLUSTER_CREATE))
+    stub_request(:post, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/virtual_dns").
+      to_return(response_body(SUCCESSFUL_CLUSTER_CREATE))
     stub_request(:get, "https://api.cloudflare.com/client/v4/user/virtual_dns/foobar").
-      to_return(response_body(SUCCESSFUL_USER_CLUSTER_DETAILS))
+      to_return(response_body(SUCCESSFUL_CLUSTER_DETAILS))
+    stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/virtual_dns/foobar").
+      to_return(response_body(SUCCESSFUL_CLUSTER_DETAILS))
     stub_request(:delete, "https://api.cloudflare.com/client/v4/user/virtual_dns/foobar").
-      to_return(response_body(SUCCESSFUL_USER_CLUSTER_DELETE))
+      to_return(response_body(SUCCESSFUL_CLUSTER_DELETE))
+    stub_request(:delete, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/virtual_dns/foobar").
+      to_return(response_body(SUCCESSFUL_CLUSTER_DELETE))
     stub_request(:patch, "https://api.cloudflare.com/client/v4/user/virtual_dns/foobar").
-      to_return(response_body(SUCCESSFUL_USER_CLUSTER_DETAILS))
+      to_return(response_body(SUCCESSFUL_CLUSTER_DETAILS))
+    stub_request(:patch, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/virtual_dns/foobar").
+      to_return(response_body(SUCCESSFUL_CLUSTER_DETAILS))
     end
 
-    it "lists virtual dns clusters" do
-      client.user_virtual_dns_clusters.must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_LIST))
+    it "fails to list virutal dns clusters" do
+      e = assert_raises(ArgumentError) { client.virtual_dns_clusters }
+      e.message.must_equal('missing keyword: scope')
+      e = assert_raises(RuntimeError) { client.virtual_dns_clusters(scope: 'bob') }
+      e.message.must_equal('scope must be user or organization')
+      e = assert_raises(RuntimeError) { client.virtual_dns_clusters(scope: 'organization') }
+      e.message.must_equal('org_id required')
+    end
+    it "lists virtual dns clusters for a user" do
+      client.virtual_dns_clusters(scope: 'user').must_equal(JSON.parse(SUCCESSFUL_CLUSTER_LIST))
+    end
+    it "lists virtual dns clusters for a org" do
+      client.virtual_dns_clusters(scope: 'organization', org_id: valid_org_id).
+        must_equal(JSON.parse(SUCCESSFUL_CLUSTER_LIST))
     end
     it "fails to create a dns cluster" do
-      e = assert_raises(ArgumentError) { client.create_user_virtual_dns_cluster }
-      e.message.must_equal('missing keywords: name, origin_ips')
-      e = assert_raises(RuntimeError) { client.create_user_virtual_dns_cluster(name: nil, origin_ips: 'foo') }
+      e = assert_raises(ArgumentError) { client.create_virtual_dns_cluster }
+      e.message.must_equal('missing keywords: name, origin_ips, scope')
+      e = assert_raises(RuntimeError) { client.create_virtual_dns_cluster(name: nil, origin_ips: 'foo', scope: 'cat') }
       e.message.must_equal('name required')
-      e = assert_raises(RuntimeError) { client.create_user_virtual_dns_cluster(name: 'foo', origin_ips: 'bar') }
+      e = assert_raises(RuntimeError) { client.create_virtual_dns_cluster(name: 'foo', origin_ips: 'bar', scope: 'cat') }
       e.message.must_equal('origin_ips must be an array of ips (v4 or v6)')
-      e = assert_raises(RuntimeError) { client.create_user_virtual_dns_cluster(name: 'foo', origin_ips: ['bar'], deprecate_any_request: 'bob') }
+      e = assert_raises(RuntimeError) { client.create_virtual_dns_cluster(name: 'foo', origin_ips: ['bar'], scope: 'cat', deprecate_any_request: 'bob') }
       e.message.must_equal('deprecate_any_request must be boolean')
+      e = assert_raises(RuntimeError) { client.create_virtual_dns_cluster(name: 'foo', origin_ips: ['bar'], scope: 'cat', deprecate_any_request: true) }
+      e.message.must_equal('scope must be user or organization')
+      e = assert_raises(RuntimeError) { client.create_virtual_dns_cluster(name: 'foo', origin_ips: ['bar'], scope: 'organization', deprecate_any_request: true) }
+      e.message.must_equal('org_id required')
     end
-    it "creates a dns cluster" do
-      client.create_user_virtual_dns_cluster(name: 'foo', origin_ips: ['bar'], deprecate_any_request: true).
-        must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_CREATE))
+    it "creates a user dns cluster" do
+      client.create_virtual_dns_cluster(name: 'foo', origin_ips: ['bar'], deprecate_any_request: true, scope: 'user').
+        must_equal(JSON.parse(SUCCESSFUL_CLUSTER_CREATE))
+    end
+    it "creates an organization dns cluster" do
+      client.create_virtual_dns_cluster(name: 'foo', origin_ips: ['bar'], deprecate_any_request: true, scope: 'organization', org_id: valid_org_id).
+        must_equal(JSON.parse(SUCCESSFUL_CLUSTER_CREATE))
     end
     it "fails to get deatails of a cluster" do
-      e = assert_raises(ArgumentError) { client.user_virtual_dns_cluster }
-      e.message.must_equal('missing keyword: id')
-      e = assert_raises(RuntimeError) { client.user_virtual_dns_cluster(id: nil) }
+      e = assert_raises(ArgumentError) { client.virtual_dns_cluster }
+      e.message.must_equal('missing keywords: id, scope')
+      e = assert_raises(RuntimeError) { client.virtual_dns_cluster(id: nil, scope: nil) }
       e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.virtual_dns_cluster(id: 'foo', scope: 'bar') }
+      e.message.must_equal('scope must be user or organization')
+      e = assert_raises(RuntimeError) { client.virtual_dns_cluster(id: 'foo', scope: 'organization', org_id: nil) }
+      e.message.must_equal('org_id required')
     end
-    it "gets details of a cluster" do
-      client.user_virtual_dns_cluster(id: 'foobar').must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_DETAILS))
+    it "gets details of a user cluster" do
+      client.virtual_dns_cluster(id: 'foobar', scope: 'user').
+        must_equal(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS))
+    end
+    it "gets details of an organization cluster" do
+      client.virtual_dns_cluster(id: 'foobar', scope: 'organization', org_id: valid_org_id).
+        must_equal(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS))
     end
     it "fails to delete a virtual dns cluster" do
-      e = assert_raises(ArgumentError) { client.delete_user_virtual_dns_cluster }
-      e.message.must_equal('missing keyword: id')
-      e = assert_raises(RuntimeError) { client.delete_user_virtual_dns_cluster(id: nil) }
+      e = assert_raises(ArgumentError) { client.delete_virtual_dns_cluster }
+      e.message.must_equal('missing keywords: id, scope')
+      e = assert_raises(RuntimeError) { client.delete_virtual_dns_cluster(id: nil, scope: 'foo') }
       e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.delete_virtual_dns_cluster(id: 'foo', scope: 'foo') }
+      e.message.must_equal('scope must be user or organization')
+      e = assert_raises(RuntimeError) { client.delete_virtual_dns_cluster(id: 'foo', scope: 'organization') }
+      e.message.must_equal('org_id required')
     end
-    it "deletes a dns cluster" do
-      client.delete_user_virtual_dns_cluster(id: 'foobar').must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_DELETE))
+    it "deletes a dns user cluster" do
+      client.delete_virtual_dns_cluster(id: 'foobar', scope: 'user').must_equal(JSON.parse(SUCCESSFUL_CLUSTER_DELETE))
     end
-    it "fails to update a dns cluster (user)" do
-      e = assert_raises(ArgumentError) { client.update_user_virtual_dns_cluster }
-      e.message.must_equal('missing keyword: id')
-      e = assert_raises(RuntimeError) { client.update_user_virtual_dns_cluster(id: nil) }
+    it "deletes a dns an organization's cluster" do
+      client.delete_virtual_dns_cluster(id: 'foobar', scope: 'organization', org_id: valid_org_id).
+        must_equal(JSON.parse(SUCCESSFUL_CLUSTER_DELETE))
+    end
+    it "fails to update a dns cluster" do
+      e = assert_raises(ArgumentError) { client.update_virtual_dns_cluster }
+      e.message.must_equal('missing keywords: id, scope')
+      e = assert_raises(RuntimeError) { client.update_virtual_dns_cluster(id: nil, scope: nil) }
       e.message.must_equal('id required')
-      e = assert_raises(RuntimeError) { client.update_user_virtual_dns_cluster(id: 'foo', origin_ips: 'bar') }
+      e = assert_raises(RuntimeError) { client.update_virtual_dns_cluster(id: 'foo', origin_ips: 'bar', scope: nil) }
       e.message.must_equal('origin_ips must be an array of ips (v4 or v6)')
-      e = assert_raises(RuntimeError) { client.update_user_virtual_dns_cluster(id: 'foo', origin_ips: ['bar'], deprecate_any_request: 'bob') }
+      e = assert_raises(RuntimeError) { client.update_virtual_dns_cluster(id: 'foo', scope: nil, origin_ips: ['bar'], deprecate_any_request: 'bob') }
       e.message.must_equal('deprecate_any_request must be boolean')
+      e = assert_raises(RuntimeError) { client.update_virtual_dns_cluster(id: 'foo', origin_ips: ['bar'], scope: 'bob') }
+      e.message.must_equal('scope must be user or organization')
     end
-    it "updates a dns cluster (user)" do
-      client.update_user_virtual_dns_cluster(
+    it "updates a user dns cluster" do
+      client.update_virtual_dns_cluster(
         id: 'foobar',
+        scope: 'user',
         origin_ips: ['10.1.1.1'],
         minimum_cache_ttl: 500,
         maximum_cache_ttl: 900,
         deprecate_any_request: false,
-        ratelimit: 0).must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_DETAILS))
+        ratelimit: 0).must_equal(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS))
+    end
+    it "updates an organization dns cluster" do
+      client.update_virtual_dns_cluster(
+        id: 'foobar',
+        scope: 'organization',
+        org_id: valid_org_id,
+        origin_ips: ['10.1.1.1'],
+        minimum_cache_ttl: 500,
+        maximum_cache_ttl: 900,
+        deprecate_any_request: false,
+        ratelimit: 0).must_equal(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS))
     end
   end
+
+
+
+
 
   describe "logs api" do
     let(:valid_start_time) { 1495825365 }
