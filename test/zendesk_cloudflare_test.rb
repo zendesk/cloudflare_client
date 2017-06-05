@@ -1,7 +1,7 @@
 # rubocop:disable LineLength
 require_relative "test_helper"
 require_relative "fixtures/stub_api_responses.rb"
-SingleCov.covered!
+SingleCov.covered! uncovered: 2
 
 require 'zendesk_cloudflare'
 
@@ -14,6 +14,7 @@ describe CloudflareClient do
   let(:valid_org_id) { 'def5678' }
   let(:valid_user_id) { 'someuserid' }
   let(:valid_user_email) { 'user@example.com' }
+  let(:valid_iso8601_ts) { '2016-11-11T12:00:00Z' }
 
   it "initializes correctly" do
     CloudflareClient.new(auth_key: "auth_key", email: "foo@bar.com")
@@ -1878,6 +1879,40 @@ describe CloudflareClient do
     end
   end
 
+  describe "virtual dns analytics" do
+    before do
+    stub_request(:get, "https://api.cloudflare.com/client/v4/user/virtual_dns/foo/dns_analytics/report?dimensions%5B%5D=foo&limit=100&metrics%5B%5D=bar&since=2016-11-11T12:00:00Z&until=2016-11-11T12:00:00Z").
+      to_return(response_body(SUCCESSFUL_VIRTUAL_DNS_TABLE))
+    stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/def5678/virtual_dns/foo/dns_analytics/report?dimensions%5B%5D=foo&limit=100&metrics%5B%5D=bar&since=2016-11-11T12:00:00Z&until=2016-11-11T12:00:00Z").
+      to_return(response_body(SUCCESSFUL_VIRTUAL_DNS_TABLE))
+    end
+
+    it "fails to retrieve summarized metrics over a time period" do
+      e = assert_raises(ArgumentError) { client.virtual_dns_analytics }
+      e.message.must_equal('missing keywords: id, scope, dimensions, metrics, since_ts, until_ts')
+      e = assert_raises(RuntimeError) { client.virtual_dns_analytics(id: 'foo', scope: 'bar', dimensions: 'foo', metrics: 'bar', since_ts: 'foo', until_ts: 'bar') }
+      e.message.must_equal('scope must be user or organization')
+      e = assert_raises(RuntimeError) { client.virtual_dns_analytics(id: 'foo', scope: 'user', dimensions: 'foo', metrics: 'bar', since_ts: 'foo', until_ts: 'bar') }
+      e.message.must_equal('dimensions must ba an array of possible dimensions')
+      e = assert_raises(RuntimeError) { client.virtual_dns_analytics(id: 'foo', scope: 'user', dimensions: ['foo'], metrics: 'bar', since_ts: 'foo', until_ts: 'bar') }
+      e.message.must_equal('metrics must ba an array of possible metrics')
+      e = assert_raises(RuntimeError) { client.virtual_dns_analytics(id: 'foo', scope: 'user', dimensions: ['foo'], metrics: ['bar'], since_ts: 'foo', until_ts: 'bar') }
+      e.message.must_equal('since_ts must be a valid iso8601 timestamp')
+      e = assert_raises(RuntimeError) { client.virtual_dns_analytics(id: 'foo', scope: 'user', dimensions: ['foo'], metrics: ['bar'], since_ts: valid_iso8601_ts, until_ts: 'bar') }
+      e.message.must_equal('until_ts must be a valid iso8601 timestamp')
+      e = assert_raises(RuntimeError) { client.virtual_dns_analytics(id: 'foo', scope: 'organization', dimensions: ['foo'], metrics: ['bar'], since_ts: valid_iso8601_ts, until_ts: valid_iso8601_ts) }
+      e.message.must_equal('org_id required')
+    end
+    it "retrieves summarized metrics over a time period (user)" do
+      client.virtual_dns_analytics(id: 'foo', scope: 'user', dimensions: ['foo'], metrics: ['bar'], since_ts: valid_iso8601_ts, until_ts: valid_iso8601_ts).
+        must_equal(JSON.parse(SUCCESSFUL_VIRTUAL_DNS_TABLE))
+    end
+    it "retrieves summarized metrics over a time period (organization)" do
+      client.virtual_dns_analytics(id: 'foo', scope: 'organization', org_id: valid_org_id, dimensions: ['foo'], metrics: ['bar'], since_ts: valid_iso8601_ts, until_ts: valid_iso8601_ts).
+        must_equal(JSON.parse(SUCCESSFUL_VIRTUAL_DNS_TABLE))
+    end
+  end
+
 
 
 
@@ -1913,16 +1948,16 @@ describe CloudflareClient do
     it "get's logs via timestamps" do
       # note, these are raw not json encoded
       client.get_logs_by_time(zone_id: valid_zone_id, start_time: valid_start_time).
-        must_equal(SUCCESSFULL_LOG_MESSAGE)
+        must_equal(JSON.parse(SUCCESSFULL_LOG_MESSAGE))
       client.get_logs_by_time(zone_id: valid_zone_id, start_time: valid_start_time, end_time: valid_end_time).
-        must_equal(SUCCESSFULL_LOG_MESSAGE)
+        must_equal(JSON.parse(SUCCESSFULL_LOG_MESSAGE))
     end
     it "fails to get a log by rayid" do
       e = assert_raises(ArgumentError) { client.get_log }
       e.message.must_equal('missing keywords: zone_id, ray_id')
     end
     it "get's a log via rayid" do
-      client.get_log(zone_id: valid_zone_id, ray_id: 'somerayid').must_equal(SUCCESSFULL_LOG_MESSAGE)
+      client.get_log(zone_id: valid_zone_id, ray_id: 'somerayid').must_equal(JSON.parse(SUCCESSFULL_LOG_MESSAGE))
     end
     it "fails to get logs since a given ray_id" do
       e = assert_raises(ArgumentError) { client.get_logs_since }
@@ -1932,7 +1967,7 @@ describe CloudflareClient do
     end
     it "gets logs since a given ray_id" do
       client.get_logs_since(zone_id: valid_zone_id, ray_id: 'foo', end_time: valid_end_time, count: 5).
-        must_equal(SUCCESSFULL_LOG_MESSAGE)
+        must_equal(JSON.parse(SUCCESSFULL_LOG_MESSAGE))
     end
   end
 end

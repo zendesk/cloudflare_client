@@ -1355,7 +1355,7 @@ class CloudflareClient
 
   ##
   # updates a dns cluster (user)
-  def update_virtual_dns_cluster(id:, scope:, org_id: nil, name: nil, origin_ips: nil, minimum_cache_ttl: nil, maximum_cache_ttl: nil, deprecate_any_request: nil, ratelimit: nil)
+  def update_virtual_dns_cluster(id:, scope:, name: nil, origin_ips: nil, minimum_cache_ttl: nil, maximum_cache_ttl: nil, deprecate_any_request: nil, ratelimit: nil, org_id: nil)
     id_check('id', id)
     unless origin_ips.nil?
       unless (origin_ips.is_a?(Array) && !origin_ips.empty?)
@@ -1387,13 +1387,42 @@ class CloudflareClient
       raise ("scope must be user or organization")
     end
   end
+
+  ##
+  # virtual DNS Analytics (users and orgs)
   #
-  #
-  #
-  #
-  #TODO: virtual DNS org
-  #TODO: virtual DNS Analytics users
-  #TODO: virtual DNS Analytics org
+
+  def virtual_dns_analytics(id:, scope:, org_id: nil, dimensions:, metrics:, since_ts:, until_ts:, limit: 100, filters: nil, sort: nil)
+    id_check('id', id)
+    virtual_dns_scope(scope)
+    unless dimensions.is_a?(Array) && !dimensions.empty?
+      raise ("dimensions must ba an array of possible dimensions")
+    end
+    unless metrics.is_a?(Array) && !metrics.empty?
+      raise ("metrics must ba an array of possible metrics")
+    end
+    raise ('since_ts must be a valid iso8601 timestamp') unless date_iso8601?(since_ts)
+    raise ('until_ts must be a valid iso8601 timestamp') unless date_iso8601?(until_ts)
+
+    params = {
+      limit: limit,
+      dimensions: dimensions,
+      metrics: metrics,
+      since: since_ts,
+      until: until_ts
+    }
+    params[:sort] = sort unless sort.nil?
+    params[:filters] = sort unless filters.nil?
+
+    if scope == 'user'
+      cf_get(path: "/user/virtual_dns/#{id}/dns_analytics/report", params: params)
+    elsif scope == 'organization'
+      id_check('org_id', org_id)
+      cf_get(path: "/organizations/#{org_id}/virtual_dns/#{id}/dns_analytics/report", params: params)
+    end
+  end
+  #TODO: add the time based stuff
+
   #TODO: cloudflare IPs
   #TODO: AML
   #TODO: load balancer monitors
@@ -1420,25 +1449,25 @@ class CloudflareClient
       params[:end] = end_time
     end
     params[:count] = count unless count.nil?
-    cf_get(path: "/zones/#{zone_id}/logs/requests", params: params, raw: true)
+    cf_get(path: "/zones/#{zone_id}/logs/requests", params: params, extra_headers: {'Accept-encoding': 'gzip'})
   end
 
   ##
   # get a single log entry by it's ray_id
   def get_log(zone_id:, ray_id:)
-    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}", raw: true)
+    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}")
   end
 
   ##
   # get all logs after a given ray_id.  end_time must be a valid unix timestamp
-  def get_logs_since(zone_id:, ray_id:, end_time: nil, count: nil)
+  def get_logs_since(zone_id:, ray_id:, end_time: nil, count: nil, extra_headers: {'Accept-encoding': 'gzip'})
     params = {start_id: ray_id}
     unless end_time.nil?
       raise('end time must be a valid unix timestamp') unless valid_timestamp?(end_time)
       params[:end] = end_time
     end
     params[:count] = count unless count.nil?
-    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}", params: params, raw: true)
+    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}", params: params, extra_headers: {'Accept-encoding': 'gzip'})
   end
 
   private
@@ -1482,6 +1511,15 @@ class CloudflareClient
     true
   end
 
+  def date_iso8601?(ts)
+    begin
+      DateTime.iso8601(ts)
+    rescue ArgumentError
+      return false
+    end
+    true
+  end
+
   def id_check(name, id)
     raise ("#{name} required") if id.nil?
   end
@@ -1512,15 +1550,24 @@ class CloudflareClient
     JSON.parse(result.body)
   end
 
-  def cf_get(path: nil, params: {}, raw: nil)
+  def cf_get(path: nil, params: {}, raw: nil, extra_headers: {})
     result = @cf_client.get do |request|
+      request.headers.merge!(extra_headers) unless extra_headers.empty?
       request.url(API_BASE + path) unless path.nil?
       unless params.nil?
         request.params = params if params.values.any? { |i| !i.nil?}
       end
     end
     raise(JSON.parse(result.body).dig('errors').first.to_s) unless result.status == 200
-    raw.nil? ? JSON.parse(result.body) : result.body
+    unless raw.nil?
+      return result.body
+    end
+    # we ask for compressed logs.  uncompress if we get them
+    # as the user can always ask for raw stuff
+    if result.headers["content-encoding"] == 'gzip'
+      return Zlib::GzipReader.new(StringIO.new(result.body.to_s)).read
+    end
+    JSON.parse(result.body)
   end
 
   def cf_put(path: nil, data: nil)
