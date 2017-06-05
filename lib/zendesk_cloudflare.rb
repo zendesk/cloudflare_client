@@ -1284,9 +1284,79 @@ class CloudflareClient
   end
 
 
+  ##
+  # virtual DNS users
+
+  ##
+  # list virutal dns clsuters for a user
+  def user_virtual_dns_clusters
+    cf_get(path: '/user/virtual_dns')
+  end
+
+  ##
+  # create a virtual dns cluster
+  def create_user_virtual_dns_cluster(name:, origin_ips:, minimum_cache_ttl: 60, maximum_cache_ttl: 900, deprecate_any_request: true, ratelimit: 0)
+    id_check("name", name)
+    unless (origin_ips.is_a?(Array) && !origin_ips.empty?)
+      raise('origin_ips must be an array of ips (v4 or v6)')
+    end
+    unless (deprecate_any_request == true || deprecate_any_request == false)
+      raise ("deprecate_any_request must be boolean")
+    end
+    data = {
+      name: name,
+      origin_ips: origin_ips,
+      minimum_cache_ttl: minimum_cache_ttl,
+      maximum_cache_ttl: maximum_cache_ttl,
+      deprecate_any_request: deprecate_any_request,
+      ratelimit: ratelimit,
+    }
+    cf_post(path: '/user/virtual_dns', data: data)
+  end
+
+  ##
+  # details of a cluster
+  def user_virtual_dns_cluster(id:)
+    id_check('id', id)
+    cf_get(path: "/user/virtual_dns/#{id}")
+  end
+
+  ##
+  # delete a dns cluster (user)
+  def delete_user_virtual_dns_cluster(id:)
+    id_check('id', id)
+    cf_delete(path: "/user/virtual_dns/#{id}")
+  end
+
+  ##
+  # updates a dns cluster (user)
+  def update_user_virtual_dns_cluster(id:, name: nil, origin_ips: nil, minimum_cache_ttl: nil, maximum_cache_ttl: nil, deprecate_any_request: nil, ratelimit: nil)
+    id_check('id', id)
+    unless origin_ips.nil?
+      unless (origin_ips.is_a?(Array) && !origin_ips.empty?)
+        raise('origin_ips must be an array of ips (v4 or v6)')
+      end
+    end
+    unless deprecate_any_request.nil?
+      unless (deprecate_any_request == true || deprecate_any_request == false)
+        raise ("deprecate_any_request must be boolean")
+      end
+    end
+    data = {}
+    data[:name] = name unless name.nil?
+    data[:origin_ips] = origin_ips unless origin_ips.nil?
+    data[:minimum_cache_ttl] = minimum_cache_ttl unless minimum_cache_ttl.nil?
+    data[:maximum_cache_ttl] = maximum_cache_ttl unless maximum_cache_ttl.nil?
+    data[:deprecate_any_request] = deprecate_any_request unless deprecate_any_request.nil?
+    data[:ratelimit] = ratelimit unless ratelimit.nil?
+    cf_patch(path: "/user/virtual_dns/#{id}", data: data)
+  end
+
 
   #
-  #TODO: virtual DNS users
+  #
+  #
+  #
   #TODO: virtual DNS org
   #TODO: virtual DNS Analytics users
   #TODO: virtual DNS Analytics org

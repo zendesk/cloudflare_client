@@ -1745,10 +1745,77 @@ describe CloudflareClient do
     it "revokes a certificate" do
       client.revoke_certificate(id: 'somecertid').must_equal(JSON.parse(SUCCESSFUL_CERTS_REVOKE))
     end
-
   end
 
+  describe "virtual DNS" do
+    before do
+    stub_request(:get, "https://api.cloudflare.com/client/v4/user/virtual_dns").
+      to_return(response_body(SUCCESSFUL_USER_CLUSTER_LIST))
+    stub_request(:post, "https://api.cloudflare.com/client/v4/user/virtual_dns").
+      to_return(response_body(SUCCESSFUL_USER_CLUSTER_CREATE))
+    stub_request(:get, "https://api.cloudflare.com/client/v4/user/virtual_dns/foobar").
+      to_return(response_body(SUCCESSFUL_USER_CLUSTER_DETAILS))
+    stub_request(:delete, "https://api.cloudflare.com/client/v4/user/virtual_dns/foobar").
+      to_return(response_body(SUCCESSFUL_USER_CLUSTER_DELETE))
+    stub_request(:patch, "https://api.cloudflare.com/client/v4/user/virtual_dns/foobar").
+      to_return(response_body(SUCCESSFUL_USER_CLUSTER_DETAILS))
+    end
 
+    it "lists virtual dns clusters" do
+      client.user_virtual_dns_clusters.must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_LIST))
+    end
+    it "fails to create a dns cluster" do
+      e = assert_raises(ArgumentError) { client.create_user_virtual_dns_cluster }
+      e.message.must_equal('missing keywords: name, origin_ips')
+      e = assert_raises(RuntimeError) { client.create_user_virtual_dns_cluster(name: nil, origin_ips: 'foo') }
+      e.message.must_equal('name required')
+      e = assert_raises(RuntimeError) { client.create_user_virtual_dns_cluster(name: 'foo', origin_ips: 'bar') }
+      e.message.must_equal('origin_ips must be an array of ips (v4 or v6)')
+      e = assert_raises(RuntimeError) { client.create_user_virtual_dns_cluster(name: 'foo', origin_ips: ['bar'], deprecate_any_request: 'bob') }
+      e.message.must_equal('deprecate_any_request must be boolean')
+    end
+    it "creates a dns cluster" do
+      client.create_user_virtual_dns_cluster(name: 'foo', origin_ips: ['bar'], deprecate_any_request: true).
+        must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_CREATE))
+    end
+    it "fails to get deatails of a cluster" do
+      e = assert_raises(ArgumentError) { client.user_virtual_dns_cluster }
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.user_virtual_dns_cluster(id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "gets details of a cluster" do
+      client.user_virtual_dns_cluster(id: 'foobar').must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_DETAILS))
+    end
+    it "fails to delete a virtual dns cluster" do
+      e = assert_raises(ArgumentError) { client.delete_user_virtual_dns_cluster }
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.delete_user_virtual_dns_cluster(id: nil) }
+      e.message.must_equal('id required')
+    end
+    it "deletes a dns cluster" do
+      client.delete_user_virtual_dns_cluster(id: 'foobar').must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_DELETE))
+    end
+    it "fails to update a dns cluster (user)" do
+      e = assert_raises(ArgumentError) { client.update_user_virtual_dns_cluster }
+      e.message.must_equal('missing keyword: id')
+      e = assert_raises(RuntimeError) { client.update_user_virtual_dns_cluster(id: nil) }
+      e.message.must_equal('id required')
+      e = assert_raises(RuntimeError) { client.update_user_virtual_dns_cluster(id: 'foo', origin_ips: 'bar') }
+      e.message.must_equal('origin_ips must be an array of ips (v4 or v6)')
+      e = assert_raises(RuntimeError) { client.update_user_virtual_dns_cluster(id: 'foo', origin_ips: ['bar'], deprecate_any_request: 'bob') }
+      e.message.must_equal('deprecate_any_request must be boolean')
+    end
+    it "updates a dns cluster (user)" do
+      client.update_user_virtual_dns_cluster(
+        id: 'foobar',
+        origin_ips: ['10.1.1.1'],
+        minimum_cache_ttl: 500,
+        maximum_cache_ttl: 900,
+        deprecate_any_request: false,
+        ratelimit: 0).must_equal(JSON.parse(SUCCESSFUL_USER_CLUSTER_DETAILS))
+    end
+  end
 
   describe "logs api" do
     let(:valid_start_time) { 1495825365 }
