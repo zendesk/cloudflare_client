@@ -1,4 +1,4 @@
-require_relative '../test/fixtures/stub_api_responses'
+require_relative 'fixtures/stub_api_responses'
 require 'webmock/rspec'
 require 'single_cov'
 SingleCov.setup :rspec

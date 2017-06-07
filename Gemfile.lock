@@ -16,12 +16,6 @@ GEM
     faraday (0.12.1)
       multipart-post (>= 1.2, < 3)
     hashdiff (0.3.4)
-    maxitest (2.4.0)
-      minitest (>= 5.0.0, < 5.11.0)
-    metaclass (0.0.4)
-    minitest (5.10.1)
-    mocha (1.2.1)
-      metaclass (~> 0.0.1)
     multipart-post (2.0.0)
     parser (2.4.0.0)
       ast (~> 2.2)
@@ -63,8 +57,6 @@ PLATFORMS
 DEPENDENCIES
   byebug
   faraday
-  maxitest
-  mocha
   rake
   rspec
   rubocop

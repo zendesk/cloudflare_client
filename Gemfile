@@ -4,8 +4,6 @@ gem 'faraday'
 
 # testing
 gem 'rspec'
-gem 'maxitest'
-gem 'mocha'
 gem 'webmock'
 gem 'single_cov'
 gem 'rubocop'
