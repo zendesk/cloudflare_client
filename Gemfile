@@ -3,6 +3,7 @@ source 'https://rubygems.org'
 gem 'faraday'
 
 # testing
+gem 'rspec'
 gem 'maxitest'
 gem 'mocha'
 gem 'webmock'
