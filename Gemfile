@@ -3,8 +3,7 @@ source 'https://rubygems.org'
 gem 'faraday'
 
 # testing
-gem 'maxitest'
-gem 'mocha'
+gem 'rspec'
 gem 'webmock'
 gem 'single_cov'
 gem 'rubocop'
