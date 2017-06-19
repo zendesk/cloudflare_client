@@ -1,15 +1,8 @@
-require_relative '../zone.rb'
+require 'zendesk_cloudflare/zone/base'
 
-class CloudflareClient::Zone::RailgunConnections < CloudflareClient::Zone
-  attr_reader :zone_id
-
+class CloudflareClient::Zone::RailgunConnections < CloudflareClient::Zone::Base
   ##
   # Railgun connections
-  def initialize(args)
-    @zone_id = args.delete(:zone_id)
-    id_check('zone_id', zone_id)
-    super
-  end
 
   ##
   # available railguns

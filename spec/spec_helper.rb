@@ -1,7 +1,10 @@
 require_relative 'fixtures/stub_api_responses'
+require 'active_support/core_ext/hash'
+require 'active_support/core_ext/time'
 require 'webmock/rspec'
 require 'single_cov'
 require 'factory_girl'
+require 'faker'
 SingleCov.setup :rspec
 
 RSpec.configure do |config|

@@ -1,17 +1,10 @@
-require_relative '../zone.rb'
+require 'zendesk_cloudflare/zone/base'
 
-class CloudflareClient::Zone::DNS < CloudflareClient::Zone
+class CloudflareClient::Zone::DNS < CloudflareClient::Zone::Base
   VALID_TYPES = ['A', 'AAAA', 'CNAME', 'TXT', 'SRV', 'LOC', 'MX', 'NS', 'SPF', 'read only'].freeze
-
-  attr_reader :zone_id
 
   ##
   # DNS methods
-  def initialize(args)
-    @zone_id = args.delete(:zone_id)
-    id_check('zone_id', zone_id)
-    super
-  end
 
   ##
   # Create a dns record

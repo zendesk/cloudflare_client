@@ -1,7 +1,3 @@
-require 'faker'
-require 'factory_girl'
-require 'active_support/core_ext/hash'
-
 FactoryGirl.define do
   factory :railgun, class: Hash do
     skip_create
