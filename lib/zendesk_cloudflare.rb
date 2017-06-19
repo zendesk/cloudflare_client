@@ -54,42 +54,6 @@ class CloudflareClient
   end
 
   ##
-  # Railgun connections
-
-  ##
-  # available railguns
-  def railgun_connections(zone_id:)
-    id_check('zone_id', zone_id)
-    cf_get(path: "/zones/#{zone_id}/railguns")
-  end
-
-  ##
-  # details of a single railgun
-  def railgun_connection(zone_id:, id:)
-    raise ("zone_id required") if zone_id.nil?
-    raise ("railgun id required") if id.nil?
-    cf_get(path: "/zones/#{zone_id}/railguns/#{id}")
-  end
-
-  ##
-  # test a railgun connection
-  def test_railgun_connection(zone_id:, id:)
-    raise ("zone_id required") if zone_id.nil?
-    raise ("railgun id required") if id.nil?
-    cf_get(path: "/zones/#{zone_id}/railguns/#{id}/diagnose")
-  end
-
-  ##
-  # connect or disconnect a railgun
-  def connect_railgun(zone_id:, id:, connected:)
-    id_check("zone_id", zone_id)
-    raise ("railgun id required") if id.nil?
-    raise ("connected must be true or false") if (connected != true && connected != false)
-    data = {connected: connected}
-    cf_patch(path: "/zones/#{zone_id}/railguns/#{id}", data: data)
-  end
-
-  ##
   # zone analytics (free, pro, business, enterprise)
 
   ##
