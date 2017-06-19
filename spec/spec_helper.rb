@@ -1,6 +1,7 @@
 require_relative 'fixtures/stub_api_responses'
 require 'webmock/rspec'
 require 'single_cov'
+require 'factory_girl'
 SingleCov.setup :rspec
 
 RSpec.configure do |config|
@@ -13,4 +14,7 @@ RSpec.configure do |config|
   end
 
   config.shared_context_metadata_behavior = :apply_to_host_groups
+
+  config.include FactoryGirl::Syntax::Methods
+  config.before(:suite) { FactoryGirl.find_definitions }
 end
