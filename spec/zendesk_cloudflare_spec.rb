@@ -25,69 +25,6 @@ describe CloudflareClient do
     expect { CloudflareClient.new(auth_key: "somefakekey") }.to raise_error(RuntimeError, "missing email")
   end
 
-  describe "custom_pages" do
-    before do
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_pages').
-        to_return(response_body(SUCCESSFULL_CUSTOM_PAGES))
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_pages/footothebar').
-        to_return(response_body(SUCCESSFULL_CUSTOM_PAGE_DETAIL))
-      stub_request(:put, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_pages/footothebar').
-        to_return(response_body(SUCCESSFULL_CUSTOM_PAGE_UPDATE))
-    end
-
-    it "fails to list custom pages" do
-      expect { client.custom_pages }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-      expect { client.custom_pages(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-    end
-
-    it "lists custom pages" do
-      result = client.custom_pages(zone_id: valid_zone_id)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_CUSTOM_PAGES))
-    end
-
-    it "fails to get details for a custom page" do
-      expect { client.custom_page }.to raise_error(ArgumentError, 'missing keywords: zone_id, id')
-      expect { client.custom_page(zone_id: nil, id: 'foo') }.to raise_error(RuntimeError, 'zone_id required')
-      expect { client.custom_page(zone_id: valid_zone_id, id: nil) }.to raise_error(RuntimeError, 'id must not be nil')
-    end
-
-    it "gets details for a custom page" do
-      result = client.custom_page(zone_id: valid_zone_id, id: 'footothebar')
-      expect(result).to eq(JSON.parse(SUCCESSFULL_CUSTOM_PAGE_DETAIL))
-    end
-
-    it "fails to update a custom page" do
-      expect { client.update_custom_page }.to raise_error(ArgumentError, 'missing keywords: zone_id, id, url, state')
-
-      expect do
-        client.update_custom_page(zone_id: nil, id: '1234', url: 'foo.bar', state: 'default')
-      end.to raise_error(RuntimeError, 'zone_id required')
-
-      expect do
-        client.update_custom_page(zone_id: valid_zone_id, id: nil, url: 'foo.bar', state: 'default')
-      end.to raise_error(RuntimeError, 'id required')
-
-      expect do
-        client.update_custom_page(zone_id: valid_zone_id, id: '1234', url: nil, state: 'default')
-      end.to raise_error(RuntimeError, 'url required')
-
-      expect do
-        client.update_custom_page(zone_id: valid_zone_id, id: 'footothebar', url: 'http://foo.bar', state: 'whateverman')
-      end.to raise_error(RuntimeError, 'state must be either default | customized')
-    end
-
-    it "updates a custom page" do
-      result = client.update_custom_page(
-        zone_id: valid_zone_id,
-        id:      'footothebar',
-        url:     'http://foo.bar',
-        state:   'customized'
-      )
-
-      expect(result).to eq(JSON.parse(SUCCESSFULL_CUSTOM_PAGE_UPDATE))
-    end
-  end
-
   describe "custom_ssl for a zone" do
     before do
       stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_certificates').

@@ -8,20 +8,7 @@ describe CloudflareClient::Zone::Analytics do
 
   let(:valid_zone_id) { 'abc1234' }
 
-  describe '#initialize' do
-    it 'returns a CloudflareClient::Zone::Analytics instance' do
-      expect { subject }.to_not raise_error
-      expect(subject).to be_a(described_class)
-    end
-
-    context 'when zone_id is missing' do
-      let(:valid_zone_id) { nil }
-
-      it 'raises error' do
-        expect { subject }.to raise_error(StandardError, 'zone_id required')
-      end
-    end
-  end
+  it_behaves_like 'initialize for zone features'
 
   describe '#zone_dashboard' do
     before do

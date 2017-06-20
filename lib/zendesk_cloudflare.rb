@@ -54,34 +54,6 @@ class CloudflareClient
   end
 
   ##
-  # Custom pages for a zone
-  ##
-  # custom_pages list all avaialble custom_pages
-  def custom_pages(zone_id:)
-    id_check("zone_id", zone_id)
-    cf_get(path: "/zones/#{zone_id}/custom_pages")
-  end
-
-  ##
-  # custom_page details
-  def custom_page(zone_id:, id:)
-    id_check("zone_id", zone_id)
-    raise("id must not be nil") if id.nil?
-    cf_get(path: "/zones/#{zone_id}/custom_pages/#{id}")
-  end
-
-  ##
-  # update_custom_page
-  def update_custom_page(zone_id:, id:, url:, state:)
-    id_check("zone_id", zone_id)
-    id_check("id", id)
-    id_check("url", url)
-    raise("state must be either default | customized") if state != 'default' && state != 'customized'
-    data = {url: url, state: state}
-    cf_put(path: "/zones/#{zone_id}/custom_pages/#{id}", data: data)
-  end
-
-  ##
   # Custom SSL for a zone
 
   ##

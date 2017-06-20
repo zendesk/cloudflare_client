@@ -7,6 +7,7 @@ require 'factory_girl'
 require 'faker'
 SingleCov.setup :rspec
 
+Dir[File.expand_path('../shared_examples/*.rb', __FILE__)].each{ |f| require f }
 Dir[File.expand_path('../support/*.rb', __FILE__)].each{ |f| require f }
 
 RSpec.configure do |config|
