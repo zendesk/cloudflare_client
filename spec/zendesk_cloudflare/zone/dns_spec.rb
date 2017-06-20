@@ -4,7 +4,7 @@ require 'zendesk_cloudflare/zone/dns'
 SingleCov.covered!
 
 describe CloudflareClient::Zone::DNS do
-  subject(:client) { described_class.new(zone_id: valid_zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
+  subject(:client) { described_class.new(zone_id: zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
 
   before do
     stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/dns_records').
@@ -23,7 +23,7 @@ describe CloudflareClient::Zone::DNS do
   let(:successful_dns_query) { create(:successful_dns_query) }
   let(:successful_dns_update) { create(:successful_dns_update) }
   let(:successful_dns_delete) { create(:successful_dns_delete) }
-  let(:valid_zone_id) { 'abc1234' }
+  let(:zone_id) { 'abc1234' }
 
   it_behaves_like 'initialize for zone features'
 

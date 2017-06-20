@@ -4,16 +4,16 @@ require 'zendesk_cloudflare/zone/railgun_connections'
 SingleCov.covered!
 
 describe CloudflareClient::Zone::RailgunConnections do
-  subject(:client) { described_class.new(zone_id: valid_zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
+  subject(:client) { described_class.new(zone_id: zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
 
-  let(:valid_zone_id) { 'abc1234' }
+  let(:zone_id) { 'abc1234' }
   let(:railgun_id) { 'e928d310693a83094309acf9ead50448' }
 
   it_behaves_like 'initialize for zone features'
 
   describe '#list' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns").
         to_return(response_body(successful_railgun_connections_list))
     end
 
@@ -26,7 +26,7 @@ describe CloudflareClient::Zone::RailgunConnections do
 
   describe '#show' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns/#{successful_railgun_connections_show[:result][:id]}").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns/#{successful_railgun_connections_show[:result][:id]}").
         to_return(response_body(successful_railgun_connections_show))
     end
 
@@ -45,7 +45,7 @@ describe CloudflareClient::Zone::RailgunConnections do
 
   describe '#test' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns/#{railgun_id}/diagnose").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns/#{railgun_id}/diagnose").
         to_return(response_body(successful_railgun_connections_test))
     end
 
@@ -63,7 +63,7 @@ describe CloudflareClient::Zone::RailgunConnections do
 
   describe '#connect' do
     before do
-      stub_request(:patch, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns/#{railgun_id}").
+      stub_request(:patch, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns/#{railgun_id}").
         with(body: {connected: true}).
         to_return(response_body(successful_railgun_connections_connect))
     end
@@ -82,7 +82,7 @@ describe CloudflareClient::Zone::RailgunConnections do
 
   describe '#disconnect' do
     before do
-      stub_request(:patch, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns/#{railgun_id}").
+      stub_request(:patch, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns/#{railgun_id}").
         with(body: {connected: false}).
         to_return(response_body(successful_railgun_connections_disconnect))
     end

@@ -4,15 +4,15 @@ require 'zendesk_cloudflare/zone/analytics'
 SingleCov.covered!
 
 describe CloudflareClient::Zone::Analytics do
-  subject(:client) { described_class.new(zone_id: valid_zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
+  subject(:client) { described_class.new(zone_id: zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
 
-  let(:valid_zone_id) { 'abc1234' }
+  let(:zone_id) { 'abc1234' }
 
   it_behaves_like 'initialize for zone features'
 
   describe '#zone_dashboard' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/analytics/dashboard").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/analytics/dashboard").
         to_return(response_body(successful_zone_analytics_dashboard))
     end
 
@@ -25,7 +25,7 @@ describe CloudflareClient::Zone::Analytics do
 
   describe '#colo_dashboard' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/analytics/dashboard").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/analytics/dashboard").
         to_return(response_body(successful_colo_analytics_dashboard))
     end
 
@@ -49,7 +49,7 @@ describe CloudflareClient::Zone::Analytics do
 
   describe '#dns_table' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/dns_analytics/report").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/dns_analytics/report").
         to_return(response_body(successful_dns_analytics_table))
     end
 
@@ -62,7 +62,7 @@ describe CloudflareClient::Zone::Analytics do
 
   describe '#dns_by_time' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/dns_analytics/report/bytime?limit=#{limit}&since=#{since_ts}&time_delta=#{time_delta}&until=#{until_ts}").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/dns_analytics/report/bytime?limit=#{limit}&since=#{since_ts}&time_delta=#{time_delta}&until=#{until_ts}").
         to_return(response_body(successful_dns_analytics_table))
     end
 

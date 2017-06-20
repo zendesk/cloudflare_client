@@ -4,15 +4,15 @@ require 'zendesk_cloudflare/zone/custom_page'
 SingleCov.covered!
 
 describe CloudflareClient::Zone::CustomPage do
-  subject(:client) { described_class.new(zone_id: valid_zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
+  subject(:client) { described_class.new(zone_id: zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
 
-  let(:valid_zone_id) { 'abc1234' }
+  let(:zone_id) { 'abc1234' }
 
   it_behaves_like 'initialize for zone features'
 
   describe '#list' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/custom_pages").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/custom_pages").
         to_return(response_body(successful_custom_page_list))
     end
 
@@ -25,7 +25,7 @@ describe CloudflareClient::Zone::CustomPage do
 
   describe '#show' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/custom_pages/#{custom_page_id}").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/custom_pages/#{custom_page_id}").
         to_return(response_body(successful_custom_page_show))
     end
 
@@ -43,7 +43,7 @@ describe CloudflareClient::Zone::CustomPage do
 
   describe '#update' do
     before do
-      stub_request(:put, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/custom_pages/#{custom_page_id}").
+      stub_request(:put, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/custom_pages/#{custom_page_id}").
         with(body: {url: url, state: state}).
         to_return(response_body(successful_custom_page_show))
     end
