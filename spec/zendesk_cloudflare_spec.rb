@@ -25,89 +25,6 @@ describe CloudflareClient do
     expect { CloudflareClient.new(auth_key: "somefakekey") }.to raise_error(RuntimeError, "missing email")
   end
 
-  describe "railgun api" do
-    before do
-      stub_request(:post, 'https://api.cloudflare.com/client/v4/railguns').
-        to_return(response_body(SUCCESSFULL_RAILGUN_CREATION))
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/railguns?direction=desc&page=1&per_page=50').
-        to_return(response_body(SUCCESSFULL_RAILGUN_LIST))
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/railguns/somerailgunid').
-        to_return(response_body(SUCCESSFULL_RAILGUN_DETAILS))
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/railguns/somerailgunid/zones').
-        to_return(response_body(SUCCESSFULL_RAILGUN_ZONES))
-      stub_request(:patch, 'https://api.cloudflare.com/client/v4/railguns/abc1234').
-        to_return(response_body(SUCCESSFULL_RAILGUN_STATUS))
-      stub_request(:delete, 'https://api.cloudflare.com/client/v4/railguns/abc1234').
-        to_return(response_body(SUCCESSFULL_RAILGUN_DELETE))
-    end
-
-    it "fails to create a railgun with missing name" do
-      expect { client.create_railgun }.to raise_error(ArgumentError, 'missing keyword: name')
-      expect { client.create_railgun(name: nil) }.to raise_error(RuntimeError, "Railgun name cannot be nil")
-    end
-
-    it "creates a railgun" do
-      result = client.create_railgun(name: 'foobar')
-      expect(result).to eq(JSON.parse(SUCCESSFULL_RAILGUN_CREATION))
-    end
-
-    it "fails to lists all railguns" do
-      expect { client.railguns(direction: 'foo') }.to raise_error(RuntimeError, 'direction must be either desc | asc')
-    end
-
-    it "lists all railguns" do
-      result = client.railguns
-      expect(result).to eq(JSON.parse(SUCCESSFULL_RAILGUN_LIST))
-    end
-
-    it "fails to get railgun details" do
-      expect { client.railgun }.to raise_error(ArgumentError, 'missing keyword: id')
-      expect { client.railgun(id: nil) }.to raise_error(RuntimeError, 'must provide the id of the railgun')
-    end
-
-    it "get a railgun's details" do
-      result = client.railgun(id: 'somerailgunid')
-      expect(result).to eq(JSON.parse(SUCCESSFULL_RAILGUN_DETAILS))
-    end
-
-    it "fails to get zones for a railgun" do
-      expect { client.railgun_zones }.to raise_error(ArgumentError, 'missing keyword: id')
-      expect { client.railgun_zones(id: nil) }.to raise_error(RuntimeError, 'must provide the id of the railgun')
-    end
-
-    it "gets zones connected to a railgun" do
-      result = client.railgun_zones(id: 'somerailgunid')
-      expect(result).to eq(JSON.parse(SUCCESSFULL_RAILGUN_ZONES))
-    end
-
-    it "fails to change the status of a railgun" do
-      expect { client.railgun_enabled }.to raise_error(ArgumentError, 'missing keywords: id, enabled')
-
-      expect do
-        client.railgun_enabled(id: nil, enabled: true)
-      end.to raise_error(RuntimeError, 'must provide the id of the railgun')
-
-      expect do
-        client.railgun_enabled(id: valid_zone_id, enabled: 'foobar')
-      end.to raise_error(RuntimeError, 'enabled must be true | false')
-    end
-
-    it "enables a railgun" do
-      result = client.railgun_enabled(id: valid_zone_id, enabled: true)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_RAILGUN_STATUS))
-    end
-
-    it "fails to delete a railgun" do
-      expect { client.delete_railgun }.to raise_error(ArgumentError, 'missing keyword: id')
-      expect { client.delete_railgun(id: nil) }.to raise_error(RuntimeError, 'must provide the id of the railgun')
-    end
-
-    it "deletes a railgun" do
-      result = client.delete_railgun(id: valid_zone_id)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_RAILGUN_DELETE))
-    end
-  end
-
   describe "custom_pages" do
     before do
       stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/custom_pages').
@@ -2269,9 +2186,5 @@ describe CloudflareClient do
       result = client.get_logs_since(zone_id: valid_zone_id, ray_id: 'foo', end_time: valid_end_time, count: 5)
       expect(result).to eq(JSON.parse(SUCCESSFULL_LOG_MESSAGE))
     end
-  end
-
-  def response_body(body)
-    {body: body, headers: {'Content-Type': 'application/json'}}
   end
 end

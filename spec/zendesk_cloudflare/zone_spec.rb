@@ -189,8 +189,4 @@ describe CloudflareClient::Zone do
   it "updates a zone's setting" do
     client.update_zone_settings(zone_id: 'abc1234', settings: [name: 'always_online', value: 'yes'])
   end
-
-  def response_body(body)
-    {body: body.to_json, headers: {'Content-Type': 'application/json'}}
-  end
 end

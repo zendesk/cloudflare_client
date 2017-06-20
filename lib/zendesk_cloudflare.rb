@@ -54,55 +54,6 @@ class CloudflareClient
   end
 
   ##
-  # Railgun methods
-
-  ##
-  # create_railgun(name: 'name of railgun')
-  def create_railgun(name:)
-    raise ("Railgun name cannot be nil") if name.nil?
-    data = {name: name}
-    cf_post(path: '/railguns', data: data)
-  end
-
-  ##
-  # Get all the railguns
-  def railguns(page: 1, per_page: 50, direction: "desc")
-    raise ("direction must be either desc | asc") if (direction != "desc" && direction != "asc")
-    params = {page: page, per_page: per_page, direction: direction}
-    cf_get(path: '/railguns', params: params)
-  end
-
-  ##
-  # Get a single railgun
-  def railgun(id:)
-    raise ("must provide the id of the railgun") if id.nil?
-    cf_get(path: "/railguns/#{id}")
-  end
-
-  ##
-  # Get CF zones associated with a railgun
-  def railgun_zones(id:)
-    raise ("must provide the id of the railgun") if id.nil?
-    cf_get(path: "/railguns/#{id}/zones")
-  end
-
-  ##
-  # Get CF zones associated with a railgun
-  def railgun_enabled(id:, enabled:)
-    raise ("must provide the id of the railgun") if id.nil?
-    raise ("enabled must be true | false") if id.nil? || (enabled != false && enabled != true)
-    data = {enabled: enabled}
-    cf_patch(path: "/railguns/#{id}", data: data)
-  end
-
-  ##
-  # delete a railgun
-  def delete_railgun(id:)
-    raise ("must provide the id of the railgun") if id.nil?
-    cf_delete(path: "/railguns/#{id}")
-  end
-
-  ##
   # Custom pages for a zone
   ##
   # custom_pages list all avaialble custom_pages

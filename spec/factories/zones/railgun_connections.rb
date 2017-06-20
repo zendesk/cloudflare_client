@@ -1,14 +1,14 @@
 FactoryGirl.define do
-  factory :railgun, class: Hash do
+  factory :railgun_connections, class: Hash do
     skip_create
     initialize_with { attributes.stringify_keys.with_indifferent_access }
 
-    factory :successful_railgun_list do
+    factory :successful_railgun_connections_list do
       transient { result_count { rand(1..5) } }
       success true
       errors []
       messages []
-      result { create_list(:successful_railgun_result, result_count) }
+      result { create_list(:successful_railgun_connections_result, result_count) }
       result_info do
         {
           page:        1,
@@ -19,21 +19,21 @@ FactoryGirl.define do
       end
     end
 
-    factory :successful_railgun_result do
+    factory :successful_railgun_connections_result do
       id { SecureRandom.uuid.gsub('-', '') }
       name { Faker::Lorem.words.join(' ') }
       enabled { Faker::Boolean.boolean }
       connected { Faker::Boolean.boolean }
     end
 
-    factory :successful_railgun_show do
+    factory :successful_railgun_connections_show do
       success true
       errors []
       messages []
-      result { create(:successful_railgun_result) }
+      result { create(:successful_railgun_connections_result) }
     end
 
-    factory :successful_railgun_test do
+    factory :successful_railgun_connections_test do
       success true
       errors []
       messages []
@@ -59,18 +59,18 @@ FactoryGirl.define do
       end
     end
 
-    factory :successful_railgun_connect do
+    factory :successful_railgun_connections_connect do
       success true
       errors []
       messages []
-      result { create(:successful_railgun_result, connected: true) }
+      result { create(:successful_railgun_connections_result, connected: true) }
     end
 
-    factory :successful_railgun_disconnect do
+    factory :successful_railgun_connections_disconnect do
       success true
       errors []
       messages []
-      result { create(:successful_railgun_result, connected: false) }
+      result { create(:successful_railgun_connections_result, connected: false) }
     end
   end
 end

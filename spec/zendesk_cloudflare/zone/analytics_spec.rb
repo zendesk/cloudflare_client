@@ -107,8 +107,4 @@ describe CloudflareClient::Zone::Analytics do
       end.to raise_error(RuntimeError, 'until_ts must be a valid timestamp')
     end
   end
-
-  def response_body(body)
-    {body: body.to_json, headers: {'Content-Type': 'application/json'}}
-  end
 end

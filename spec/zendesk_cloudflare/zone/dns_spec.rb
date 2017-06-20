@@ -111,8 +111,4 @@ describe CloudflareClient::Zone::DNS do
       expect(result).to eq(successful_dns_delete)
     end
   end
-
-  def response_body(body)
-    {body: body.to_json, headers: {'Content-Type': 'application/json'}}
-  end
 end
