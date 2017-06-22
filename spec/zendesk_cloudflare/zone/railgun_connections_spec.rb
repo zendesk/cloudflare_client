@@ -4,50 +4,37 @@ require 'zendesk_cloudflare/zone/railgun_connections'
 SingleCov.covered!
 
 describe CloudflareClient::Zone::RailgunConnections do
-  subject(:client) { described_class.new(zone_id: valid_zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
+  subject(:client) { described_class.new(zone_id: zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
 
-  let(:valid_zone_id) { 'abc1234' }
+  let(:zone_id) { 'abc1234' }
   let(:railgun_id) { 'e928d310693a83094309acf9ead50448' }
 
-  describe '#initialize' do
-    it 'returns a CloudflareClient::Zone::RailgunConnections instance' do
-      expect { subject }.to_not raise_error
-      expect(subject).to be_a(described_class)
-    end
-
-    context 'when zone_id is missing' do
-      let(:valid_zone_id) { nil }
-
-      it 'raises error' do
-        expect { subject }.to raise_error(StandardError, 'zone_id required')
-      end
-    end
-  end
+  it_behaves_like 'initialize for zone features'
 
   describe '#list' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns").
-        to_return(response_body(successful_railgun_list))
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns").
+        to_return(response_body(successful_railgun_connections_list))
     end
 
-    let(:successful_railgun_list) { create(:successful_railgun_list) }
+    let(:successful_railgun_connections_list) { create(:successful_railgun_connections_list) }
 
     it 'lists railguns' do
-      expect(client.list).to eq(successful_railgun_list)
+      expect(client.list).to eq(successful_railgun_connections_list)
     end
   end
 
   describe '#show' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns/#{successful_railgun_show[:result][:id]}").
-        to_return(response_body(successful_railgun_show))
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns/#{successful_railgun_connections_show[:result][:id]}").
+        to_return(response_body(successful_railgun_connections_show))
     end
 
-    let(:successful_railgun_show) { create(:successful_railgun_show) }
-    let(:railgun_id) { successful_railgun_show[:result][:id] }
+    let(:successful_railgun_connections_show) { create(:successful_railgun_connections_show) }
+    let(:railgun_id) { successful_railgun_connections_show[:result][:id] }
 
     it 'railguns connection details' do
-      expect(client.show(id: railgun_id)).to eq(successful_railgun_show)
+      expect(client.show(id: railgun_id)).to eq(successful_railgun_connections_show)
     end
 
     it 'fails to get railgun connection details' do
@@ -58,14 +45,14 @@ describe CloudflareClient::Zone::RailgunConnections do
 
   describe '#test' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns/#{railgun_id}/diagnose").
-        to_return(response_body(successful_railgun_test))
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns/#{railgun_id}/diagnose").
+        to_return(response_body(successful_railgun_connections_test))
     end
 
-    let(:successful_railgun_test) { create(:successful_railgun_test) }
+    let(:successful_railgun_connections_test) { create(:successful_railgun_connections_test) }
 
     it 'tests railgun connection' do
-      expect(client.test(id: railgun_id)).to eq(successful_railgun_test)
+      expect(client.test(id: railgun_id)).to eq(successful_railgun_connections_test)
     end
 
     it 'fails to test a railgun connection' do
@@ -76,15 +63,15 @@ describe CloudflareClient::Zone::RailgunConnections do
 
   describe '#connect' do
     before do
-      stub_request(:patch, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns/#{railgun_id}").
+      stub_request(:patch, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns/#{railgun_id}").
         with(body: {connected: true}).
-        to_return(response_body(successful_railgun_connect))
+        to_return(response_body(successful_railgun_connections_connect))
     end
 
-    let(:successful_railgun_connect) { create(:successful_railgun_connect) }
+    let(:successful_railgun_connections_connect) { create(:successful_railgun_connections_connect) }
 
     it 'connects a railgun' do
-      expect(client.connect(id: railgun_id)).to eq(successful_railgun_connect)
+      expect(client.connect(id: railgun_id)).to eq(successful_railgun_connections_connect)
     end
 
     it 'fails to connect a railgun' do
@@ -95,24 +82,20 @@ describe CloudflareClient::Zone::RailgunConnections do
 
   describe '#disconnect' do
     before do
-      stub_request(:patch, "https://api.cloudflare.com/client/v4/zones/#{valid_zone_id}/railguns/#{railgun_id}").
+      stub_request(:patch, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/railguns/#{railgun_id}").
         with(body: {connected: false}).
-        to_return(response_body(successful_railgun_disconnect))
+        to_return(response_body(successful_railgun_connections_disconnect))
     end
 
-    let(:successful_railgun_disconnect) { create(:successful_railgun_disconnect) }
+    let(:successful_railgun_connections_disconnect) { create(:successful_railgun_connections_disconnect) }
 
     it 'disconnects a railgun' do
-      expect(client.disconnect(id: railgun_id)).to eq(successful_railgun_disconnect)
+      expect(client.disconnect(id: railgun_id)).to eq(successful_railgun_connections_disconnect)
     end
 
     it 'fails to disconnect a railgun' do
       expect { client.disconnect }.to raise_error(ArgumentError, 'missing keyword: id')
       expect { client.disconnect(id: nil) }.to raise_error(RuntimeError, 'railgun id required')
     end
-  end
-
-  def response_body(body)
-    {body: body.to_json, headers: {'Content-Type': 'application/json'}}
   end
 end

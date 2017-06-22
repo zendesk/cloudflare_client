@@ -40,7 +40,7 @@ describe CloudflareClient::Zone do
   let(:successful_zone_edit) { create(:successful_zone_edit) }
   let(:successful_zone_delete) { create(:successful_zone_delete) }
   let(:successful_zone_cache_purge) { create(:successful_zone_cache_purge) }
-  let(:valid_zone_id) { 'abc1234' }
+  let(:zone_id) { 'abc1234' }
 
   it 'creates a zone' do
     result = client.create_zone(
@@ -67,7 +67,7 @@ describe CloudflareClient::Zone do
   end
 
   it 'deletes a zone' do
-    result = client.delete_zone(zone_id: valid_zone_id)
+    result = client.delete_zone(zone_id: zone_id)
     expect(result).to eq(successful_zone_delete)
   end
 
@@ -119,7 +119,7 @@ describe CloudflareClient::Zone do
   it 'edits and existing zone' do
     name_servers = successful_zone_edit['result']['name_servers']
     result       = client.
-      edit_zone(zone_id: valid_zone_id, vanity_name_servers: name_servers).
+      edit_zone(zone_id: zone_id, vanity_name_servers: name_servers).
       dig('result', 'name_servers')
 
     expect(result).to eq(name_servers)
@@ -131,22 +131,22 @@ describe CloudflareClient::Zone do
     expect { client.purge_zone_cache(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
 
     expect do
-      client.purge_zone_cache(zone_id: valid_zone_id)
+      client.purge_zone_cache(zone_id: zone_id)
     end.to raise_error(RuntimeError, 'specify a combination tags[], files[] or purge_everything')
   end
 
   it 'succeedes in purging the entire cache on a zone' do
-    result = client.purge_zone_cache(zone_id: valid_zone_id, purge_everything: true)
+    result = client.purge_zone_cache(zone_id: zone_id, purge_everything: true)
     expect(result).to eq(successful_zone_cache_purge)
   end
 
   it 'succeedes in purging a file from cache on a zone' do
-    result = client.purge_zone_cache(zone_id: valid_zone_id, files: ['/some_random_file'])
+    result = client.purge_zone_cache(zone_id: zone_id, files: ['/some_random_file'])
     expect(result).to eq(successful_zone_cache_purge)
   end
 
   it 'succeedes in purging a tag from cache on a zone' do
-    result = client.purge_zone_cache(zone_id: valid_zone_id, tags: ['tag-to-purge'])
+    result = client.purge_zone_cache(zone_id: zone_id, tags: ['tag-to-purge'])
     expect(result).to eq(successful_zone_cache_purge)
   end
 
@@ -156,7 +156,7 @@ describe CloudflareClient::Zone do
   end
 
   it 'gets all settings for a zone' do
-    result = client.zone_settings(zone_id: valid_zone_id)
+    result = client.zone_settings(zone_id: zone_id)
     expect(result).to eq(successful_zone_query)
   end
 
@@ -168,12 +168,12 @@ describe CloudflareClient::Zone do
     end.to raise_error(RuntimeError, 'zone_id required')
 
     expect do
-      client.zone_setting(zone_id: valid_zone_id, name: 'foobar')
+      client.zone_setting(zone_id: zone_id, name: 'foobar')
     end.to raise_error(RuntimeError, 'setting_name not valid')
   end
 
   it 'gets a setting for a zone' do
-    client.zone_setting(zone_id: valid_zone_id, name: 'always_online')
+    client.zone_setting(zone_id: zone_id, name: 'always_online')
   end
 
   it 'fails to update zone setting' do
@@ -188,9 +188,5 @@ describe CloudflareClient::Zone do
 
   it "updates a zone's setting" do
     client.update_zone_settings(zone_id: 'abc1234', settings: [name: 'always_online', value: 'yes'])
-  end
-
-  def response_body(body)
-    {body: body.to_json, headers: {'Content-Type': 'application/json'}}
   end
 end

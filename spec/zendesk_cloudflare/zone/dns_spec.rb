@@ -4,7 +4,7 @@ require 'zendesk_cloudflare/zone/dns'
 SingleCov.covered!
 
 describe CloudflareClient::Zone::DNS do
-  subject(:client) { described_class.new(zone_id: valid_zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
+  subject(:client) { described_class.new(zone_id: zone_id, auth_key: 'somefakekey', email: 'foo@bar.com') }
 
   before do
     stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/dns_records').
@@ -23,22 +23,9 @@ describe CloudflareClient::Zone::DNS do
   let(:successful_dns_query) { create(:successful_dns_query) }
   let(:successful_dns_update) { create(:successful_dns_update) }
   let(:successful_dns_delete) { create(:successful_dns_delete) }
-  let(:valid_zone_id) { 'abc1234' }
+  let(:zone_id) { 'abc1234' }
 
-  describe '#initialize' do
-    it 'returns a CloudflareClient::Zone::DNS instance' do
-      expect { subject }.to_not raise_error
-      expect(subject).to be_a(described_class)
-    end
-
-    context 'when zone_id is missing' do
-      let(:valid_zone_id) { nil }
-
-      it 'raises error' do
-        expect { subject }.to raise_error(StandardError, 'zone_id required')
-      end
-    end
-  end
+  it_behaves_like 'initialize for zone features'
 
   describe '#create' do
     it 'creates a dns record' do
@@ -110,9 +97,5 @@ describe CloudflareClient::Zone::DNS do
       result = client.delete(id: 'somebigid')
       expect(result).to eq(successful_dns_delete)
     end
-  end
-
-  def response_body(body)
-    {body: body.to_json, headers: {'Content-Type': 'application/json'}}
   end
 end
