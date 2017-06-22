@@ -38,7 +38,7 @@ class CloudflareClient::Zone::PageRule < CloudflareClient::Zone::Base
   # page rule details
   def show(id:)
     id_check('id', id)
-    
+
     cf_get(path: "/zones/#{zone_id}/pagerules/#{id}")
   end
 
