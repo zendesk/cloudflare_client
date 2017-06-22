@@ -54,60 +54,6 @@ class CloudflareClient
   end
 
   ##
-  # keyless_ssl
-
-  ##
-  # create a keyless ssl config
-  def create_keyless_ssl_config(zone_id:, host:, port:, certificate:, name: nil, bundle_method: "ubiquitous")
-    id_check("zone_id", zone_id)
-    raise('host required') if host.nil?
-    raise('certificate required') if certificate.nil?
-    bundle_method_check(bundle_method)
-    data = {host: host, port: port, certificate: certificate, bundle_method: bundle_method}
-    data[:name] = name + ' Keyless SSL' unless name.nil?
-    cf_post(path: "/zones/#{zone_id}/keyless_certificates", data: data)
-  end
-
-  ##
-  # list all the keyless ssl configs
-  def keyless_ssl_configs(zone_id:)
-    id_check("zone_id", zone_id)
-    cf_get(path: "/zones/#{zone_id}/keyless_certificates")
-  end
-
-  ##
-  # details of a keyless_ssl_config
-  def keyless_ssl_config(zone_id:, id:)
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    cf_get(path: "/zons/#{zone_id}/keyless_certificates/#{id}")
-  end
-
-  ##
-  # updates a keyless ssl config
-  def update_keyless_ssl_config(zone_id:, id:, host: nil, name: nil, port: nil, enabled: nil)
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    unless enabled.nil?
-      raise ("enabled must be true||false") unless (enabled == true || enabled == false)
-    end
-    data = {}
-    data[:host] = host unless host.nil?
-    data[:name] = host + " Keyless ssl" unless name.nil?
-    data[:port] = port unless name.nil?
-    data[:enabled] = port unless enabled.nil?
-    cf_patch(path: "/zones/#{zone_id}/keyless_certificates/#{id}", data: data)
-  end
-
-  ##
-  # delete a custom_ssl_config
-  def delete_keyless_ssl_config(zone_id:, id:)
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    cf_delete(path: "/zones/#{zone_id}/keyless_certificates/#{id}")
-  end
-
-  ##
   # page_rules_for_a_zone
 
   ##
