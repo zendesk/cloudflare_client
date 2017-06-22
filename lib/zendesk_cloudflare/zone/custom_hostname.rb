@@ -1,10 +1,9 @@
 require 'zendesk_cloudflare/zone/base'
 
 class CloudflareClient::Zone::CustomHostname < CloudflareClient::Zone::Base
-  VALID_METHODS    = %w[http email cname].freeze
-  VALID_TYPES      = ['read only', 'dv'].freeze
-  VALID_ORDERS     = %w[ssl ssl_status].freeze
-  VALID_DIRECTIONS = %w[asc desc].freeze
+  VALID_METHODS = %w[http email cname].freeze
+  VALID_TYPES   = ['read only', 'dv'].freeze
+  VALID_ORDERS  = %w[ssl ssl_status].freeze
 
   ##
   # custom_hostnames
@@ -18,8 +17,8 @@ class CloudflareClient::Zone::CustomHostname < CloudflareClient::Zone::Base
     #"custom_metadata":{"hsts_enabled":"true"}
     #"custom_metadata":{"hsts_enabled":"true","custom_maxage":value}
     id_check('hostname', hostname)
-    raise("method must be one of #{VALID_METHODS}") unless VALID_METHODS.include?(method)
-    raise("type must be one of #{VALID_TYPES}") unless VALID_TYPES.include?(type)
+    valid_value_check(:method, method, VALID_METHODS)
+    valid_value_check(:type, type, VALID_TYPES)
 
     data                   = {hostname: hostname, ssl: {method: method, type: type}}
     data[:custom_metadata] = custom_metadata unless custom_metadata.empty?
@@ -31,9 +30,9 @@ class CloudflareClient::Zone::CustomHostname < CloudflareClient::Zone::Base
   # list custom_hostnames
   def list(hostname: nil, id: nil, page: 1, per_page: 50, order: 'ssl', direction: 'desc', ssl: 0)
     raise 'cannot use both hostname and id' if hostname && id
-    raise 'order must be ssl or ssl_status' unless VALID_ORDERS.include?(order)
-    raise 'direction must be either asc or desc' unless VALID_DIRECTIONS.include?(direction)
-    raise 'ssl must be either 0 or 1' unless ssl == 0 || ssl == 1
+    valid_value_check(:order, order, VALID_ORDERS)
+    valid_value_check(:direction, direction, VALID_DIRECTIONS)
+    valid_value_check(:ssl, ssl, [0, 1])
 
     params            = {page: page, per_page: per_page, order: order, direction: direction, ssl: ssl}
     params[:hostname] = hostname if hostname
@@ -58,13 +57,15 @@ class CloudflareClient::Zone::CustomHostname < CloudflareClient::Zone::Base
     data = {}
 
     unless type.nil? && method.nil?
-      raise "method must be one of #{VALID_METHODS}" unless VALID_METHODS.include?(method)
-      raise "type must be one of #{VALID_TYPES}" unless VALID_TYPES.include?(type)
+      valid_value_check(:method, method, VALID_METHODS)
+      valid_value_check(:type, type, VALID_TYPES)
+
       data[:ssl] = {method: method, type: type}
     end
 
     unless custom_metadata.nil?
       raise 'custom_metadata must be an object' unless custom_metadata.is_a?(Hash)
+
       data[:custom_metadata] = custom_metadata
     end
 

@@ -8,6 +8,7 @@ class CloudflareClient
 
   API_BASE = 'https://api.cloudflare.com/client/v4'.freeze
   VALID_BUNDLE_METHODS = %w[ubiquitous optimal force].freeze
+  VALID_DIRECTIONS = %w[asc desc].freeze
 
   POSSIBLE_API_SETTINGS = %w[
     advanced_ddos
@@ -51,70 +52,6 @@ class CloudflareClient
     raise('Missing auth_key') if auth_key.nil?
     raise('missing email') if email.nil?
     @cf_client ||= build_client(auth_key: auth_key, email: email)
-  end
-
-  ##
-  # page_rules_for_a_zone
-
-  ##
-  # create zone_page_rule
-  def create_zone_page_rule(zone_id:, targets:, actions:, priority: 1, status: 'disabled')
-    id_check("zone_id", zone_id)
-    if (!targets.is_a?(Array) || targets.empty?)
-      raise("targets must be an array of targes https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule")
-    end
-    if (!actions.is_a?(Array) || actions.empty?)
-      raise("actions must be an array of actions https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule")
-    end
-    raise("status must be disabled||active") if (status != "disabled" && status != "active")
-    data = {targets: targets, actions: actions, priority: priority, status: status}
-    cf_post(path: "/zones/#{zone_id}/pagerules", data: data)
-  end
-
-  ##
-  # list all the page rules for a zone
-  def zone_page_rules(zone_id:, status: 'disabled', order: 'priority', direction: 'desc', match: 'all')
-    id_check("zone_id", zone_id)
-    raise ('status must be either active||disabled') unless (status == 'active' || status == 'disabled')
-    raise ('order must be either status||priority') unless (order == 'status' || order == 'priority')
-    raise ('direction must be either asc||desc') unless (direction == 'asc' || direction == 'desc')
-    raise ('match must be either any||all') unless (match == 'any' || match == 'all')
-    params = {status: status, order: order, direction: direction, match: match}
-    cf_get(path: "/zones/#{zone_id}/pagerules", params: params)
-  end
-
-  ##
-  # page rule details
-  def zone_page_rule(zone_id:, id:)
-    id_check("zone_id", zone_id)
-    id_check('id', id)
-    cf_get(path: "/zones/#{zone_id}/pagerules/#{id}")
-  end
-
-  #TODO: do we need upate, looks the same as change
-
-  ##
-  # update a page rule
-  def update_zone_page_rule(zone_id:, id:, targets: [], actions: [], priority: 1, status: 'disabled')
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    if (!targets.is_a?(Array) || targets.empty?)
-      raise("targets must be an array of targes https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule")
-    end
-    if (!actions.is_a?(Array) || actions.empty?)
-      raise("actions must be an array of actions https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule")
-    end
-    raise("status must be disabled||active") if (status != "disabled" && status != "active")
-    data = {targets: targets, actions: actions, priority: priority, status: status}
-    cf_patch(path: "/zones/#{zone_id}/pagerules/#{id}", data: data)
-  end
-
-  ##
-  # delete a zone page rule
-  def delete_zone_page_rule(zone_id:, id:)
-    id_check("zone_id", zone_id)
-    raise ('zone page rule id required') if id.nil?
-    cf_delete(path: "/zones/#{zone_id}/pagerules/#{id}")
   end
 
   ##
@@ -981,6 +918,10 @@ class CloudflareClient
 
   def id_check(name, id)
     raise ("#{name} required") if id.nil?
+  end
+
+  def valid_value_check(name, value, valid_values)
+    raise "#{name} must be one of #{valid_values}" unless valid_values.include?(value)
   end
 
   def build_client(params)

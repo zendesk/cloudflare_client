@@ -61,6 +61,18 @@ describe CloudflareClient::Zone::CustomHostname do
 
     it 'fails to list custom hostnames' do
       expect { client.list(hostname: hostname, id: id) }.to raise_error(RuntimeError, 'cannot use both hostname and id')
+
+      expect do
+        client.list(order: 'invalid')
+      end.to raise_error(RuntimeError, "order must be one of #{described_class::VALID_ORDERS}")
+
+      expect do
+        client.list(direction: 'invalid')
+      end.to raise_error(RuntimeError, "direction must be one of #{described_class::VALID_DIRECTIONS}")
+
+      expect do
+        client.list(ssl: 'invalid')
+      end.to raise_error(RuntimeError, "ssl must be one of #{[0, 1]}")
     end
   end
 
