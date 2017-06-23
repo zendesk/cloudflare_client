@@ -9,6 +9,7 @@ class CloudflareClient
   API_BASE = 'https://api.cloudflare.com/client/v4'.freeze
   VALID_BUNDLE_METHODS = %w[ubiquitous optimal force].freeze
   VALID_DIRECTIONS = %w[asc desc].freeze
+  VALID_MATCHES  = %w[any all].freeze
 
   POSSIBLE_API_SETTINGS = %w[
     advanced_ddos
@@ -52,78 +53,6 @@ class CloudflareClient
     raise('Missing auth_key') if auth_key.nil?
     raise('missing email') if email.nil?
     @cf_client ||= build_client(auth_key: auth_key, email: email)
-  end
-
-  ##
-  # firewall_access_rules_for_a_zone
-  def firewall_access_rules(zone_id:, notes: nil, mode: nil, match: nil, scope_type: nil, configuration_value: nil, order: nil, page: 1, per_page: 50, configuration_target: nil, direction: 'desc')
-    id_check('zone_id', zone_id, )
-    params = {page: page, per_page: per_page}
-    params[:notes] = notes unless notes.nil?
-    unless mode.nil?
-      raise("mode can only be one of block, challenge, whitelist") unless %w[block challenge whitelist].include?(mode)
-      params[:mode] = mode
-    end
-    unless match.nil?
-      raise("match can only be one either all || any") unless %w[all any].include?(match)
-      params[:match] = match
-    end
-    unless scope_type.nil?
-      raise("scope_type can only be one of user, organization, zone") unless %w[user organization zone].include?(scope_type)
-      params[:scope_type] = scope_type
-    end
-    params[:configuration_value] = configuration_value unless configuration_value.nil?
-    unless configuration_target.nil?
-      possible_targets = %w[ip ip_range country]
-      unless (possible_targets.include?(configuration_target))
-        raise("configuration_target can only be one #{possible_targets.flatten}")
-      end
-      params[:configuration_target] = configuration_target
-    end
-    unless direction.nil?
-      raise("direction must be either asc || desc") unless %w[asc desc].include?(direction)
-      params[:direction] = direction
-    end
-    cf_get(path: "/zones/#{zone_id}/firewall/access_rules/rules", params: params)
-  end
-
-  ##
-  # create firewall access rule
-  def create_firewall_access_rule(zone_id:, mode:, configuration:, notes: nil)
-    id_check('zone_id', zone_id)
-    raise("mode must be one of block, challenge, whitlist") unless %w[block challenge whitelist].include?(mode)
-    #https://api.cloudflare.com/#firewall-access-rule-for-a-zone-create-access-rule
-    if configuration.is_a?(Hash)
-      raise("configuration must contain valid a valid target and value") unless configuration.keys.sort == [:target, :value]
-    else
-      raise("configuration must be a valid configuration object")
-    end
-    data = {mode: mode, configuration: configuration}
-    data[:notes] = notes unless notes.nil?
-    cf_post(path: "/zones/#{zone_id}/firewall/access_rules/rules", data: data)
-  end
-
-  ##
-  # updates firewall_access_rule
-  def update_firewall_access_rule(zone_id:, id:, mode: nil,  notes: nil)
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    unless mode.nil?
-      raise("mode must be one of block, challenge, whitlist") unless %w[block challenge whitelist].include?(mode)
-    end
-    data = {}
-    data[:mode] = mode unless mode. nil?
-    data[:notes] = notes unless notes.nil?
-    cf_patch(path: "/zones/#{zone_id}/firewall/access_rules/rules/#{id}", data: data)
-  end
-
-  ##
-  # delete a firewall access rule
-  def delete_firewall_access_rule(zone_id:, id:, cascade: 'none')
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    raise("cascade must be one of none, basic, aggressive") unless %w[none basic aggressive].include?(cascade)
-    cf_delete(path: "/zones/#{zone_id}/firewall/access_rules/rules/#{id}")
   end
 
   ##
