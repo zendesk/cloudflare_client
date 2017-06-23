@@ -56,49 +56,6 @@ class CloudflareClient
   end
 
   ##
-  # waf_rules
-
-  ##
-  # list waf rules
-  def waf_rules(zone_id:, package_id:, mode: {}, priority: nil, match: 'all', order: 'priority', page: 1, per_page: 50, group_id: nil, description: nil, direction: 'desc')
-    id_check('zone_id', zone_id)
-    id_check('package_id', package_id)
-    #FIXME: mode isn't documented in api, ask CF
-    #FIXME: priority is read only?, ask CF
-    params = {page: page, per_page: per_page}
-    match_check(match)
-    params[:match] = match
-    raise("order must be one of priority, group_id, description") unless %w[priority group_id description].include?(order)
-    params[:order] = order
-    params[:group_id] unless group_id.nil?
-    params[:description] unless description.nil?
-    direction_check(direction)
-    params[:direction] = direction
-    cf_get(path: "/zones/#{zone_id}/waf/packages/#{package_id}/rules", params: params)
-  end
-
-  ##
-  # get a single waf rule
-  def waf_rule(zone_id:, package_id:, id:)
-    id_check('zone_id', zone_id)
-    id_check('package_id', package_id)
-    id_check('id', id)
-    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/rules/#{id}")
-  end
-
-  ##
-  # update a waf rule
-  def update_waf_rule(zone_id:, package_id:, id:, mode: 'on')
-    id_check('zone_id', zone_id)
-    id_check('package_id', package_id)
-    id_check('id', id)
-    unless %w[default disable simulate block challenge on off].include?(mode)
-      raise("mode must be one of default, disable, simulate, block, challenge, on, off")
-    end
-    cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/rules/#{id}", data: {mode: mode})
-  end
-
-  ##
   #analyze_certificate
 
   ##
@@ -678,14 +635,6 @@ class CloudflareClient
     unless VALID_BUNDLE_METHODS.include?(bundle_method)
       raise("valid bundle methods are #{VALID_BUNDLE_METHODS.flatten}")
     end
-  end
-
-  def direction_check(direction)
-    raise ("direction must be either asc or desc") if (direction != 'asc' && direction != 'desc')
-  end
-
-  def match_check(match)
-    raise ("match must be either all or any") if (match != 'all' && match != 'any')
   end
 
   def date_rfc3339?(ts)
