@@ -56,23 +56,6 @@ class CloudflareClient
   end
 
   ##
-  #analyze_certificate
-
-  ##
-  # analyze a certificate
-  def analyze_certificate(zone_id:, certificate: nil, bundle_method: 'ubiquitous')
-    id_check('zone_id', zone_id)
-    data = {}
-    data[:certificate] = certificate unless certificate.nil?
-    bundle_method_check(bundle_method)
-    data[:bundle_method] = bundle_method
-    cf_post(path: "/zones/#{zone_id}/ssl/analyze", data: data)
-  end
-
-
-
-
-  ##
   # certificate_packs
 
   ##
@@ -102,21 +85,6 @@ class CloudflareClient
     data = {hosts: hosts}
     cf_patch(path: "/zones/#{zone_id}/ssl/certificate_packs/#{id}", data: data)
   end
-
-  ##
-  #ssl_verification
-
-  ##
-  # get ssl verification
-  def ssl_verification(zone_id:, retry_verification: nil)
-    id_check('zone_id', zone_id)
-    unless retry_verification.nil?
-      raise("retry_verification is true or nil") unless retry_verification == true
-      params = {retry: true}
-    end
-    cf_get(path: "/zones/#{zone_id}/ssl/verification", params: params)
-  end
-
 
 
   ##

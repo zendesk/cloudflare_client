@@ -25,28 +25,6 @@ describe CloudflareClient do
     expect { CloudflareClient.new(auth_key: "somefakekey") }.to raise_error(RuntimeError, "missing email")
   end
 
-  describe "analyze certificate" do
-    before do
-      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/analyze').
-        to_return(response_body(SUCCESSFULL_CERT_ANALYZE))
-    end
-
-    it "fails to analyze a certificate" do
-      expect { client.analyze_certificate }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-
-      expect { client.analyze_certificate(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-
-      expect do
-        client.analyze_certificate(zone_id: valid_zone_id, bundle_method: 'foo')
-      end.to raise_error(RuntimeError, 'valid bundle methods are ["ubiquitous", "optimal", "force"]')
-    end
-
-    it "analyzies a certificate" do
-      result = client.analyze_certificate(zone_id: valid_zone_id, certificate: 'bar', bundle_method: 'ubiquitous')
-      expect(result).to eq(JSON.parse(SUCCESSFULL_CERT_ANALYZE))
-    end
-  end
-
   describe "certificate packs" do
     before do
       stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/certificate_packs').
@@ -101,27 +79,6 @@ describe CloudflareClient do
     it "updates a certifiate pack" do
       result = client.update_certificate_pack(zone_id: valid_zone_id, id: 'foo', hosts: ['footothebar'])
       expect(result).to eq(JSON.parse(SUCCESSFULL_CERT_PACK_LIST))
-    end
-  end
-
-  describe "zone verification" do
-    before do
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/verification').
-        to_return(response_body(SUCCESSFULL_VERIFY_SSL))
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/verification?retry=true').
-        to_return(response_body(SUCCESSFULL_VERIFY_SSL))
-    end
-
-    it "fails to verify a zone" do
-      expect { client.ssl_verification }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-      expect { client.ssl_verification(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-    end
-
-    it "verifies a zone" do
-      result = client.ssl_verification(zone_id: valid_zone_id)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_VERIFY_SSL))
-      result = client.ssl_verification(zone_id: valid_zone_id, retry_verification: true)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_VERIFY_SSL))
     end
   end
 
