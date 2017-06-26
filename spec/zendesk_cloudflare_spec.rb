@@ -25,44 +25,6 @@ describe CloudflareClient do
     expect { CloudflareClient.new(auth_key: "somefakekey") }.to raise_error(RuntimeError, "missing email")
   end
 
-  describe "zone subscriptions" do
-    before do
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/subscription').
-        to_return(response_body(SUCCESSFULL_ZONE_SUBSCRIPTION))
-      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/subscription').
-        to_return(response_body(SUCCESSFULL_ZONE_SUBSCRIPTION_CREATE))
-    end
-
-    it "fails to list zone subscriptions" do
-      expect { client.zone_subscription }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-      expect { client.zone_subscription(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-    end
-
-    it "gets a zone subscription" do
-      result = client.zone_subscription(zone_id: valid_zone_id)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_ZONE_SUBSCRIPTION))
-    end
-
-    it "fails to create a zone subscription" do
-      expect { client.create_zone_subscription }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-
-      expect { client.create_zone_subscription(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-
-      expect do
-        client.create_zone_subscription(zone_id: valid_zone_id, state: 'foo')
-      end.to raise_error(RuntimeError, 'state must be one of ["Trial", "Provisioned", "Paid", "AwaitingPayment", "Cancelled", "Failed", "Expired"]')
-
-      expect do
-        client.create_zone_subscription(zone_id: valid_zone_id, state: 'Failed', frequency: 'foo')
-      end.to raise_error(RuntimeError, 'frequency must be one of ["weekly", "monthly", "quarterly", "yearly"]')
-    end
-
-    it "creates a zone subscription" do
-      result = client.create_zone_subscription(zone_id: valid_zone_id, state: 'Failed', frequency: 'weekly')
-      expect(result).to eq(JSON.parse(SUCCESSFULL_ZONE_SUBSCRIPTION_CREATE))
-    end
-  end
-
   describe "organizations" do
     before do
       stub_request(:get, 'https://api.cloudflare.com/client/v4/organizations/abc1234').

@@ -56,41 +56,6 @@ class CloudflareClient
   end
 
   ##
-  #zone_subscription
-
-  ##
-  # get a zone subscription
-  # FIXME: seems to throw a 404
-  def zone_subscription(zone_id:)
-    id_check('zone_id', zone_id)
-    cf_get(path: "/zones/#{zone_id}/subscription")
-  end
-
-  ##
-  # create a zone subscriptions
-  # FIXME: api talks about lots of read only constrains
-  def create_zone_subscription(zone_id:, component_values: [], rate_plan: {}, zone: {}, state: nil, id: nil, frequency: nil)
-    id_check('zone_id', zone_id)
-    possible_states = %w[Trial Provisioned Paid AwaitingPayment Cancelled Failed Expired]
-    possible_frequencies = %w[weekly monthly quarterly yearly]
-    unless state.nil?
-      raise ("state must be one of #{possible_states.flatten}") unless possible_states.include?(state.capitalize)
-    end
-    unless frequency.nil?
-      raise ("frequency must be one of #{possible_frequencies.flatten}") unless possible_frequencies.include?(frequency)
-    end
-    data = {zone: zone, state: state, currency: 'USD', frequency: frequency}
-    cf_post(path: "/zones/#{zone_id}/subscription", data: data)
-  end
-
-  ##
-  # update a zone subscription
-  def update_zone_subscription(zone_id: )
-    #FIXME: more read-only questions abound
-  end
-
-
-  ##
   #organizations
   #
 
@@ -592,7 +557,7 @@ class CloudflareClient
   end
 
   def id_check(name, id)
-    raise ("#{name} required") if id.nil?
+    raise "#{name} required" if id.nil?
   end
 
   def valid_value_check(name, value, valid_values)
@@ -601,6 +566,18 @@ class CloudflareClient
 
   def non_empty_array_check(name, array)
     raise "#{name} must be an array of #{name}" unless array.is_a?(Array) && !array.empty?
+  end
+
+  def non_empty_hash_check(name, hash)
+    raise "#{name} must be an hash of #{name}" unless hash.is_a?(Hash) && !hash.empty?
+  end
+
+  def basic_type_check(name, value, type)
+    raise "#{name} must be a #{type}" unless value.is_a?(type)
+  end
+
+  def max_length_check(name, value, max_length=32)
+    raise "the length of #{name} must not exceed #{max_length}" unless value.length <= max_length
   end
 
   def build_client(params)
