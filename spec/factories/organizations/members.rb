@@ -25,7 +25,7 @@ FactoryGirl.define do
       name { Faker::Name.name }
       email { Faker::Internet.email }
       status 'accepted'
-      roles { create_list(:organization_member_role, role_count) }
+      roles { create_list(:organization_role_result, role_count) }
     end
 
     factory :organization_member_show do

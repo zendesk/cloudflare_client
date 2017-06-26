@@ -17,7 +17,7 @@ FactoryGirl.define do
       invited_member_email { Faker::Internet.email }
       organization_id { SecureRandom.uuid.gsub('-', '') }
       organization_name { Faker::Company.name }
-      roles { create_list(:organization_member_role, role_count) }
+      roles { create_list(:organization_role_result, role_count) }
       invited_by { Faker::Internet.email }
       invited_on { Time.now.utc.advance(years: -2).iso8601 }
       expires_on { Time.now.utc.advance(years: -2).iso8601 }

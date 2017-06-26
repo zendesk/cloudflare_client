@@ -25,36 +25,6 @@ describe CloudflareClient do
     expect { CloudflareClient.new(auth_key: "somefakekey") }.to raise_error(RuntimeError, "missing email")
   end
 
-  describe "organization roles" do
-    before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/roles").
-        to_return(response_body(SUCCESSFUL_ORG_ROLES))
-      stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/roles/1234").
-        to_return(response_body(SUCCESSFUL_ORG_ROLE_DETAIL))
-    end
-
-    it "fails to list organization roles" do
-      expect { client.organization_roles }.to raise_error(ArgumentError, "missing keyword: org_id")
-      expect { client.organization_roles(org_id: nil) }.to raise_error(RuntimeError, 'org_id required')
-    end
-
-    it "lists organization roles" do
-      result = client.organization_roles(org_id: valid_org_id)
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_ROLES))
-    end
-
-    it "fails to get details of an organization role" do
-      expect { client.organization_role }.to raise_error(ArgumentError, "missing keywords: org_id, id")
-      expect { client.organization_role(org_id: nil, id: nil) }.to raise_error(RuntimeError, "org_id required")
-      expect { client.organization_role(org_id: valid_org_id, id: nil) }.to raise_error(RuntimeError, "id required")
-    end
-
-    it "gets details of an organization role" do
-      result = client.organization_role(org_id: valid_org_id, id: 1234)
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_ROLE_DETAIL))
-    end
-  end
-
   describe "organzation level firewall rules" do
     before do
       stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/firewall/access_rules/rules?configuration_target=ip&configuration_value=IP&direction=asc&match=all&mode=block&order=mode&page=1&per_page=50").

@@ -21,14 +21,7 @@ FactoryGirl.define do
       name { Faker::Company.name }
       members { create_list(:organization_member_result, member_count) }
       invites { create_list(:organization_invite_result, invite_count) }
-      roles { create_list(:organization_member_role, role_count) }
-    end
-
-    factory :organization_member_role do
-      id { SecureRandom.uuid.gsub('-', '') }
-      name { Faker::Job.title }
-      description { Faker::Hacker.say_something_smart }
-      permissions '#zones:read'
+      roles { create_list(:organization_role_result, role_count) }
     end
   end
 end

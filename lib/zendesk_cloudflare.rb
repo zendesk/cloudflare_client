@@ -56,25 +56,6 @@ class CloudflareClient
   end
 
   ##
-  # org roles
-  #
-
-  ##
-  # list all organization roles
-  def organization_roles(org_id:)
-    id_check('org_id', org_id)
-    cf_get(path: "/organizations/#{org_id}/roles")
-  end
-
-  ##
-  # get details of an organization role
-  def organization_role(org_id:, id:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    cf_get(path: "/organizations/#{org_id}/roles/#{id}")
-  end
-
-  ##
   # org level firewall rules
   #
 
