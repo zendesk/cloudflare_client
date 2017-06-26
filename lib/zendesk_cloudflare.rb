@@ -56,57 +56,6 @@ class CloudflareClient
   end
 
   ##
-  # org invites
-
-  ##
-  # create an org invite
-  def create_organization_invite(org_id:, email:, roles:, auto_accept: nil)
-    id_check('org_id', org_id)
-    id_check('email', email)
-    raise("roles must be an array of roles") unless roles.is_a?(Array)
-    raise("roles cannot be empty") if roles.empty?
-    unless auto_accept.nil?
-      raise("auto_accept must be a boolean value") unless (auto_accept == true || auto_accept == false)
-    end
-    data = {invited_member_email: email, roles: roles}
-    cf_post(path: "/organizations/#{org_id}/invites", data: data)
-  end
-
-  ##
-  # org invites
-  def organization_invites(org_id:)
-    id_check('org_id', org_id)
-    cf_get(path: "/organizations/#{org_id}/invites")
-  end
-
-  ##
-  # org invite details
-  def organization_invite(org_id:, id:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    cf_get(path: "/organizations/#{org_id}/invites/#{id}")
-  end
-
-  ##
-  # update an organization invites roles
-  def updates_organization_invite_roles(org_id:, id:, roles:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    raise("roles must be an array of roles") unless roles.is_a?(Array)
-    raise("roles cannot be empty") if roles.empty?
-    data = {roles: roles}
-    cf_patch(path: "/organizations/#{org_id}/invites/#{id}", data: data)
-  end
-
-  ##
-  # cancel an organization invite
-  def cancel_organization_invite(org_id:, id:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    cf_delete(path: "/organizations/#{org_id}/invites/#{id}")
-  end
-
-  ##
   # org roles
   #
 

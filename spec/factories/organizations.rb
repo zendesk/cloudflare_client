@@ -20,7 +20,7 @@ FactoryGirl.define do
       id { SecureRandom.uuid.gsub('-', '') }
       name { Faker::Company.name }
       members { create_list(:organization_member_result, member_count) }
-      invites { create_list(:organization_invite, invite_count) }
+      invites { create_list(:organization_invite_result, invite_count) }
       roles { create_list(:organization_member_role, role_count) }
     end
 
@@ -29,20 +29,6 @@ FactoryGirl.define do
       name { Faker::Job.title }
       description { Faker::Hacker.say_something_smart }
       permissions '#zones:read'
-    end
-
-    factory :organization_invite do
-      transient { role_count { rand(1..3) } }
-      id { SecureRandom.uuid.gsub('-', '') }
-      invited_member_id { SecureRandom.uuid.gsub('-', '') }
-      invited_member_email { Faker::Internet.email }
-      organization_id { SecureRandom.uuid.gsub('-', '') }
-      organization_name { Faker::Company.name }
-      roles { create_list(:organization_member_role, role_count) }
-      invited_by { Faker::Internet.email }
-      invited_on { Time.now.utc.advance(years: -2).iso8601 }
-      expires_on { Time.now.utc.advance(years: -2).iso8601 }
-      status 'accepted'
     end
   end
 end
