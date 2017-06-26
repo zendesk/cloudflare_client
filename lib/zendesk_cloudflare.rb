@@ -56,38 +56,6 @@ class CloudflareClient
   end
 
   ##
-  # certificate_packs
-
-  ##
-  # list all certificate packs
-  def certificate_packs(zone_id:)
-    id_check('zone_id', zone_id)
-    cf_get(path: "/zones/#{zone_id}/ssl/certificate_packs")
-  end
-
-  ##
-  # re-order certificate packs
-  def order_certificate_packs(zone_id:, hosts: nil)
-    unless (hosts.nil?)
-      raise("hosts must be an array of hostnames") if (!hosts.is_a?(Array) || hosts.empty?)
-    end
-    data = {host: [hosts]}
-    # TODO: test against api
-    cf_post(path: "/zones/#{zone_id}/ssl/certificate_packs", data: data)
-  end
-
-  ##
-  # edit a certificate pack
-  def update_certificate_pack(zone_id:, id:, hosts:)
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    raise('hosts must be an array of hosts') unless (hosts.is_a?(Array) && !hosts.empty?)
-    data = {hosts: hosts}
-    cf_patch(path: "/zones/#{zone_id}/ssl/certificate_packs/#{id}", data: data)
-  end
-
-
-  ##
   #zone_subscription
 
   ##
@@ -629,6 +597,10 @@ class CloudflareClient
 
   def valid_value_check(name, value, valid_values)
     raise "#{name} must be one of #{valid_values}" unless valid_values.include?(value)
+  end
+
+  def non_empty_array_check(name, array)
+    raise "#{name} must be an array of #{name}" unless array.is_a?(Array) && !array.empty?
   end
 
   def build_client(params)

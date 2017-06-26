@@ -25,63 +25,6 @@ describe CloudflareClient do
     expect { CloudflareClient.new(auth_key: "somefakekey") }.to raise_error(RuntimeError, "missing email")
   end
 
-  describe "certificate packs" do
-    before do
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/certificate_packs').
-        to_return(response_body(SUCCESSFULL_CERT_PACK_LIST))
-      stub_request(:post, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/certificate_packs').
-        to_return(response_body(SUCCESSFULL_CERT_PACK_ORDER))
-      stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/ssl/certificate_packs/foo').
-        to_return(response_body(SUCCESSFULL_CERT_PACK_LIST))
-    end
-
-    it "fails to list certificate packs " do
-      expect { client.certificate_packs }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-      expect { client.certificate_packs(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-    end
-
-    it "lists certificate packs" do
-      result = client.certificate_packs(zone_id: valid_zone_id)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_CERT_PACK_LIST))
-    end
-
-    it "fails to order certificate packs" do
-      expect { client.order_certificate_packs }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-
-      expect do
-        client.order_certificate_packs(zone_id: valid_zone_id, hosts: 'foo')
-      end.to raise_error(RuntimeError, 'hosts must be an array of hostnames')
-    end
-
-    it "orders certificate packs" do
-      result = client.order_certificate_packs(zone_id: valid_zone_id, hosts: ['foobar.com'])
-      expect(result).to eq(JSON.parse(SUCCESSFULL_CERT_PACK_ORDER))
-    end
-
-    it "fails to update a certificate pack" do
-      expect do
-        client.update_certificate_pack
-      end.to raise_error(ArgumentError, 'missing keywords: zone_id, id, hosts')
-
-      expect do
-        client.update_certificate_pack(zone_id: nil, id: 'foo', hosts: ['bar'])
-      end.to raise_error(RuntimeError, 'zone_id required')
-
-      expect do
-        client.update_certificate_pack(zone_id: valid_zone_id, id: nil, hosts: ['bar'])
-      end.to raise_error(RuntimeError, 'id required')
-
-      expect do
-        client.update_certificate_pack(zone_id: valid_zone_id, id: 'foo', hosts: [])
-      end.to raise_error(RuntimeError, 'hosts must be an array of hosts')
-    end
-
-    it "updates a certifiate pack" do
-      result = client.update_certificate_pack(zone_id: valid_zone_id, id: 'foo', hosts: ['footothebar'])
-      expect(result).to eq(JSON.parse(SUCCESSFULL_CERT_PACK_LIST))
-    end
-  end
-
   describe "zone subscriptions" do
     before do
       stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/subscription').
