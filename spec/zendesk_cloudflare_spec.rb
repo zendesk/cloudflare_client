@@ -25,35 +25,6 @@ describe CloudflareClient do
     expect { CloudflareClient.new(auth_key: "somefakekey") }.to raise_error(RuntimeError, "missing email")
   end
 
-  describe "organizations" do
-    before do
-      stub_request(:get, 'https://api.cloudflare.com/client/v4/organizations/abc1234').
-        to_return(response_body(SUCCESSFULL_ORG_LIST))
-      stub_request(:patch, 'https://api.cloudflare.com/client/v4/organizations/abc1234').
-        to_return(response_body(SUCCESSFULL_ORG_UPDATE))
-    end
-
-    it "fails to get the details of an org" do
-      expect { client.organization }.to raise_error(ArgumentError, 'missing keyword: org_id')
-      expect { client.organization(org_id: nil) }.to raise_error(RuntimeError, 'org_id required')
-    end
-
-    it "get an org's details" do
-      result = client.organization(org_id: valid_zone_id)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_ORG_LIST))
-    end
-
-    it "fails to update an org" do
-      expect { client.update_organization }.to raise_error(ArgumentError, 'missing keyword: org_id')
-      expect { client.update_organization(org_id: nil) }.to raise_error(RuntimeError, 'org_id required')
-    end
-
-    it "updates an org" do
-      result = client.update_organization(org_id: valid_zone_id, name: 'foobar.com')
-      expect(result).to eq(JSON.parse(SUCCESSFULL_ORG_UPDATE))
-    end
-  end
-
   describe "organization members" do
     before do
       stub_request(:get, "https://api.cloudflare.com/client/v4/organizations/#{valid_org_id}/members").

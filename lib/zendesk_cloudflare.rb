@@ -56,25 +56,6 @@ class CloudflareClient
   end
 
   ##
-  #organizations
-  #
-
-  ##
-  # get an org's details
-  def organization(org_id:)
-    id_check('org_id', org_id)
-    cf_get(path: "/organizations/#{org_id}")
-  end
-
-  ##
-  # update a given org (only supports name)
-  def update_organization(org_id:, name: nil)
-    id_check('org_id', org_id)
-    data = {name: name} unless name.nil?
-    cf_patch(path: "/organizations/#{org_id}", data: data)
-  end
-
-  ##
   # org members
 
   ##
