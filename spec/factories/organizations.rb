@@ -19,17 +19,8 @@ FactoryGirl.define do
 
       id { SecureRandom.uuid.gsub('-', '') }
       name { Faker::Company.name }
-      members { create_list(:organization_member, member_count) }
+      members { create_list(:organization_member_result, member_count) }
       invites { create_list(:organization_invite, invite_count) }
-      roles { create_list(:organization_member_role, role_count) }
-    end
-
-    factory :organization_member do
-      transient { role_count { rand(1..3) } }
-      id { SecureRandom.uuid.gsub('-', '') }
-      name { Faker::Name.name }
-      email { Faker::Internet.email }
-      status 'accepted'
       roles { create_list(:organization_member_role, role_count) }
     end
 

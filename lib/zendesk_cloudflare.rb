@@ -56,44 +56,6 @@ class CloudflareClient
   end
 
   ##
-  # org members
-
-  ##
-  # list or members
-  def organization_members(org_id:)
-    id_check('org_id', org_id)
-    cf_get(path: "/organizations/#{org_id}/members")
-  end
-
-  ##
-  # org member details
-  def organization_member(org_id:, id:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    cf_get(path: "/organizations/#{org_id}/members/#{id}")
-  end
-
-  ##
-  # update org member roles
-  def update_organization_member_roles(org_id:, id:, roles:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    raise("roles must be an array of roles") unless roles.is_a?(Array)
-    raise("roles cannot be empty") if roles.empty?
-    data = {roles: roles}
-    cf_patch(path: "/organizations/#{org_id}/members/#{id}", data: data)
-  end
-
-  ##
-  # remove org member
-  def remove_org_member(org_id:, id:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    cf_delete(path: "/organizations/#{org_id}/members/#{id}")
-  end
-
-
-  ##
   # org invites
 
   ##
