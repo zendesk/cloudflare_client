@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::CustomHostname < CloudflareClient::Zone::Base
   VALID_METHODS = %w[http email cname].freeze
   VALID_TYPES   = ['read only', 'dv'].freeze

@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/firewall/waf_package'
-
 class CloudflareClient::Zone::Firewall::WAFPackage::Base < CloudflareClient::Zone::Firewall::WAFPackage
   attr_reader :package_id
 

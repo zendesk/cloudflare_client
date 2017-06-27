@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::PageRule < CloudflareClient::Zone::Base
   VALID_STATUSES = %w[active disabled].freeze
   VALID_ORDERS   = %w[status priority].freeze

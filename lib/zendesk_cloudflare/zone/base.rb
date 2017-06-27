@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone'
-
 class CloudflareClient::Zone::Base < CloudflareClient::Zone
   attr_reader :zone_id
 

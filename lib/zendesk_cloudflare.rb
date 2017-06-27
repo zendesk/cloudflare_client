@@ -5,6 +5,7 @@ class CloudflareClient
   require 'faraday'
   require 'date'
   require 'byebug'
+  Dir[File.expand_path('../zendesk_cloudflare/*.rb', __FILE__)].each {|f| require f}
 
   API_BASE = 'https://api.cloudflare.com/client/v4'.freeze
   VALID_BUNDLE_METHODS = %w[ubiquitous optimal force].freeze

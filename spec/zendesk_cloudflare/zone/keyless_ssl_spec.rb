@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'zendesk_cloudflare/zone/keyless_ssl'
+require 'zendesk_cloudflare'
 
 SingleCov.covered!
 

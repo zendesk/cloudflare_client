@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::KeylessSSL < CloudflareClient::Zone::Base
   ##
   # keyless_ssl

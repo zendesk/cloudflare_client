@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/organization'
-
 class CloudflareClient::Organization::Invite < CloudflareClient::Organization
   ##
   # org invites

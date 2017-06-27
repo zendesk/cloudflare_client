@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'zendesk_cloudflare/organization/invite'
+require 'zendesk_cloudflare'
 
 SingleCov.covered!
 

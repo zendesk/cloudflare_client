@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/firewall/waf_package/base'
-
 class CloudflareClient::Zone::Firewall::WAFPackage::RuleGroup < CloudflareClient::Zone::Firewall::WAFPackage::Base
   VALID_MODES = %w[on off]
   VALID_ORDERS = %w[mode rules_count]

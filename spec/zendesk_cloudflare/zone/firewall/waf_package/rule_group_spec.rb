@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'zendesk_cloudflare/zone/firewall/waf_package/rule_group'
+require 'zendesk_cloudflare'
 
 SingleCov.covered!
 

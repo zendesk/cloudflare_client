@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/ssl'
-
 class CloudflareClient::Zone::SSL::CertificatePack < CloudflareClient::Zone::SSL
   ##
   # certificate_packs

@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::Subscription < CloudflareClient::Zone::Base
   VALID_FREQUENCIES = %w[weekly monthly quarterly yearly].freeze
   VALID_STATES      = %w[Trial Provisioned Paid AwaitingPayment Cancelled Failed Expired].freeze

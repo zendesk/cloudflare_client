@@ -1,5 +1,3 @@
-require_relative '../zendesk_cloudflare.rb'
-
 class CloudflareClient::Railgun < CloudflareClient
   ##
   # Railgun methods
