@@ -51,7 +51,7 @@ describe CloudflareClient do
         direction:            'asc'
       )
 
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_FIREWALL_RULES_LIST))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_FIREWALL_RULES_LIST, symbolize_names: true))
     end
 
     it "fails to create an org level access rule" do
@@ -76,7 +76,7 @@ describe CloudflareClient do
 
     it "creates an org level access rules" do
       result = client.create_org_access_rule(org_id: valid_org_id, mode: 'block', configuration: {foo: 'bar'})
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_FIREWALL_RULES_CREATE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_FIREWALL_RULES_CREATE, symbolize_names: true))
     end
 
     it "fails to delete an org level access rule" do
@@ -87,7 +87,7 @@ describe CloudflareClient do
 
     it "deletes an org level access rule" do
       result = client.delete_org_access_rule(org_id: valid_org_id, id: 1234)
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_FIREWALL_RULES_DELETE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_FIREWALL_RULES_DELETE, symbolize_names: true))
     end
   end
 
@@ -115,7 +115,7 @@ describe CloudflareClient do
 
     it "creates an org railgun" do
       result = client.create_org_railguns(org_id: valid_org_id, name: "some_name")
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_CREATE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_CREATE, symbolize_names: true))
     end
 
     it "fails to list an orgs railguns" do
@@ -130,7 +130,7 @@ describe CloudflareClient do
 
     it "lists an orgs railguns" do
       result = client.org_railguns(org_id: valid_org_id)
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_LIST))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_LIST, symbolize_names: true))
     end
 
     it "fails to get details for a railgun" do
@@ -141,7 +141,7 @@ describe CloudflareClient do
 
     it "gets details for an org railgun" do
       result = client.org_railgun(org_id: valid_org_id, id: 'foobar')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_DETAILS))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_DETAILS, symbolize_names: true))
     end
 
     it "fails to get zones connected to an org railgun" do
@@ -152,7 +152,7 @@ describe CloudflareClient do
 
     it "gets zones connected to an org railgun" do
       result = client.org_railgun_connected_zones(org_id: valid_org_id, id: 'foobar')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_ZONES))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_ZONES, symbolize_names: true))
     end
 
     it "fails to enable or disable a railgun" do
@@ -177,7 +177,7 @@ describe CloudflareClient do
 
     it "enables or disables a railgun" do
       result = client.enable_org_railgun(org_id: valid_org_id, id: 'foobar', enabled: true)
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_ENABLE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_ENABLE, symbolize_names: true))
     end
 
     it "fails to delete an org railgun" do
@@ -188,7 +188,7 @@ describe CloudflareClient do
 
     it "deltes an org railgun" do
       result = client.delete_org_railgun(org_id: valid_org_id, id: 'foobar')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_DELETE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_ORG_RAILGUN_DELETE, symbolize_names: true))
     end
   end
 
@@ -205,7 +205,7 @@ describe CloudflareClient do
     end
 
     it "lists cloudflare certs" do
-      expect(client.certificates).to eq(JSON.parse(SUCCESSFUL_CERTS))
+      expect(client.certificates).to eq(JSON.parse(SUCCESSFUL_CERTS, symbolize_names: true))
     end
 
     it "fails to create a certificate" do
@@ -232,7 +232,7 @@ describe CloudflareClient do
         csr:                'foo'
       )
 
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CERTS_CREATE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CERTS_CREATE, symbolize_names: true))
     end
 
     it "fails to get details of a certficiate" do
@@ -242,7 +242,7 @@ describe CloudflareClient do
 
     it "gets details for a certificate" do
       result = client.certificate(id: 'somecertid')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CERTS_DETAILS))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CERTS_DETAILS, symbolize_names: true))
     end
 
     it "fails to revoke a certificate" do
@@ -252,7 +252,7 @@ describe CloudflareClient do
 
     it "revokes a certificate" do
       result = client.revoke_certificate(id: 'somecertid')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CERTS_REVOKE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CERTS_REVOKE, symbolize_names: true))
     end
   end
 
@@ -292,12 +292,12 @@ describe CloudflareClient do
 
     it "lists virtual dns clusters for a user" do
       result = client.virtual_dns_clusters(scope: 'user')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_LIST))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_LIST, symbolize_names: true))
     end
 
     it "lists virtual dns clusters for a org" do
       result = client.virtual_dns_clusters(scope: 'organization', org_id: valid_org_id)
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_LIST))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_LIST, symbolize_names: true))
     end
 
     it "fails to create a dns cluster" do
@@ -339,7 +339,7 @@ describe CloudflareClient do
         scope:                 'user'
       )
 
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_CREATE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_CREATE, symbolize_names: true))
     end
 
     it "creates an organization dns cluster" do
@@ -351,7 +351,7 @@ describe CloudflareClient do
         org_id:                valid_org_id
       )
 
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_CREATE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_CREATE, symbolize_names: true))
     end
 
     it "fails to get deatails of a cluster" do
@@ -370,12 +370,12 @@ describe CloudflareClient do
 
     it "gets details of a user cluster" do
       result = client.virtual_dns_cluster(id: 'foobar', scope: 'user')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS, symbolize_names: true))
     end
 
     it "gets details of an organization cluster" do
       result = client.virtual_dns_cluster(id: 'foobar', scope: 'organization', org_id: valid_org_id)
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS, symbolize_names: true))
     end
 
     it "fails to delete a virtual dns cluster" do
@@ -394,12 +394,12 @@ describe CloudflareClient do
 
     it "deletes a dns user cluster" do
       result = client.delete_virtual_dns_cluster(id: 'foobar', scope: 'user')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DELETE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DELETE, symbolize_names: true))
     end
 
     it "deletes a dns an organization's cluster" do
       result = client.delete_virtual_dns_cluster(id: 'foobar', scope: 'organization', org_id: valid_org_id)
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DELETE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DELETE, symbolize_names: true))
     end
 
     it "fails to update a dns cluster" do
@@ -431,7 +431,7 @@ describe CloudflareClient do
         ratelimit:             0
       )
 
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS, symbolize_names: true))
     end
 
     it "updates an organization dns cluster" do
@@ -446,7 +446,7 @@ describe CloudflareClient do
         ratelimit:             0
       )
 
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_CLUSTER_DETAILS, symbolize_names: true))
     end
   end
 
@@ -540,7 +540,7 @@ describe CloudflareClient do
         until_ts:   valid_iso8601_ts
       )
 
-      expect(result).to eq(JSON.parse(SUCCESSFUL_VIRTUAL_DNS_TABLE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_VIRTUAL_DNS_TABLE, symbolize_names: true))
     end
 
     it "retrieves summarized metrics over a time period (organization)" do
@@ -554,7 +554,7 @@ describe CloudflareClient do
         until_ts:   valid_iso8601_ts
       )
 
-      expect(result).to eq(JSON.parse(SUCCESSFUL_VIRTUAL_DNS_TABLE))
+      expect(result).to eq(JSON.parse(SUCCESSFUL_VIRTUAL_DNS_TABLE, symbolize_names: true))
     end
   end
 
@@ -598,9 +598,9 @@ describe CloudflareClient do
     it "get's logs via timestamps" do
       # note, these are raw not json encoded
       result = client.get_logs_by_time(zone_id: valid_zone_id, start_time: valid_start_time)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_LOG_MESSAGE))
+      expect(result).to eq(JSON.parse(SUCCESSFULL_LOG_MESSAGE, symbolize_names: true))
       result = client.get_logs_by_time(zone_id: valid_zone_id, start_time: valid_start_time, end_time: valid_end_time)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_LOG_MESSAGE))
+      expect(result).to eq(JSON.parse(SUCCESSFULL_LOG_MESSAGE, symbolize_names: true))
     end
 
     it "fails to get a log by rayid" do
@@ -609,7 +609,7 @@ describe CloudflareClient do
 
     it "get's a log via rayid" do
       result = client.get_log(zone_id: valid_zone_id, ray_id: 'somerayid')
-      expect(result).to eq(JSON.parse(SUCCESSFULL_LOG_MESSAGE))
+      expect(result).to eq(JSON.parse(SUCCESSFULL_LOG_MESSAGE, symbolize_names: true))
     end
 
     it "fails to get logs since a given ray_id" do
@@ -622,7 +622,7 @@ describe CloudflareClient do
 
     it "gets logs since a given ray_id" do
       result = client.get_logs_since(zone_id: valid_zone_id, ray_id: 'foo', end_time: valid_end_time, count: 5)
-      expect(result).to eq(JSON.parse(SUCCESSFULL_LOG_MESSAGE))
+      expect(result).to eq(JSON.parse(SUCCESSFULL_LOG_MESSAGE, symbolize_names: true))
     end
   end
 end

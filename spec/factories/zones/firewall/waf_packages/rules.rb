@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :waf_packages_rules, class: Hash do
     skip_create
-    initialize_with { attributes.stringify_keys.with_indifferent_access }
+    initialize_with(&FactoryHelper.initializer)
 
     factory :waf_packages_rule_list do
       transient { result_count { rand(1..3) } }

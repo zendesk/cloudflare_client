@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :dns, class: Hash do
     skip_create
-    initialize_with { attributes.stringify_keys.with_indifferent_access }
+    initialize_with(&FactoryHelper.initializer)
 
     factory :successful_dns_query do
       transient { result_count { rand(1..5) } }

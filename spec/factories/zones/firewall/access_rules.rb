@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :firewall_access_rules, class: Hash do
     skip_create
-    initialize_with { attributes.stringify_keys.with_indifferent_access }
+    initialize_with(&FactoryHelper.initializer)
 
     factory :firewall_access_rule_list do
       transient { result_count { rand(1..3) } }

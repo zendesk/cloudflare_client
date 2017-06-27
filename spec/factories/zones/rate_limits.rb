@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :rate_limits, class: Hash do
     skip_create
-    initialize_with { attributes.stringify_keys.with_indifferent_access }
+    initialize_with(&FactoryHelper.initializer)
 
     factory :rate_limit_list do
       transient { result_count { rand(1..3) } }

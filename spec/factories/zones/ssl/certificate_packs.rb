@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :certificate_packs, class: Hash do
     skip_create
-    initialize_with { attributes.stringify_keys.with_indifferent_access }
+    initialize_with(&FactoryHelper.initializer)
 
     factory :certificate_pack_list do
       transient { result_count { rand(1..3) } }

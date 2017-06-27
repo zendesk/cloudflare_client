@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :ssl, class: Hash do
     skip_create
-    initialize_with { attributes.stringify_keys.with_indifferent_access }
+    initialize_with(&FactoryHelper.initializer)
 
     factory :ssl_analyze do
       success true

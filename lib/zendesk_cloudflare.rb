@@ -476,7 +476,7 @@ class CloudflareClient
       request.body = data.to_json
     end
     raise(JSON.parse(result.body).dig('errors').first.to_s) unless result.status == 200
-    JSON.parse(result.body)
+    JSON.parse(result.body, symbolize_names: true)
   end
 
   def cf_get(path: nil, params: {}, raw: nil, extra_headers: {})
@@ -496,7 +496,7 @@ class CloudflareClient
     if result.headers["content-encoding"] == 'gzip'
       return Zlib::GzipReader.new(StringIO.new(result.body.to_s)).read
     end
-    JSON.parse(result.body)
+    JSON.parse(result.body, symbolize_names: true)
   end
 
   def cf_put(path: nil, data: nil)
@@ -505,7 +505,7 @@ class CloudflareClient
       request.body = data.to_json unless data.nil?
     end
     raise(JSON.parse(result.body).dig('errors').first.to_s) unless result.status == 200
-    JSON.parse(result.body)
+    JSON.parse(result.body, symbolize_names: true)
   end
 
   def cf_patch(path: nil, data: {})
@@ -515,7 +515,7 @@ class CloudflareClient
       request.body = data.to_json unless data.empty?
     end
     raise(JSON.parse(result.body).dig('errors').first.to_s) unless valid_response_codes.include?(result.status)
-    JSON.parse(result.body)
+    JSON.parse(result.body, symbolize_names: true)
   end
 
   def cf_delete(path: nil, data: {})
@@ -524,7 +524,7 @@ class CloudflareClient
       request.body = data.to_json unless data.empty?
     end
     raise(JSON.parse(result.body).dig('errors').first.to_s) unless result.status == 200
-    JSON.parse(result.body)
+    JSON.parse(result.body, symbolize_names: true)
   end
 
   def valid_setting?(name = nil)
