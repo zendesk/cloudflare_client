@@ -9,6 +9,7 @@ class CloudflareClient
   API_BASE = 'https://api.cloudflare.com/client/v4'.freeze
   VALID_BUNDLE_METHODS = %w[ubiquitous optimal force].freeze
   VALID_DIRECTIONS = %w[asc desc].freeze
+  VALID_MATCHES  = %w[any all].freeze
 
   POSSIBLE_API_SETTINGS = %w[
     advanced_ddos
@@ -52,193 +53,6 @@ class CloudflareClient
     raise('Missing auth_key') if auth_key.nil?
     raise('missing email') if email.nil?
     @cf_client ||= build_client(auth_key: auth_key, email: email)
-  end
-
-  ##
-  # firewall_access_rules_for_a_zone
-  def firewall_access_rules(zone_id:, notes: nil, mode: nil, match: nil, scope_type: nil, configuration_value: nil, order: nil, page: 1, per_page: 50, configuration_target: nil, direction: 'desc')
-    id_check('zone_id', zone_id, )
-    params = {page: page, per_page: per_page}
-    params[:notes] = notes unless notes.nil?
-    unless mode.nil?
-      raise("mode can only be one of block, challenge, whitelist") unless %w[block challenge whitelist].include?(mode)
-      params[:mode] = mode
-    end
-    unless match.nil?
-      raise("match can only be one either all || any") unless %w[all any].include?(match)
-      params[:match] = match
-    end
-    unless scope_type.nil?
-      raise("scope_type can only be one of user, organization, zone") unless %w[user organization zone].include?(scope_type)
-      params[:scope_type] = scope_type
-    end
-    params[:configuration_value] = configuration_value unless configuration_value.nil?
-    unless configuration_target.nil?
-      possible_targets = %w[ip ip_range country]
-      unless (possible_targets.include?(configuration_target))
-        raise("configuration_target can only be one #{possible_targets.flatten}")
-      end
-      params[:configuration_target] = configuration_target
-    end
-    unless direction.nil?
-      raise("direction must be either asc || desc") unless %w[asc desc].include?(direction)
-      params[:direction] = direction
-    end
-    cf_get(path: "/zones/#{zone_id}/firewall/access_rules/rules", params: params)
-  end
-
-  ##
-  # create firewall access rule
-  def create_firewall_access_rule(zone_id:, mode:, configuration:, notes: nil)
-    id_check('zone_id', zone_id)
-    raise("mode must be one of block, challenge, whitlist") unless %w[block challenge whitelist].include?(mode)
-    #https://api.cloudflare.com/#firewall-access-rule-for-a-zone-create-access-rule
-    if configuration.is_a?(Hash)
-      raise("configuration must contain valid a valid target and value") unless configuration.keys.sort == [:target, :value]
-    else
-      raise("configuration must be a valid configuration object")
-    end
-    data = {mode: mode, configuration: configuration}
-    data[:notes] = notes unless notes.nil?
-    cf_post(path: "/zones/#{zone_id}/firewall/access_rules/rules", data: data)
-  end
-
-  ##
-  # updates firewall_access_rule
-  def update_firewall_access_rule(zone_id:, id:, mode: nil,  notes: nil)
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    unless mode.nil?
-      raise("mode must be one of block, challenge, whitlist") unless %w[block challenge whitelist].include?(mode)
-    end
-    data = {}
-    data[:mode] = mode unless mode. nil?
-    data[:notes] = notes unless notes.nil?
-    cf_patch(path: "/zones/#{zone_id}/firewall/access_rules/rules/#{id}", data: data)
-  end
-
-  ##
-  # delete a firewall access rule
-  def delete_firewall_access_rule(zone_id:, id:, cascade: 'none')
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    raise("cascade must be one of none, basic, aggressive") unless %w[none basic aggressive].include?(cascade)
-    cf_delete(path: "/zones/#{zone_id}/firewall/access_rules/rules/#{id}")
-  end
-
-  ##
-  # waf_rule_packages
-  def waf_rule_packages(zone_id:, name: nil, page: 1, per_page: 50, order: 'status', direction: 'desc', match: 'all')
-    id_check('zone_id', zone_id)
-    params = {page: page, per_page: per_page}
-    params[:name] = name unless name.nil?
-    raise ('order must be either status or name') unless (order == 'status' || order == 'name')
-    params[:order] = order
-    raise ('direction must be either asc or desc') unless (direction == "asc" || direction == "desc")
-    params[:direction] = direction
-    raise ('match must be either all or any') unless (match == "all" || match == "any")
-    params[:match] = match
-    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages", params: params)
-  end
-
-  ##
-  # details of a single package
-  def waf_rule_package(zone_id:, id:)
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{id}")
-  end
-
-  ##
-  # change anomoly detection of waf package
-  def change_waf_rule_anomoly_detection(zone_id:, id:, sensitivity: 'high', action_mode: 'challange')
-    id_check('zone_id', zone_id)
-    id_check('id', id)
-    raise('sensitivity must be one of high, low, off') unless %w[high low off].include?(sensitivity)
-    raise('action_mode must be one of simulate, block or challenge') unless %w[simulate block challenge].include?(action_mode)
-    data = {sensitivity: sensitivity, action_mode: action_mode}
-    cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{id}", data: data)
-  end
-
-  ##
-  # waf_rule_groups
-  def waf_rule_groups(zone_id:, package_id:, name: nil, mode: 'on', rules_count: 0, page: 1, per_page: 50, order: 'mode', direction: 'desc', match: 'all')
-    id_check('zone_id', zone_id)
-    id_check('package_id', package_id)
-    params = {page: page, per_page: per_page}
-    raise("mode must be one of on or off") if (mode != 'on' && mode != 'off')
-    params[:mode] = mode
-    #FIXME: rules_count doesn't make any sense, ask CF
-    raise('order must be one of mode or rules_count') if (order != 'mode' && order != 'rules_count')
-    params[:order] = order
-    raise('direction must be one of asc or desc') if (direction != 'asc' && direction != 'desc')
-    params[:direction] = direction
-    raise('match must be either all or any') if (match != 'any' && match != 'all')
-    params[:match] = match
-    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/groups", params: params)
-  end
-
-  ##
-  # details of a waf rule group
-  def waf_rule_group(zone_id:, package_id:, id:)
-    id_check('zone_id', zone_id)
-    id_check('package_id', package_id)
-    id_check('id', id)
-    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/groups/#{id}")
-  end
-
-  ##
-  # updates a waf rule group
-  def update_waf_rule_group(zone_id:, package_id:, id:, mode: 'on')
-    id_check('zone_id', zone_id)
-    id_check('package_id', package_id)
-    id_check('id', id)
-    raise('mode must be either on or off') if (mode != 'on' && mode != 'off')
-    cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/groups/#{id}", data: {mode: mode})
-  end
-
-
-  ##
-  # waf_rules
-
-  ##
-  # list waf rules
-  def waf_rules(zone_id:, package_id:, mode: {}, priority: nil, match: 'all', order: 'priority', page: 1, per_page: 50, group_id: nil, description: nil, direction: 'desc')
-    id_check('zone_id', zone_id)
-    id_check('package_id', package_id)
-    #FIXME: mode isn't documented in api, ask CF
-    #FIXME: priority is read only?, ask CF
-    params = {page: page, per_page: per_page}
-    match_check(match)
-    params[:match] = match
-    raise("order must be one of priority, group_id, description") unless %w[priority group_id description].include?(order)
-    params[:order] = order
-    params[:group_id] unless group_id.nil?
-    params[:description] unless description.nil?
-    direction_check(direction)
-    params[:direction] = direction
-    cf_get(path: "/zones/#{zone_id}/waf/packages/#{package_id}/rules", params: params)
-  end
-
-  ##
-  # get a single waf rule
-  def waf_rule(zone_id:, package_id:, id:)
-    id_check('zone_id', zone_id)
-    id_check('package_id', package_id)
-    id_check('id', id)
-    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/rules/#{id}")
-  end
-
-  ##
-  # update a waf rule
-  def update_waf_rule(zone_id:, package_id:, id:, mode: 'on')
-    id_check('zone_id', zone_id)
-    id_check('package_id', package_id)
-    id_check('id', id)
-    unless %w[default disable simulate block challenge on off].include?(mode)
-      raise("mode must be one of default, disable, simulate, block, challenge, on, off")
-    end
-    cf_patch(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/rules/#{id}", data: {mode: mode})
   end
 
   ##
@@ -821,14 +635,6 @@ class CloudflareClient
     unless VALID_BUNDLE_METHODS.include?(bundle_method)
       raise("valid bundle methods are #{VALID_BUNDLE_METHODS.flatten}")
     end
-  end
-
-  def direction_check(direction)
-    raise ("direction must be either asc or desc") if (direction != 'asc' && direction != 'desc')
-  end
-
-  def match_check(match)
-    raise ("match must be either all or any") if (match != 'all' && match != 'any')
   end
 
   def date_rfc3339?(ts)

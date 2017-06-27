@@ -3,7 +3,6 @@ require 'zendesk_cloudflare/zone/base'
 class CloudflareClient::Zone::PageRule < CloudflareClient::Zone::Base
   VALID_STATUSES = %w[active disabled].freeze
   VALID_ORDERS   = %w[status priority].freeze
-  VALID_MATCHES  = %w[any all].freeze
   DOC_URL        = 'https://api.cloudflare.com/#page-rules-for-a-zone-create-a-page-rule'.freeze
 
   ##
