@@ -1,7 +1,7 @@
 FactoryGirl.define do
   factory :analytics, class: Hash do
     skip_create
-    initialize_with { attributes.stringify_keys.with_indifferent_access }
+    initialize_with(&FactoryHelper.initializer)
 
     factory :successful_zone_analytics_dashboard do
       transient { timeseries_count 1 }

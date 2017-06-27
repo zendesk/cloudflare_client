@@ -117,10 +117,10 @@ describe CloudflareClient::Zone do
   end
 
   it 'edits and existing zone' do
-    name_servers = successful_zone_edit['result']['name_servers']
+    name_servers = successful_zone_edit[:result][:name_servers]
     result       = client.
       edit_zone(zone_id: zone_id, vanity_name_servers: name_servers).
-      dig('result', 'name_servers')
+      dig(:result, :name_servers)
 
     expect(result).to eq(name_servers)
   end
