@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/firewall'
-
 class CloudflareClient::Zone::Firewall::AccessRule < CloudflareClient::Zone::Firewall
   VALID_MODES          = %w[block challenge whitelist].freeze
   VALID_SCOPE_TYPES    = %w[user organization zone].freeze

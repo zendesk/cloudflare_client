@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::CustomPage < CloudflareClient::Zone::Base
   ##
   # Custom pages for a zone

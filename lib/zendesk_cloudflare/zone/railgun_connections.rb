@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::RailgunConnections < CloudflareClient::Zone::Base
   ##
   # Railgun connections

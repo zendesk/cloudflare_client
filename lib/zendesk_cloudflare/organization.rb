@@ -1,6 +1,6 @@
-require 'zendesk_cloudflare'
-
 class CloudflareClient::Organization < CloudflareClient
+  Dir[File.expand_path('../organization/*.rb', __FILE__)].each {|f| require f}
+
   attr_reader :org_id
 
   ##

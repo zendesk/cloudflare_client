@@ -1,6 +1,7 @@
-require 'zendesk_cloudflare/zone/firewall'
-
 class CloudflareClient::Zone::Firewall::WAFPackage < CloudflareClient::Zone::Firewall
+  require_relative './waf_package/base.rb'
+  Dir[File.expand_path('../waf_package/*.rb', __FILE__)].each {|f| require f}
+
   VALID_ORDERS        = %w[status name].freeze
   VALID_SENSITIVITIES = %w[high low off].freeze
   VALID_ACTION_MODES  = %w[simulate block challenge].freeze

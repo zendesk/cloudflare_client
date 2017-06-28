@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::Analytics < CloudflareClient::Zone::Base
   ##
   # zone analytics (free, pro, business, enterprise)

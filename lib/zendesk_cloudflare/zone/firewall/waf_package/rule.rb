@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/firewall/waf_package/base'
-
 class CloudflareClient::Zone::Firewall::WAFPackage::Rule < CloudflareClient::Zone::Firewall::WAFPackage::Base
   VALID_ORDERS = %w[priority group_id description].freeze
   VALID_MODES  = %w[default disable simulate block challenge on off].freeze

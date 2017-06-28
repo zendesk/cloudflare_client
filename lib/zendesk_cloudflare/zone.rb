@@ -1,7 +1,8 @@
-require_relative '../zendesk_cloudflare.rb'
-
 class CloudflareClient
   class Zone < CloudflareClient
+    require_relative './zone/base.rb'
+    Dir[File.expand_path('../zone/*.rb', __FILE__)].each {|f| require f}
+
     ##
     # Zone based operations
     def initialize(*args)

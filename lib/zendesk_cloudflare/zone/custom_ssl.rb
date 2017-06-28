@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::CustomSSL < CloudflareClient::Zone::Base
   VALID_ORDERS = %w[status issuer priority expires_on].freeze
 

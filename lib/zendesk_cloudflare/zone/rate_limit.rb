@@ -1,5 +1,3 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::RateLimit < CloudflareClient::Zone::Base
   DOC_URL = 'https://api.cloudflare.com/#rate-limits-for-a-zone-create-a-ratelimit'.freeze
 

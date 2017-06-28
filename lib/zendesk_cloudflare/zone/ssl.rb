@@ -1,6 +1,6 @@
-require 'zendesk_cloudflare/zone/base'
-
 class CloudflareClient::Zone::SSL < CloudflareClient::Zone::Base
+  Dir[File.expand_path('../ssl/*.rb', __FILE__)].each {|f| require f}
+
   VALID_RETRY_VERIFICATIONS = [true].freeze
 
   ##
