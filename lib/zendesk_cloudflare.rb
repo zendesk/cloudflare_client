@@ -57,49 +57,6 @@ class CloudflareClient
   end
 
   ##
-  # cloudflare CA
-
-  ##
-  # list certificates
-  def certificates(zone_id: nil)
-    cf_get(path: '/certificates', params: {zone_id: zone_id})
-  end
-
-  ##
-  # create a certificate
-  def create_certificate(hostnames:, requested_validity: 5475, request_type: 'origin-rsa', csr: nil)
-    raise('hostnames must be an array') unless hostnames.is_a?(Array)
-    raise('hostnames cannot be empty') if hostnames.empty?
-    possible_validity = [7, 30, 90, 365, 730, 1095, 5475]
-    unless possible_validity.include?(requested_validity)
-      raise("requested_validity must be one of #{possible_validity.flatten}")
-    end
-    possible_types = %w[origin-rsa origin-ecc keyless-certificate]
-    unless possible_types.include?(request_type)
-      raise("request type must be one of #{possible_types.flatten}")
-    end
-    data       = {hostnames: hostnames, requested_validity: 5475, request_type: 'origin-rsa'}
-    data[:csr] = csr unless csr.nil?
-    cf_post(path: '/certificates', data: data)
-  end
-
-  ##
-  # details of a certificate
-  def certificate(id:)
-    id_check('id', id)
-    cf_get(path: "/certificates/#{id}")
-  end
-
-  ##
-  # revoke a cert
-  def revoke_certificate(id:)
-    #FIXME: what is the
-    id_check('id', id)
-    cf_delete(path: "/certificates/#{id}")
-  end
-
-
-  ##
   # virtual DNS
   # using scope to determine if this is for users or for orgs
 

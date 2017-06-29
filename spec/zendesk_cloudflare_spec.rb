@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'zendesk_cloudflare'
 
-SingleCov.covered! uncovered: 2
+SingleCov.covered! uncovered: 4
 
 describe CloudflareClient do
   let(:client) { CloudflareClient.new(auth_key: "somefakekey", email: "foo@bar.com") }
@@ -23,70 +23,6 @@ describe CloudflareClient do
 
   it "raises when missing auth_email" do
     expect { CloudflareClient.new(auth_key: "somefakekey") }.to raise_error(RuntimeError, "missing email")
-  end
-
-  describe "cloudflare CA" do
-    before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/certificates").
-        to_return(response_body(SUCCESSFUL_CERTS))
-      stub_request(:post, "https://api.cloudflare.com/client/v4/certificates").
-        to_return(response_body(SUCCESSFUL_CERTS_CREATE))
-      stub_request(:get, "https://api.cloudflare.com/client/v4/certificates/somecertid").
-        to_return(response_body(SUCCESSFUL_CERTS_DETAILS))
-      stub_request(:delete, "https://api.cloudflare.com/client/v4/certificates/somecertid").
-        to_return(response_body(SUCCESSFUL_CERTS_REVOKE))
-    end
-
-    it "lists cloudflare certs" do
-      expect(client.certificates).to eq(JSON.parse(SUCCESSFUL_CERTS, symbolize_names: true))
-    end
-
-    it "fails to create a certificate" do
-      expect { client.create_certificate }.to raise_error(ArgumentError, 'missing keyword: hostnames')
-
-      expect { client.create_certificate(hostnames: 'foo') }.to raise_error(RuntimeError, 'hostnames must be an array')
-
-      expect { client.create_certificate(hostnames: []) }.to raise_error(RuntimeError, 'hostnames cannot be empty')
-
-      expect do
-        client.create_certificate(hostnames: ['foobar.com'], requested_validity: 1)
-      end.to raise_error(RuntimeError, 'requested_validity must be one of [7, 30, 90, 365, 730, 1095, 5475]')
-
-      expect do
-        client.create_certificate(hostnames: ['foobar.com'], requested_validity: 7, request_type: 'bob')
-      end.to raise_error(RuntimeError, 'request type must be one of ["origin-rsa", "origin-ecc", "keyless-certificate"]')
-    end
-
-    it "creates a certificate" do
-      result = client.create_certificate(
-        hostnames:          ['foobar.com'],
-        requested_validity: 7,
-        request_type:       'origin-rsa',
-        csr:                'foo'
-      )
-
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CERTS_CREATE, symbolize_names: true))
-    end
-
-    it "fails to get details of a certficiate" do
-      expect { client.certificate }.to raise_error(ArgumentError, 'missing keyword: id')
-      expect { client.certificate(id: nil) }.to raise_error(RuntimeError, 'id required')
-    end
-
-    it "gets details for a certificate" do
-      result = client.certificate(id: 'somecertid')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CERTS_DETAILS, symbolize_names: true))
-    end
-
-    it "fails to revoke a certificate" do
-      expect { client.revoke_certificate }.to raise_error(ArgumentError, 'missing keyword: id')
-      expect { client.revoke_certificate(id: nil) }.to raise_error(RuntimeError, 'id required')
-    end
-
-    it "revokes a certificate" do
-      result = client.revoke_certificate(id: 'somecertid')
-      expect(result).to eq(JSON.parse(SUCCESSFUL_CERTS_REVOKE, symbolize_names: true))
-    end
   end
 
   describe "virtual DNS" do
