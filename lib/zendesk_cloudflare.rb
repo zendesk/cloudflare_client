@@ -57,110 +57,6 @@ class CloudflareClient
   end
 
   ##
-  # virtual DNS
-  # using scope to determine if this is for users or for orgs
-
-  ##
-  # list virutal dns clsuters for a user or an org
-  def virtual_dns_clusters(scope:, org_id: nil)
-    virtual_dns_scope(scope)
-    if scope == 'user'
-      cf_get(path: '/user/virtual_dns')
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_get(path: "/organizations/#{org_id}/virtual_dns")
-    end
-  end
-
-  ##
-  # create a virtual dns cluster
-  def create_virtual_dns_cluster(name:, origin_ips:, scope:, org_id: nil, minimum_cache_ttl: 60, maximum_cache_ttl: 900, deprecate_any_request: true, ratelimit: 0)
-    id_check("name", name)
-    unless (origin_ips.is_a?(Array) && !origin_ips.empty?)
-      raise('origin_ips must be an array of ips (v4 or v6)')
-    end
-    unless (deprecate_any_request == true || deprecate_any_request == false)
-      raise ("deprecate_any_request must be boolean")
-    end
-    virtual_dns_scope(scope)
-    data = {
-      name:                  name,
-      origin_ips:            origin_ips,
-      minimum_cache_ttl:     minimum_cache_ttl,
-      maximum_cache_ttl:     maximum_cache_ttl,
-      deprecate_any_request: deprecate_any_request,
-      ratelimit:             ratelimit,
-    }
-    if scope == 'user'
-      cf_post(path: '/user/virtual_dns', data: data)
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_post(path: "/organizations/#{org_id}/virtual_dns", data: data)
-    end
-  end
-
-  ##
-  # details of a cluster
-  def virtual_dns_cluster(id:, scope:, org_id: nil)
-    id_check('id', id)
-    virtual_dns_scope(scope)
-    if scope == 'user'
-      cf_get(path: "/user/virtual_dns/#{id}")
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_get(path: "/organizations/#{org_id}/virtual_dns/#{id}")
-    end
-  end
-
-  ##
-  # delete a dns cluster (user)
-  def delete_virtual_dns_cluster(id:, scope:, org_id: nil)
-    id_check('id', id)
-    virtual_dns_scope(scope)
-    if scope == 'user'
-      cf_delete(path: "/user/virtual_dns/#{id}")
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_delete(path: "/organizations/#{org_id}/virtual_dns/#{id}")
-    end
-  end
-
-  ##
-  # updates a dns cluster (user)
-  def update_virtual_dns_cluster(id:, scope:, name: nil, origin_ips: nil, minimum_cache_ttl: nil, maximum_cache_ttl: nil, deprecate_any_request: nil, ratelimit: nil, org_id: nil)
-    id_check('id', id)
-    unless origin_ips.nil?
-      unless (origin_ips.is_a?(Array) && !origin_ips.empty?)
-        raise('origin_ips must be an array of ips (v4 or v6)')
-      end
-    end
-    unless deprecate_any_request.nil?
-      unless (deprecate_any_request == true || deprecate_any_request == false)
-        raise ("deprecate_any_request must be boolean")
-      end
-    end
-    virtual_dns_scope(scope)
-    data                         = {}
-    data[:name]                  = name unless name.nil?
-    data[:origin_ips]            = origin_ips unless origin_ips.nil?
-    data[:minimum_cache_ttl]     = minimum_cache_ttl unless minimum_cache_ttl.nil?
-    data[:maximum_cache_ttl]     = maximum_cache_ttl unless maximum_cache_ttl.nil?
-    data[:deprecate_any_request] = deprecate_any_request unless deprecate_any_request.nil?
-    data[:ratelimit]             = ratelimit unless ratelimit.nil?
-    if scope == 'user'
-      cf_patch(path: "/user/virtual_dns/#{id}", data: data)
-    elsif scope == 'organization'
-      cf_patch(path: "/organizations/#{org_id}/virtual_dns/#{id}", data: data)
-    end
-  end
-
-  def virtual_dns_scope(scope)
-    unless virtual_dns_scope_valid?(scope)
-      raise ("scope must be user or organization")
-    end
-  end
-
-  ##
   # virtual DNS Analytics (users and orgs)
   #
 
@@ -244,13 +140,6 @@ class CloudflareClient
   end
 
   private
-
-  def virtual_dns_scope_valid?(scope)
-    if (scope != 'user' && scope != 'organization')
-      return false
-    end
-    true
-  end
 
   def valid_timestamp?(ts)
     begin
