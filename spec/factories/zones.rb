@@ -48,7 +48,7 @@ FactoryGirl.define do
     end
 
     factory :zone_query_error do
-      code { Faker::Number.number(4) }
+      code { Faker::Number.number(4).to_i }
       message { Faker::Hacker.say_something_smart }
     end
 

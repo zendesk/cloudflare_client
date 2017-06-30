@@ -5,12 +5,12 @@ class CloudflareClient
   require 'faraday'
   require 'date'
   require 'byebug'
-  Dir[File.expand_path('../zendesk_cloudflare/*.rb', __FILE__)].each {|f| require f}
+  Dir[File.expand_path('../zendesk_cloudflare/*.rb', __FILE__)].each { |f| require f }
 
-  API_BASE = 'https://api.cloudflare.com/client/v4'.freeze
+  API_BASE             = 'https://api.cloudflare.com/client/v4'.freeze
   VALID_BUNDLE_METHODS = %w[ubiquitous optimal force].freeze
-  VALID_DIRECTIONS = %w[asc desc].freeze
-  VALID_MATCHES  = %w[any all].freeze
+  VALID_DIRECTIONS     = %w[asc desc].freeze
+  VALID_MATCHES        = %w[any all].freeze
 
   POSSIBLE_API_SETTINGS = %w[
     advanced_ddos
@@ -57,152 +57,6 @@ class CloudflareClient
   end
 
   ##
-  # org level firewall rules
-  #
-
-  ##
-  # list access rules
-  def org_level_firewall_rules(org_id:, notes: nil, mode: nil, match: 'all', configuration_value: nil, order: nil, page: 1, per_page: 50, configuration_target: nil, direction: "desc")
-    id_check('org_id', org_id)
-    params = {page: page, per_page: per_page}
-    unless mode.nil?
-      params[:mode] = mode if %w[block challenge whitelist].include?(mode)
-    end
-    params[:match] = match if (match == "all" || match == "any")
-    params[:configuration_value] = configuration_value if ['IP', 'range', 'country_code'].include?(configuration_value)
-    #FIXME: check this against the api
-    params[:order] = order if %w[configuration_target configuration_value mode].include?(order)
-    params[:configuration_target] = configuration_target if %w[ip range country ].include?(configuration_target)
-    params[:direction] = direction if (direction == 'asc' || direction == 'desc')
-    cf_get(path: "/organizations/#{org_id}/firewall/access_rules/rules", params: params)
-  end
-
-  ##
-  # list access rules
-  def create_org_access_rule(org_id:, mode: nil, configuration: nil, notes: nil)
-    id_check('org_id', org_id)
-    unless configuration.nil?
-      raise("configuration must be a hash") unless configuration.is_a?(Hash)
-      raise("configuration cannot be empty") if configuration.empty?
-    end
-    unless mode.nil?
-      raise "mode must be one of block, challenge, whitelist" unless %w[block challenge whitelist].include?(mode)
-    end
-    #TODO: validate config objects?
-    data = {}
-    data[:mode] = mode unless mode.nil?
-    data[:configuration] = configuration unless configuration.nil?
-    data[:notes] = notes unless notes.nil?
-    cf_post(path: "/organizations/#{org_id}/firewall/access_rules/rules", data: data)
-  end
-
-  ##
-  # delete org access rule
-  def delete_org_access_rule(org_id:, id:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    cf_delete(path: "/organizations/#{org_id}/firewall/access_rules/rules/#{id}")
-  end
-
-  ##
-  # org railgun
-
-  ##
-  # list railguns
-  def create_org_railguns(org_id:, name:)
-    id_check('org_id', org_id)
-    id_check('name', name)
-    data = {name: name}
-    cf_post(path: "/organizations/#{org_id}/railguns", data: data)
-  end
-
-  ##
-  # list railguns
-  def org_railguns(org_id:, page: 1, per_page: 50, direction: 'desc')
-    id_check('org_id', org_id)
-    params = {page: page, per_page: per_page, direction: direction}
-    raise("direction must be either asc or desc") unless %w[asc desc].include?(direction)
-    cf_get(path: "/organizations/#{org_id}/railguns", params: params)
-  end
-
-  ##
-  # list railgun details
-  def org_railgun(org_id:, id:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    cf_get(path: "/organizations/#{org_id}/railguns/#{id}")
-  end
-
-  ##
-  # get zones connected to a given railgun
-  def org_railgun_connected_zones(org_id:, id:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    cf_get(path: "/organizations/#{org_id}/railguns/#{id}/zones")
-  end
-
-  ##
-  # enable or disable a railgun
-  def enable_org_railgun(org_id:, id:, enabled:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    id_check('enabled', enabled)
-    raise ('enabled must be true or false') unless (enabled == true || enabled == false)
-    cf_patch(path: "/organizations/#{org_id}/railguns/#{id}", data: {enabled: enabled})
-  end
-
-  ##
-  # delete an org railgun
-  def delete_org_railgun(org_id:, id:)
-    id_check('org_id', org_id)
-    id_check('id', id)
-    cf_delete(path: "/organizations/#{org_id}/railguns/#{id}")
-  end
-
-  ##
-  # cloudflare CA
-
-  ##
-  # list certificates
-  def certificates(zone_id: nil)
-    cf_get(path: '/certificates', params: {zone_id: zone_id})
-  end
-
-  ##
-  # create a certificate
-  def create_certificate(hostnames:, requested_validity: 5475, request_type: 'origin-rsa', csr: nil)
-    raise('hostnames must be an array') unless hostnames.is_a?(Array)
-    raise('hostnames cannot be empty') if hostnames.empty?
-    possible_validity = [7, 30, 90, 365, 730, 1095, 5475]
-    unless possible_validity.include?(requested_validity)
-      raise("requested_validity must be one of #{possible_validity.flatten}")
-    end
-    possible_types = %w[origin-rsa origin-ecc keyless-certificate]
-    unless possible_types.include?(request_type)
-      raise("request type must be one of #{possible_types.flatten}")
-    end
-    data = {hostnames: hostnames, requested_validity: 5475, request_type: 'origin-rsa'}
-    data[:csr] = csr unless csr.nil?
-    cf_post(path: '/certificates', data: data)
-  end
-
-  ##
-  # details of a certificate
-  def certificate(id:)
-    id_check('id', id)
-    cf_get(path: "/certificates/#{id}")
-  end
-
-  ##
-  # revoke a cert
-  def revoke_certificate(id:)
-    #FIXME: what is the
-    id_check('id', id)
-    cf_delete(path: "/certificates/#{id}")
-  end
-
-
-  ##
   # virtual DNS
   # using scope to determine if this is for users or for orgs
 
@@ -230,12 +84,12 @@ class CloudflareClient
     end
     virtual_dns_scope(scope)
     data = {
-      name: name,
-      origin_ips: origin_ips,
-      minimum_cache_ttl: minimum_cache_ttl,
-      maximum_cache_ttl: maximum_cache_ttl,
+      name:                  name,
+      origin_ips:            origin_ips,
+      minimum_cache_ttl:     minimum_cache_ttl,
+      maximum_cache_ttl:     maximum_cache_ttl,
       deprecate_any_request: deprecate_any_request,
-      ratelimit: ratelimit,
+      ratelimit:             ratelimit,
     }
     if scope == 'user'
       cf_post(path: '/user/virtual_dns', data: data)
@@ -286,13 +140,13 @@ class CloudflareClient
       end
     end
     virtual_dns_scope(scope)
-    data = {}
-    data[:name] = name unless name.nil?
-    data[:origin_ips] = origin_ips unless origin_ips.nil?
-    data[:minimum_cache_ttl] = minimum_cache_ttl unless minimum_cache_ttl.nil?
-    data[:maximum_cache_ttl] = maximum_cache_ttl unless maximum_cache_ttl.nil?
+    data                         = {}
+    data[:name]                  = name unless name.nil?
+    data[:origin_ips]            = origin_ips unless origin_ips.nil?
+    data[:minimum_cache_ttl]     = minimum_cache_ttl unless minimum_cache_ttl.nil?
+    data[:maximum_cache_ttl]     = maximum_cache_ttl unless maximum_cache_ttl.nil?
     data[:deprecate_any_request] = deprecate_any_request unless deprecate_any_request.nil?
-    data[:ratelimit] = ratelimit unless ratelimit.nil?
+    data[:ratelimit]             = ratelimit unless ratelimit.nil?
     if scope == 'user'
       cf_patch(path: "/user/virtual_dns/#{id}", data: data)
     elsif scope == 'organization'
@@ -322,14 +176,14 @@ class CloudflareClient
     raise ('since_ts must be a valid iso8601 timestamp') unless date_iso8601?(since_ts)
     raise ('until_ts must be a valid iso8601 timestamp') unless date_iso8601?(until_ts)
 
-    params = {
-      limit: limit,
+    params           = {
+      limit:      limit,
       dimensions: dimensions,
-      metrics: metrics,
-      since: since_ts,
-      until: until_ts
+      metrics:    metrics,
+      since:      since_ts,
+      until:      until_ts
     }
-    params[:sort] = sort unless sort.nil?
+    params[:sort]    = sort unless sort.nil?
     params[:filters] = sort unless filters.nil?
 
     if scope == 'user'
@@ -339,6 +193,7 @@ class CloudflareClient
       cf_get(path: "/organizations/#{org_id}/virtual_dns/#{id}/dns_analytics/report", params: params)
     end
   end
+
   #TODO: add the time based stuff
 
   #TODO: cloudflare IPs
@@ -454,19 +309,29 @@ class CloudflareClient
     raise "the length of #{name} must not exceed #{max_length}" unless value.length <= max_length
   end
 
+  def range_check(name, value, min=nil, max=nil)
+    if min && max
+      raise "#{name} must be between #{min} and #{max}" unless value >= min && value <= max
+    elsif min
+      raise "#{name} must be equal or larger than #{min}" unless value >= min
+    elsif max
+      raise "#{name} must be equal or less than #{max}" unless value <= max
+    end
+  end
+
   def build_client(params)
     raise('Missing auth_key') if params[:auth_key].nil?
     raise('Missing auth email') if params[:email].nil?
     # we need multipart form encoding for some of these operations
-    client = Faraday.new(url:  API_BASE) do |conn|
+    client                                      = Faraday.new(url: API_BASE) do |conn|
       conn.request :multipart
       conn.request :url_encoded
       conn.adapter :net_http
     end
-    client.headers['X-Auth-Key'] = params[:auth_key]
+    client.headers['X-Auth-Key']                = params[:auth_key]
     client.headers['X-Auth-User-Service-Key	'] = params[:auth_key] #FIXME, is this always the same?
-    client.headers['X-Auth-Email'] = params[:email]
-    client.headers['Content-Type'] = 'application/json'
+    client.headers['X-Auth-Email']              = params[:email]
+    client.headers['Content-Type']              = 'application/json'
     client
   end
 
@@ -485,7 +350,7 @@ class CloudflareClient
       request.headers.merge!(extra_headers) unless extra_headers.empty?
       request.url(API_BASE + path) unless path.nil?
       unless params.nil?
-        request.params = params if params.values.any? { |i| !i.nil?}
+        request.params = params if params.values.any? { |i| !i.nil? }
       end
     end
     raise(JSON.parse(result.body).dig('errors').first.to_s) unless result.status == 200
@@ -511,7 +376,7 @@ class CloudflareClient
 
   def cf_patch(path: nil, data: {})
     valid_response_codes = [200, 202]
-    result = @cf_client.patch do |request|
+    result               = @cf_client.patch do |request|
       request.url(API_BASE + path) unless path.nil?
       request.body = data.to_json unless data.empty?
     end

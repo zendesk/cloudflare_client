@@ -28,9 +28,9 @@ FactoryGirl.define do
       add_attribute(:until) { Time.now.utc.iso8601 }
       requests do
         {
-          all:          Faker::Number.number(10),
-          cached:       Faker::Number.number(10),
-          uncached:     Faker::Number.number(8),
+          all:          Faker::Number.number(10).to_i,
+          cached:       Faker::Number.number(10).to_i,
+          uncached:     Faker::Number.number(8).to_i,
           content_type: create(:analytics_content_type),
           country:      create(:analytics_countries)[:countries],
           ssl:          create(:analytics_ssl),
@@ -39,9 +39,9 @@ FactoryGirl.define do
       end
       bandwidth do
         {
-          all:          Faker::Number.number(10),
-          cached:       Faker::Number.number(10),
-          uncached:     Faker::Number.number(8),
+          all:          Faker::Number.number(10).to_i,
+          cached:       Faker::Number.number(10).to_i,
+          uncached:     Faker::Number.number(8).to_i,
           content_type: create(:analytics_content_type),
           country:      create(:analytics_countries)[:countries],
           ssl:          create(:analytics_ssl)
@@ -49,62 +49,62 @@ FactoryGirl.define do
       end
       threats do
         {
-          all:     Faker::Number.number(10),
+          all:     Faker::Number.number(10).to_i,
           country: create(:analytics_countries)[:countries],
           type:    create(:analytics_threat_types)
         }
       end
       pageviews do
         {
-          all:            Faker::Number.number(10),
+          all:            Faker::Number.number(10).to_i,
           search_engines: create(:analytics_search_engines)
         }
       end
-      uniques { {all: Faker::Number.number(5)} }
+      uniques { {all: Faker::Number.number(5).to_i} }
     end
 
     factory :analytics_content_type do
-      css { Faker::Number.number(rand(5..7)) }
-      html { Faker::Number.number(rand(5..7)) }
-      javascript { Faker::Number.number(rand(5..7)) }
-      gif { Faker::Number.number(rand(5..7)) }
-      jpeg { Faker::Number.number(rand(5..7)) }
+      css { Faker::Number.number(rand(5..7)).to_i }
+      html { Faker::Number.number(rand(5..7)).to_i }
+      javascript { Faker::Number.number(rand(5..7)).to_i }
+      gif { Faker::Number.number(rand(5..7)).to_i }
+      jpeg { Faker::Number.number(rand(5..7)).to_i }
     end
 
     factory :analytics_countries do
       countries do
         %w[US AG GI CN AU].sample(3).reduce({}) do |hash, country_code|
-          hash[country_code] = Faker::Number.number(rand(5..7))
+          hash[country_code] = Faker::Number.number(rand(5..7)).to_i
           hash
         end
       end
     end
 
     factory :analytics_ssl do
-      encrypted { Faker::Number.number(rand(5..7)) }
-      unencrypted { Faker::Number.number(rand(5..7)) }
+      encrypted { Faker::Number.number(rand(5..7)).to_i }
+      unencrypted { Faker::Number.number(rand(5..7)).to_i }
     end
 
     factory :analytics_http_status do
-      add_attribute('200') { Faker::Number.number(rand(3..8)) }
-      add_attribute('301') { Faker::Number.number(rand(3..8)) }
-      add_attribute('400') { Faker::Number.number(rand(3..8)) }
-      add_attribute('402') { Faker::Number.number(rand(3..8)) }
-      add_attribute('404') { Faker::Number.number(rand(3..8)) }
+      add_attribute('200') { Faker::Number.number(rand(3..8)).to_i }
+      add_attribute('301') { Faker::Number.number(rand(3..8)).to_i }
+      add_attribute('400') { Faker::Number.number(rand(3..8)).to_i }
+      add_attribute('402') { Faker::Number.number(rand(3..8)).to_i }
+      add_attribute('404') { Faker::Number.number(rand(3..8)).to_i }
     end
 
     factory :analytics_threat_types do
-      add_attribute('user.ban.ip') { Faker::Number.number(rand(3..4)) }
-      add_attribute('hot.ban.unknown') { Faker::Number.number(rand(3..4)) }
-      add_attribute('macro.chl.captchaErr') { Faker::Number.number(rand(3..4)) }
-      add_attribute('macro.chl.jschlErr') { Faker::Number.number(rand(3..4)) }
+      add_attribute('user.ban.ip') { Faker::Number.number(rand(3..4)).to_i }
+      add_attribute('hot.ban.unknown') { Faker::Number.number(rand(3..4)).to_i }
+      add_attribute('macro.chl.captchaErr') { Faker::Number.number(rand(3..4)).to_i }
+      add_attribute('macro.chl.jschlErr') { Faker::Number.number(rand(3..4)).to_i }
     end
 
     factory :analytics_search_engines do
-      add_attribute('googlebot') { Faker::Number.number(rand(4..5)) }
-      add_attribute('pingdom') { Faker::Number.number(rand(4..5)) }
-      add_attribute('bingbot') { Faker::Number.number(rand(4..5)) }
-      add_attribute('baidubot') { Faker::Number.number(rand(4..5)) }
+      add_attribute('googlebot') { Faker::Number.number(rand(4..5)).to_i }
+      add_attribute('pingdom') { Faker::Number.number(rand(4..5)).to_i }
+      add_attribute('bingbot') { Faker::Number.number(rand(4..5)).to_i }
+      add_attribute('baidubot') { Faker::Number.number(rand(4..5)).to_i }
     end
 
     factory :successful_colo_analytics_dashboard do
