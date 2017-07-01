@@ -1,4 +1,6 @@
 class CloudflareClient::VirtualDnsCluster < CloudflareClient
+  require_relative '../zendesk_cloudflare/virtual_dns_cluster/analytic.rb'
+
   VALID_SCOPES = %i[user organization].freeze
 
   attr_reader :uri_prefix

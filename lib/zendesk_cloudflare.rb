@@ -56,40 +56,6 @@ class CloudflareClient
     @cf_client ||= build_client(auth_key: auth_key, email: email)
   end
 
-  ##
-  # virtual DNS Analytics (users and orgs)
-  #
-
-  def virtual_dns_analytics(id:, scope:, org_id: nil, dimensions:, metrics:, since_ts:, until_ts:, limit: 100, filters: nil, sort: nil)
-    id_check('id', id)
-    virtual_dns_scope(scope)
-    unless dimensions.is_a?(Array) && !dimensions.empty?
-      raise ("dimensions must ba an array of possible dimensions")
-    end
-    unless metrics.is_a?(Array) && !metrics.empty?
-      raise ("metrics must ba an array of possible metrics")
-    end
-    raise ('since_ts must be a valid iso8601 timestamp') unless date_iso8601?(since_ts)
-    raise ('until_ts must be a valid iso8601 timestamp') unless date_iso8601?(until_ts)
-
-    params           = {
-      limit:      limit,
-      dimensions: dimensions,
-      metrics:    metrics,
-      since:      since_ts,
-      until:      until_ts
-    }
-    params[:sort]    = sort unless sort.nil?
-    params[:filters] = sort unless filters.nil?
-
-    if scope == 'user'
-      cf_get(path: "/user/virtual_dns/#{id}/dns_analytics/report", params: params)
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_get(path: "/organizations/#{org_id}/virtual_dns/#{id}/dns_analytics/report", params: params)
-    end
-  end
-
   #TODO: add the time based stuff
 
   #TODO: cloudflare IPs
@@ -165,13 +131,10 @@ class CloudflareClient
     true
   end
 
-  def date_iso8601?(ts)
-    begin
-      DateTime.iso8601(ts)
-    rescue ArgumentError
-      return false
-    end
-    true
+  def iso8601_check(name, ts)
+    DateTime.iso8601(ts)
+  rescue ArgumentError
+    raise "#{name} must be a valid iso8601 timestamp"
   end
 
   def id_check(name, id)
