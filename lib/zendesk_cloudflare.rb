@@ -65,56 +65,8 @@ class CloudflareClient
   #TODO: org load balancer monitors
   #TODO: org load balancer pools
   #TODO: load balancers
-  #
-
-  ##
-  # Logs. This isn't part of the documented api, but is needed functionality
-
-  #FIXME: make sure this covers all the logging cases
-
-  ##
-  # get logs using only timestamps
-  def get_logs_by_time(zone_id:, start_time:, end_time: nil, count: nil)
-    id_check('zone_id', zone_id)
-    id_check('start_time', start_time)
-    raise('start_time must be a valid unix timestamp') unless valid_timestamp?(start_time)
-    params = {start: start_time}
-    unless end_time.nil?
-      raise('end_time must be a valid unix timestamp') unless valid_timestamp?(end_time)
-      params[:end] = end_time
-    end
-    params[:count] = count unless count.nil?
-    cf_get(path: "/zones/#{zone_id}/logs/requests", params: params, extra_headers: {'Accept-encoding': 'gzip'})
-  end
-
-  ##
-  # get a single log entry by it's ray_id
-  def get_log(zone_id:, ray_id:)
-    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}")
-  end
-
-  ##
-  # get all logs after a given ray_id.  end_time must be a valid unix timestamp
-  def get_logs_since(zone_id:, ray_id:, end_time: nil, count: nil, extra_headers: {'Accept-encoding': 'gzip'})
-    params = {start_id: ray_id}
-    unless end_time.nil?
-      raise('end time must be a valid unix timestamp') unless valid_timestamp?(end_time)
-      params[:end] = end_time
-    end
-    params[:count] = count unless count.nil?
-    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}", params: params, extra_headers: {'Accept-encoding': 'gzip'})
-  end
 
   private
-
-  def valid_timestamp?(ts)
-    begin
-      Time.at(ts).to_datetime
-    rescue TypeError
-      return false
-    end
-    true
-  end
 
   def bundle_method_check(bundle_method)
     unless VALID_BUNDLE_METHODS.include?(bundle_method)
@@ -135,6 +87,12 @@ class CloudflareClient
     DateTime.iso8601(ts)
   rescue ArgumentError
     raise "#{name} must be a valid iso8601 timestamp"
+  end
+
+  def timestamp_check(name, ts)
+    Time.at(ts).to_datetime
+  rescue TypeError
+    raise "#{name} must be a valid unix timestamp"
   end
 
   def id_check(name, id)
