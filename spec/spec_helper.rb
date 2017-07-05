@@ -1,4 +1,3 @@
-require_relative 'fixtures/stub_api_responses'
 require 'active_support/core_ext/hash'
 require 'active_support/core_ext/time'
 require 'webmock/rspec'

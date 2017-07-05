@@ -56,144 +56,6 @@ class CloudflareClient
     @cf_client ||= build_client(auth_key: auth_key, email: email)
   end
 
-  ##
-  # virtual DNS
-  # using scope to determine if this is for users or for orgs
-
-  ##
-  # list virutal dns clsuters for a user or an org
-  def virtual_dns_clusters(scope:, org_id: nil)
-    virtual_dns_scope(scope)
-    if scope == 'user'
-      cf_get(path: '/user/virtual_dns')
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_get(path: "/organizations/#{org_id}/virtual_dns")
-    end
-  end
-
-  ##
-  # create a virtual dns cluster
-  def create_virtual_dns_cluster(name:, origin_ips:, scope:, org_id: nil, minimum_cache_ttl: 60, maximum_cache_ttl: 900, deprecate_any_request: true, ratelimit: 0)
-    id_check("name", name)
-    unless (origin_ips.is_a?(Array) && !origin_ips.empty?)
-      raise('origin_ips must be an array of ips (v4 or v6)')
-    end
-    unless (deprecate_any_request == true || deprecate_any_request == false)
-      raise ("deprecate_any_request must be boolean")
-    end
-    virtual_dns_scope(scope)
-    data = {
-      name:                  name,
-      origin_ips:            origin_ips,
-      minimum_cache_ttl:     minimum_cache_ttl,
-      maximum_cache_ttl:     maximum_cache_ttl,
-      deprecate_any_request: deprecate_any_request,
-      ratelimit:             ratelimit,
-    }
-    if scope == 'user'
-      cf_post(path: '/user/virtual_dns', data: data)
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_post(path: "/organizations/#{org_id}/virtual_dns", data: data)
-    end
-  end
-
-  ##
-  # details of a cluster
-  def virtual_dns_cluster(id:, scope:, org_id: nil)
-    id_check('id', id)
-    virtual_dns_scope(scope)
-    if scope == 'user'
-      cf_get(path: "/user/virtual_dns/#{id}")
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_get(path: "/organizations/#{org_id}/virtual_dns/#{id}")
-    end
-  end
-
-  ##
-  # delete a dns cluster (user)
-  def delete_virtual_dns_cluster(id:, scope:, org_id: nil)
-    id_check('id', id)
-    virtual_dns_scope(scope)
-    if scope == 'user'
-      cf_delete(path: "/user/virtual_dns/#{id}")
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_delete(path: "/organizations/#{org_id}/virtual_dns/#{id}")
-    end
-  end
-
-  ##
-  # updates a dns cluster (user)
-  def update_virtual_dns_cluster(id:, scope:, name: nil, origin_ips: nil, minimum_cache_ttl: nil, maximum_cache_ttl: nil, deprecate_any_request: nil, ratelimit: nil, org_id: nil)
-    id_check('id', id)
-    unless origin_ips.nil?
-      unless (origin_ips.is_a?(Array) && !origin_ips.empty?)
-        raise('origin_ips must be an array of ips (v4 or v6)')
-      end
-    end
-    unless deprecate_any_request.nil?
-      unless (deprecate_any_request == true || deprecate_any_request == false)
-        raise ("deprecate_any_request must be boolean")
-      end
-    end
-    virtual_dns_scope(scope)
-    data                         = {}
-    data[:name]                  = name unless name.nil?
-    data[:origin_ips]            = origin_ips unless origin_ips.nil?
-    data[:minimum_cache_ttl]     = minimum_cache_ttl unless minimum_cache_ttl.nil?
-    data[:maximum_cache_ttl]     = maximum_cache_ttl unless maximum_cache_ttl.nil?
-    data[:deprecate_any_request] = deprecate_any_request unless deprecate_any_request.nil?
-    data[:ratelimit]             = ratelimit unless ratelimit.nil?
-    if scope == 'user'
-      cf_patch(path: "/user/virtual_dns/#{id}", data: data)
-    elsif scope == 'organization'
-      cf_patch(path: "/organizations/#{org_id}/virtual_dns/#{id}", data: data)
-    end
-  end
-
-  def virtual_dns_scope(scope)
-    unless virtual_dns_scope_valid?(scope)
-      raise ("scope must be user or organization")
-    end
-  end
-
-  ##
-  # virtual DNS Analytics (users and orgs)
-  #
-
-  def virtual_dns_analytics(id:, scope:, org_id: nil, dimensions:, metrics:, since_ts:, until_ts:, limit: 100, filters: nil, sort: nil)
-    id_check('id', id)
-    virtual_dns_scope(scope)
-    unless dimensions.is_a?(Array) && !dimensions.empty?
-      raise ("dimensions must ba an array of possible dimensions")
-    end
-    unless metrics.is_a?(Array) && !metrics.empty?
-      raise ("metrics must ba an array of possible metrics")
-    end
-    raise ('since_ts must be a valid iso8601 timestamp') unless date_iso8601?(since_ts)
-    raise ('until_ts must be a valid iso8601 timestamp') unless date_iso8601?(until_ts)
-
-    params           = {
-      limit:      limit,
-      dimensions: dimensions,
-      metrics:    metrics,
-      since:      since_ts,
-      until:      until_ts
-    }
-    params[:sort]    = sort unless sort.nil?
-    params[:filters] = sort unless filters.nil?
-
-    if scope == 'user'
-      cf_get(path: "/user/virtual_dns/#{id}/dns_analytics/report", params: params)
-    elsif scope == 'organization'
-      id_check('org_id', org_id)
-      cf_get(path: "/organizations/#{org_id}/virtual_dns/#{id}/dns_analytics/report", params: params)
-    end
-  end
-
   #TODO: add the time based stuff
 
   #TODO: cloudflare IPs
@@ -203,63 +65,8 @@ class CloudflareClient
   #TODO: org load balancer monitors
   #TODO: org load balancer pools
   #TODO: load balancers
-  #
-
-  ##
-  # Logs. This isn't part of the documented api, but is needed functionality
-
-  #FIXME: make sure this covers all the logging cases
-
-  ##
-  # get logs using only timestamps
-  def get_logs_by_time(zone_id:, start_time:, end_time: nil, count: nil)
-    id_check('zone_id', zone_id)
-    id_check('start_time', start_time)
-    raise('start_time must be a valid unix timestamp') unless valid_timestamp?(start_time)
-    params = {start: start_time}
-    unless end_time.nil?
-      raise('end_time must be a valid unix timestamp') unless valid_timestamp?(end_time)
-      params[:end] = end_time
-    end
-    params[:count] = count unless count.nil?
-    cf_get(path: "/zones/#{zone_id}/logs/requests", params: params, extra_headers: {'Accept-encoding': 'gzip'})
-  end
-
-  ##
-  # get a single log entry by it's ray_id
-  def get_log(zone_id:, ray_id:)
-    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}")
-  end
-
-  ##
-  # get all logs after a given ray_id.  end_time must be a valid unix timestamp
-  def get_logs_since(zone_id:, ray_id:, end_time: nil, count: nil, extra_headers: {'Accept-encoding': 'gzip'})
-    params = {start_id: ray_id}
-    unless end_time.nil?
-      raise('end time must be a valid unix timestamp') unless valid_timestamp?(end_time)
-      params[:end] = end_time
-    end
-    params[:count] = count unless count.nil?
-    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}", params: params, extra_headers: {'Accept-encoding': 'gzip'})
-  end
 
   private
-
-  def virtual_dns_scope_valid?(scope)
-    if (scope != 'user' && scope != 'organization')
-      return false
-    end
-    true
-  end
-
-  def valid_timestamp?(ts)
-    begin
-      Time.at(ts).to_datetime
-    rescue TypeError
-      return false
-    end
-    true
-  end
 
   def bundle_method_check(bundle_method)
     unless VALID_BUNDLE_METHODS.include?(bundle_method)
@@ -276,13 +83,16 @@ class CloudflareClient
     true
   end
 
-  def date_iso8601?(ts)
-    begin
-      DateTime.iso8601(ts)
-    rescue ArgumentError
-      return false
-    end
-    true
+  def iso8601_check(name, ts)
+    DateTime.iso8601(ts)
+  rescue ArgumentError
+    raise "#{name} must be a valid iso8601 timestamp"
+  end
+
+  def timestamp_check(name, ts)
+    Time.at(ts).to_datetime
+  rescue TypeError
+    raise "#{name} must be a valid unix timestamp"
   end
 
   def id_check(name, id)
