@@ -5,7 +5,7 @@ Gem::Specification.new name, '1.0.0' do |s|
   s.authors = ['ian waters']
   s.email = 'iwaters@zendesk.com'
   s.homepage = "https://github.com/zendesk/#{name}"
-  s.files = Dir['lib/**.rb']
+  s.files = Dir['lib/**/*.rb']
   s.license = 'MIT'
   s.required_ruby_version = '>= 2.3.0'
 end
