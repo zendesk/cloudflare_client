@@ -6,187 +6,249 @@ SingleCov.covered!
 describe CloudflareClient::Zone do
   subject(:client) { CloudflareClient::Zone.new(auth_key: 'somefakekey', email: 'foo@bar.com') }
 
-  before do
-    stub_request(:post, 'https://api.cloudflare.com/client/v4/zones').
-      to_return(response_body(successful_zone_query))
-    stub_request(:put, 'https://api.cloudflare.com/client/v4/zones/1234abcd/activation_check').
-      to_return(response_body(successful_zone_query))
-    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones?page=1&per_page=50').
-      to_return(response_body(successful_zone_query))
-    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones?name=testzonename.com&page=1&per_page=50').
-      to_return(response_body(successful_zone_query))
-    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/1234abc').
-      to_return(response_body(successful_zone_query))
-    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/shouldfail').
-      to_return(response_body(failed_zone_query).merge(status: 400))
-    stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234').
-      to_return(response_body(successful_zone_edit))
-    stub_request(:delete, 'https://api.cloudflare.com/client/v4/zones/abc1234').
-      to_return(response_body(successful_zone_delete))
-    stub_request(:delete, 'https://api.cloudflare.com/client/v4/zones/abc1234/purge_cache').
-      to_return(response_body(successful_zone_cache_purge))
-    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/settings').
-      to_return(response_body(successful_zone_query))
-    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/').
-      to_return(response_body(successful_zone_query))
-    stub_request(:get, 'https://api.cloudflare.com/client/v4/zones/abc1234/settings/always_online').
-      to_return(response_body(successful_zone_query))
-    stub_request(:patch, 'https://api.cloudflare.com/client/v4/zones/abc1234/settings').
-      to_return(response_body(successful_zone_edit))
+  describe '#zones' do
+    before { stub_request(:get, request_url).to_return(response_body(zone_list)) }
+
+    let(:request_path) { '/zones' }
+    let(:request_query) { {page: 1, per_page: 50} }
+    let(:zone_list) { create(:zone_list, result_count: 1) }
+
+    it 'lists all zones' do
+      expect(client.zones).to eq(zone_list)
+    end
+
+    it 'fails to list zones with an invalid status' do
+      error_message = "status must be one of #{described_class::VALID_ZONE_STATUSES}"
+
+      expect { client.zones(status: 'foobar') }.to raise_error(RuntimeError, error_message)
+    end
+
+    context 'with a zone name' do
+      let(:request_query) { {name: name, page: 1, per_page: 50} }
+      let(:name) { zone_list[:result].first[:id] }
+
+      it 'lists zones with the given name' do
+        expect(client.zones(name: name)).to eq(zone_list)
+      end
+    end
+
+    context 'with a zone name' do
+      let(:request_query) { {status: status, page: 1, per_page: 50} }
+      let(:status) { 'active' }
+
+      it 'lists zones with a given status' do
+        expect(client.zones(status: status)).to eq(zone_list)
+      end
+    end
   end
 
-  let(:successful_zone_query) { create(:successful_zone_query) }
-  let(:failed_zone_query) { create(:failed_zone_query) }
-  let(:successful_zone_edit) { create(:successful_zone_edit) }
-  let(:successful_zone_delete) { create(:successful_zone_delete) }
-  let(:successful_zone_cache_purge) { create(:successful_zone_cache_purge) }
-  let(:zone_id) { 'abc1234' }
+  describe '#create_zone' do
+    before { stub_request(:post, request_url).with(body: payload).to_return(response_body(zone_show)) }
 
-  it 'creates a zone' do
-    result = client.create_zone(
-      name:         'testzone.com',
-      organization: {id: 'thisismyorgid', name: 'fish barrel and a smoking gun'}
-    )
+    let(:request_path) { '/zones' }
+    let(:zone_show) { create(:zone_show) }
+    let(:payload) do
+      {
+        name:         name,
+        organization: organization.merge(status: 'active', permissions: %w[#zones:read]),
+        jump_start:   jump_start
+      }
+    end
+    let(:name) { zone_show[:result][:name] }
+    let(:organization) { {id: 'thisismyorgid', name: 'fish barrel and a smoking gun'} }
+    let(:jump_start) { true }
 
-    expect(result).to eq(successful_zone_query)
+    it 'creates a zone' do
+      expect(client.create_zone(name: name, organization: organization)).to eq(zone_show)
+    end
+
+    it 'fails to create a zone when missing a name' do
+      expect do
+        client.create_zone(organization: organization)
+      end.to raise_error(ArgumentError, 'missing keyword: name')
+
+      expect do
+        client.create_zone(name: nil, organization: organization)
+      end.to raise_error(RuntimeError, 'Zone name required')
+    end
   end
 
-  it 'fails to create a zone when missing a name' do
-    expect do
-      client.create_zone(organization: {id: 'thisismyorgid', name: 'fish barrel and a smoking gun'})
-    end.to raise_error(ArgumentError, 'missing keyword: name')
+  describe '#zone_activation_check' do
+    before { stub_request(:put, request_url).to_return(response_body(zone_id_only_response)) }
 
-    expect do
-      client.create_zone(name: nil, organization: {id: 'thisismyorgid', name: 'fish barrel and a smoking gun'})
-    end.to raise_error(RuntimeError, 'Zone name required')
+    let(:zone_id) { zone_id_only_response[:result][:id] }
+    let(:request_path) { "/zones/#{zone_id}/activation_check" }
+    let(:zone_id_only_response) { create(:zone_id_only_response) }
+
+    it 'requests zone activation check' do
+      expect(client.zone_activation_check(zone_id: zone_id)).to eq(zone_id_only_response)
+    end
+
+    it 'fails to request a zone activation check' do
+      expect { client.zone_activation_check }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.zone_activation_check(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
+    end
   end
 
-  it 'fails to delete a zone' do
-    expect { client.delete_zone }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-    expect { client.delete_zone(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
+  describe '#zone' do
+    before { stub_request(:get, request_url).to_return(response_body(zone_show)) }
+
+    let(:zone_id) { zone_show[:result][:id] }
+    let(:request_path) { "/zones/#{zone_id}" }
+    let(:zone_show) { create(:zone_show) }
+
+    it 'returns details for a single zone' do
+      expect(client.zone(zone_id: zone_id)).to eq(zone_show)
+    end
+
+    it 'it fails to get an existing zone' do
+      expect { client.zone }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.zone(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
+    end
   end
 
-  it 'deletes a zone' do
-    result = client.delete_zone(zone_id: zone_id)
-    expect(result).to eq(successful_zone_delete)
+  describe '#edit_zone' do
+    before { stub_request(:patch, request_url).with(body: payload).to_return(response_body(zone_show)) }
+
+    let(:request_path) { "/zones/#{zone_id}" }
+    let(:zone_show) { create(:zone_show) }
+    let(:zone_id) { zone_show[:result][:id] }
+    let(:name_servers) { zone_show[:result][:name_servers] }
+    let(:payload) { {vanity_name_servers: name_servers} }
+
+    it 'edits and existing zone' do
+      result = client.edit_zone(zone_id: zone_id, vanity_name_servers: name_servers).dig(:result, :name_servers)
+
+      expect(result).to eq(name_servers)
+    end
+
+    it 'fails to edit an existing zone' do
+      expect { client.edit_zone }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.edit_zone(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
+    end
   end
 
-  it 'fails to request a zone activation check' do
-    expect { client.zone_activation_check }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-    expect { client.zone_activation_check(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
+  describe '#purge_zone_cache' do
+    before { stub_request(:delete, request_url).with(body: payload).to_return(response_body(zone_id_only_response)) }
+
+    let(:request_path) { "/zones/#{zone_id}/purge_cache" }
+    let(:zone_id_only_response) { create(:zone_id_only_response) }
+    let(:zone_id) { zone_id_only_response[:result][:id] }
+    let(:purge_everything) { true }
+    let(:payload) { {purge_everything: purge_everything} }
+
+    it 'purges the entire cache on a zone' do
+      expect(client.purge_zone_cache(zone_id: zone_id, purge_everything: purge_everything)).to eq(zone_id_only_response)
+    end
+
+    it 'fails to purge the cache on a zone' do
+      expect { client.purge_zone_cache }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+
+      expect { client.purge_zone_cache(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
+
+      expect do
+        client.purge_zone_cache(zone_id: zone_id)
+      end.to raise_error(RuntimeError, 'specify a combination tags[], files[] or purge_everything')
+    end
+
+    context 'files only' do
+      let(:files) { %w[/some_random_file] }
+      let(:payload) { {files: files} }
+
+      it 'purges a file from cache on a zone' do
+        expect(client.purge_zone_cache(zone_id: zone_id, files: files)).to eq(zone_id_only_response)
+      end
+    end
+
+    context 'tags only' do
+      let(:tags) { %w[tag-to-purge] }
+      let(:payload) { {tags: tags} }
+
+      it 'purges a tag from cache on a zone' do
+        expect(client.purge_zone_cache(zone_id: zone_id, tags: tags)).to eq(zone_id_only_response)
+      end
+    end
   end
 
-  it 'requests zone activcation check succeedes' do
-    client.zone_activation_check(zone_id: '1234abcd')
+  describe '#delete_zone' do
+    before { stub_request(:delete, request_url).to_return(response_body(zone_id_only_response)) }
+
+    let(:request_path) { "/zones/#{zone_id}" }
+    let(:zone_id_only_response) { create(:zone_id_only_response) }
+    let(:zone_id) { zone_id_only_response[:result][:id] }
+
+    it 'deletes a zone' do
+      expect(client.delete_zone(zone_id: zone_id)).to eq(zone_id_only_response)
+    end
+
+    it 'fails to delete a zone' do
+      expect { client.delete_zone }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.delete_zone(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
+    end
   end
 
-  it 'lists all zones' do
-    result = client.zones
-    expect(result).to eq(successful_zone_query)
+  describe '#zone_settings' do
+    before { stub_request(:get, request_url).to_return(response_body(zone_setting_list)) }
+
+    let(:request_path) { "/zones/#{zone_id}/settings" }
+    let(:zone_setting_list) { create(:zone_setting_list) }
+    let(:zone_id) { 'abc1234' }
+
+    it 'gets all settings for a zone' do
+      expect(client.zone_settings(zone_id: zone_id)).to eq(zone_setting_list)
+    end
+
+    it 'fails to get all settings for a zone ' do
+      expect { client.zone_settings }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.zone_settings(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
+    end
   end
 
-  it 'lists zones with a given name' do
-    result = client.zones(name: 'testzonename.com')
-    expect(result).to eq(successful_zone_query)
+  describe '#zone_setting' do
+    before { stub_request(:get, request_url).to_return(response_body(zone_setting_show)) }
+
+    let(:request_path) { "/zones/#{zone_id}/settings/#{name}" }
+    let(:zone_setting_show) { create(:zone_setting_show) }
+    let(:zone_id) { 'abc1234' }
+    let(:name) { zone_setting_show[:result][:id] }
+
+    it 'gets a setting for a zone' do
+      expect(client.zone_setting(zone_id: zone_id, name: name)).to eq(zone_setting_show)
+    end
+
+    it 'fails to get settings for a zone' do
+      expect { client.zone_setting }.to raise_error(ArgumentError, 'missing keywords: zone_id, name')
+
+      expect do
+        client.zone_setting(zone_id: nil, name: 'response_buffering')
+      end.to raise_error(RuntimeError, 'zone_id required')
+
+      expect do
+        client.zone_setting(zone_id: zone_id, name: 'foobar')
+      end.to raise_error(RuntimeError, 'setting_name not valid')
+    end
   end
 
-  it 'fails lists zones with an invalid status' do
-    statuses      = ['active', 'pending', 'initializing', 'moved', 'deleted', 'deactivated', 'read only']
-    error_message = "status must be one of #{statuses}"
-    expect { client.zones(status: 'foobar') }.to raise_error(RuntimeError, error_message)
-  end
+  describe '#update_zone_settings' do
+    before { stub_request(:patch, request_url).to_return(response_body(zone_setting_show)) }
 
-  it 'lists zones with a given status' do
-    result = client.zones(status: 'active')
-    expect(result).to eq(successful_zone_query)
-  end
+    let(:request_path) { "/zones/#{zone_id}/settings" }
+    let(:zone_setting_show) { create(:zone_setting_show) }
+    let(:zone_id) { 'abc1234' }
+    let(:setting) { {name: zone_setting_show[:result][:id], value: zone_setting_show[:result][:value]} }
 
-  it 'it fails to get an existing zone' do
-    expect { client.zone }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-    expect { client.zone(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-  end
+    it 'updates a setting of the given zone' do
+      expect(client.update_zone_settings(zone_id: zone_id, settings: [setting])).to eq(zone_setting_show)
+    end
 
-  it 'returns details for a single zone' do
-    result = client.zone(zone_id: '1234abc')
-    expect(result).to eq(successful_zone_query)
-  end
+    it 'fails to update zone setting' do
+      expect { client.update_zone_settings }.to raise_error(ArgumentError, 'missing keyword: zone_id')
 
-  it 'fails to edit an existing zone' do
-    expect { client.edit_zone }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-    expect { client.edit_zone(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-  end
+      expect { client.update_zone_settings(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
 
-  it 'edits and existing zone' do
-    name_servers = successful_zone_edit[:result][:name_servers]
-    result       = client.
-      edit_zone(zone_id: zone_id, vanity_name_servers: name_servers).
-      dig(:result, :name_servers)
-
-    expect(result).to eq(name_servers)
-  end
-
-  it 'fails to purge the cache on a zone' do
-    expect { client.purge_zone_cache }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-
-    expect { client.purge_zone_cache(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-
-    expect do
-      client.purge_zone_cache(zone_id: zone_id)
-    end.to raise_error(RuntimeError, 'specify a combination tags[], files[] or purge_everything')
-  end
-
-  it 'succeedes in purging the entire cache on a zone' do
-    result = client.purge_zone_cache(zone_id: zone_id, purge_everything: true)
-    expect(result).to eq(successful_zone_cache_purge)
-  end
-
-  it 'succeedes in purging a file from cache on a zone' do
-    result = client.purge_zone_cache(zone_id: zone_id, files: ['/some_random_file'])
-    expect(result).to eq(successful_zone_cache_purge)
-  end
-
-  it 'succeedes in purging a tag from cache on a zone' do
-    result = client.purge_zone_cache(zone_id: zone_id, tags: ['tag-to-purge'])
-    expect(result).to eq(successful_zone_cache_purge)
-  end
-
-  it 'fails to get all settings for a zone ' do
-    expect { client.zone_settings }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-    expect { client.zone_settings(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-  end
-
-  it 'gets all settings for a zone' do
-    result = client.zone_settings(zone_id: zone_id)
-    expect(result).to eq(successful_zone_query)
-  end
-
-  it 'fails to get settings for a zone' do
-    expect { client.zone_setting }.to raise_error(ArgumentError, 'missing keywords: zone_id, name')
-
-    expect do
-      client.zone_setting(zone_id: nil, name: 'response_buffering')
-    end.to raise_error(RuntimeError, 'zone_id required')
-
-    expect do
-      client.zone_setting(zone_id: zone_id, name: 'foobar')
-    end.to raise_error(RuntimeError, 'setting_name not valid')
-  end
-
-  it 'gets a setting for a zone' do
-    client.zone_setting(zone_id: zone_id, name: 'always_online')
-  end
-
-  it 'fails to update zone setting' do
-    expect { client.update_zone_settings }.to raise_error(ArgumentError, 'missing keyword: zone_id')
-
-    expect { client.update_zone_settings(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
-
-    expect do
-      client.update_zone_settings(zone_id: 'abc1234', settings: [name: 'not_a_valid_setting', value: 'yes'])
-    end.to raise_error(RuntimeError, 'setting_name "not_a_valid_setting" not valid')
-  end
-
-  it "updates a zone's setting" do
-    client.update_zone_settings(zone_id: 'abc1234', settings: [name: 'always_online', value: 'yes'])
+      expect do
+        client.update_zone_settings(zone_id: zone_id, settings: [name: 'not_a_valid_setting', value: 'yes'])
+      end.to raise_error(RuntimeError, 'setting_name "not_a_valid_setting" not valid')
+    end
   end
 end

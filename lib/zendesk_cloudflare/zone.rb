@@ -1,7 +1,9 @@
 class CloudflareClient
   class Zone < CloudflareClient
     require_relative './zone/base.rb'
-    Dir[File.expand_path('../zone/*.rb', __FILE__)].each {|f| require f}
+    Dir[File.expand_path('../zone/*.rb', __FILE__)].each { |f| require f }
+
+    VALID_ZONE_STATUSES = %w[active pending initializing moved deleted deactivated].freeze
 
     ##
     # Zone based operations
@@ -14,14 +16,16 @@ class CloudflareClient
     # results are paginated!
     # list_zones(name: name_of_zone, status: active|pending, page: page_no)
     def zones(name: nil, status: nil, per_page: 50, page: 1)
-      params = {}
+      params            = {}
       params[:per_page] = per_page
       params[:page]     = page
       params[:name]     = name unless name.nil?
+
       unless status.nil?
-        valid_statuss = ['active', 'pending', 'initializing', 'moved', 'deleted', 'deactivated', 'read only']
-        raise("status must be one of #{valid_statuss.flatten}") unless valid_statuss.include?(status)
+        raise "status must be one of #{VALID_ZONE_STATUSES.flatten}" unless VALID_ZONE_STATUSES.include?(status)
+        params[:status] = status
       end
+
       cf_get(path: '/zones', params: params)
     end
 
@@ -29,12 +33,12 @@ class CloudflareClient
     # create's a zone with a given name
     # create_zone(name: name_of_zone, jump_start: true|false (default true),
     # organization: {id: org_id, name: org_name})
-    def create_zone(name:, jump_start: true, organization: { id: nil, name: nil })
+    def create_zone(name:, jump_start: true, organization: {id: nil, name: nil})
       raise('Zone name required') if name.nil?
       unless organization[:id].nil? && organization[:name].nil
         org_data = organization.merge(status: 'active', permissions: ['#zones:read'])
       end
-      data = { name: name, jump_start: jump_start, organization: org_data }
+      data = {name: name, jump_start: jump_start, organization: org_data}
       cf_post(path: '/zones', data: data)
     end
 
@@ -59,12 +63,12 @@ class CloudflareClient
     # NOTE: some of these options require an enterprise account
     # edit_zone(zone_id: id_of_zone, paused: true|false,
     # vanity_name_servers: ['ns1.foo.bar', 'ns2.foo.bar'], plan: {id: plan_id})
-    def edit_zone(zone_id:, paused: nil, vanity_name_servers: [], plan: { id: nil })
+    def edit_zone(zone_id:, paused: nil, vanity_name_servers: [], plan: {id: nil})
       raise('zone_id required') if zone_id.nil?
-      data = {}
-      data[:paused] = paused unless paused.nil?
+      data                       = {}
+      data[:paused]              = paused unless paused.nil?
       data[:vanity_name_servers] = vanity_name_servers unless vanity_name_servers.empty?
-      data[:plan] = plan unless plan[:id].nil?
+      data[:plan]                = plan unless plan[:id].nil?
       cf_patch(path: "/zones/#{zone_id}", data: data)
     end
 
@@ -76,10 +80,10 @@ class CloudflareClient
       if purge_everything.nil? && (tags.empty? && files.empty?)
         raise('specify a combination tags[], files[] or purge_everything')
       end
-      data = {}
+      data                    = {}
       data[:purge_everything] = purge_everything unless purge_everything.nil?
-      data[:tags] = tags unless tags.empty?
-      data[:files] = files unless files.empty?
+      data[:tags]             = tags unless tags.empty?
+      data[:files]            = files unless files.empty?
       cf_delete(path: "/zones/#{zone_id}/purge_cache", data: data)
     end
 
@@ -95,7 +99,7 @@ class CloudflareClient
     # return all settings for a given zone
     def zone_settings(zone_id:)
       raise('zone_id required') if zone_id.nil?
-      cf_get(path: '/zones/#{zone_id}/settings')
+      cf_get(path: "/zones/#{zone_id}/settings")
     end
 
     ##
@@ -114,9 +118,9 @@ class CloudflareClient
       raise('zone_id required') if zone_id.nil?
       data = settings.map do |setting|
         raise("setting_name \"#{setting[:name]}\" not valid") unless valid_setting?(setting[:name])
-        { id: setting[:name], value: setting[:value] }
+        {id: setting[:name], value: setting[:value]}
       end
-      data = { 'items': data }
+      data = {items: data}
       cf_patch(path: "/zones/#{zone_id}/settings", data: data)
     end
 

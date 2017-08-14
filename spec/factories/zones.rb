@@ -3,7 +3,37 @@ FactoryGirl.define do
     skip_create
     initialize_with(&FactoryHelper.initializer)
 
-    factory :successful_zone_query do
+    factory :zone_list do
+      transient { result_count { rand(1..3) } }
+      success true
+      errors []
+      messages []
+      result { create_list(:zone_result, result_count) }
+      result_info do
+        {
+          page:        1,
+          per_page:    20,
+          count:       result_count,
+          total_count: result_count
+        }
+      end
+    end
+
+    factory :zone_show do
+      success true
+      errors []
+      messages []
+      result { create(:zone_result) }
+    end
+
+    factory :zone_id_only_response do
+      success true
+      errors []
+      messages []
+      result { {id: SecureRandom.uuid.gsub('-', '')} }
+    end
+
+    factory :zone_result do
       id { SecureRandom.uuid.gsub('-', '') }
       name { Faker::Internet.domain_name }
       development_mode 7200
@@ -38,39 +68,6 @@ FactoryGirl.define do
       legacy_id 'pro'
       is_subscribed true
       can_subscribe true
-    end
-
-    factory :failed_zone_query do
-      success false
-      errors { create_list(:zone_query_error, rand(1..3)) }
-      messages []
-      result nil
-    end
-
-    factory :zone_query_error do
-      code { Faker::Number.number(4).to_i }
-      message { Faker::Hacker.say_something_smart }
-    end
-
-    factory :successful_zone_delete do
-      success true
-      errors []
-      messages []
-      result { {id: SecureRandom.uuid.gsub('-', '')} }
-    end
-
-    factory :successful_zone_edit do
-      success true
-      errors []
-      messages []
-      result { create(:successful_zone_query) }
-    end
-
-    factory :successful_zone_cache_purge do
-      success true
-      errors []
-      messages []
-      result { {id: SecureRandom.uuid.gsub('-', '')} }
     end
   end
 end
