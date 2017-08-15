@@ -4,10 +4,13 @@ require 'webmock/rspec'
 require 'single_cov'
 require 'factory_girl'
 require 'faker'
+
 SingleCov.setup :rspec
 
 Dir[File.expand_path('../shared_examples/*.rb', __FILE__)].each{ |f| require f }
 Dir[File.expand_path('../support/*.rb', __FILE__)].each{ |f| require f }
+
+require 'cloudflare_client'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
