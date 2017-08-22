@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    zendesk_cloudflare (1.0.0)
+    cloudflare_client_rb (3.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -71,6 +71,7 @@ PLATFORMS
 
 DEPENDENCIES
   byebug
+  cloudflare_client_rb!
   factory_girl
   faker
   faraday
@@ -79,7 +80,6 @@ DEPENDENCIES
   rubocop
   single_cov
   webmock
-  zendesk_cloudflare!
 
 BUNDLED WITH
-   1.15.0
+   1.15.1
