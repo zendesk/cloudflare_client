@@ -1,24 +1,27 @@
+# https://api.cloudflare.com/#custom-hostname-for-a-zone-list-custom-hostnames
 class CloudflareClient::Zone::CustomHostname < CloudflareClient::Zone::Base
   VALID_METHODS = %w[http email cname].freeze
   VALID_TYPES   = ['read only', 'dv'].freeze
   VALID_ORDERS  = %w[ssl ssl_status].freeze
-
-  ##
-  # custom_hostnames
+  DEFAULT_SSL_PROPERTIES = { method: 'http', type: 'dv' }.freeze
 
   ##
   # create custom_hostname
-  # Note, custom_metadata may only work for enterprise or better customers
-  def create(hostname:, method: 'http', type: 'dv', custom_metadata: {})
+  # - :custom_metadata may only work for enterprise or better customers
+  # - :ssl has undocumented properties: 'custom_certificate' and 'custom_key', or can be nulled
+  def create(hostname:, ssl: DEFAULT_SSL_PROPERTIES, custom_metadata: {})
     #FIXME: implement checks for the custom_metedata/find out of it's going to be exposed to anyone else
     #"custom_metadata":{"origin_override":"hostname.zendesk.com"}
     #"custom_metadata":{"hsts_enabled":"true"}
     #"custom_metadata":{"hsts_enabled":"true","custom_maxage":value}
     id_check('hostname', hostname)
-    valid_value_check(:method, method, VALID_METHODS)
-    valid_value_check(:type, type, VALID_TYPES)
 
-    data                   = {hostname: hostname, ssl: {method: method, type: type}}
+    if ssl && ssl[:method] && ssl[:type]
+      valid_value_check(:method, ssl[:method], VALID_METHODS)
+      valid_value_check(:type,   ssl[:type],   VALID_TYPES)
+    end
+
+    data                   = { hostname: hostname, ssl: ssl }
     data[:custom_metadata] = custom_metadata unless custom_metadata.empty?
 
     cf_post(path: "/zones/#{zone_id}/custom_hostnames", data: data)
@@ -49,17 +52,20 @@ class CloudflareClient::Zone::CustomHostname < CloudflareClient::Zone::Base
 
   ##
   # update a custom hosntame
-  def update(id:, method: nil, type: nil, custom_metadata: nil)
+  # https://api.cloudflare.com/#custom-hostname-for-a-zone-update-custom-hostname-configuration
+  def update(id:, ssl: {}, custom_metadata: nil)
     id_check('id', id)
 
     data = {}
 
-    unless type.nil? && method.nil?
-      valid_value_check(:method, method, VALID_METHODS)
-      valid_value_check(:type, type, VALID_TYPES)
-
-      data[:ssl] = {method: method, type: type}
+    if ssl && ssl[:method] && ssl[:type]
+      valid_value_check(:method, ssl[:method], VALID_METHODS)
+      valid_value_check(:type,   ssl[:type],   VALID_TYPES)
     end
+
+    # Setting this to "null" requests removal of the attached certificate. We're
+    # using {} as the default value to denote "don't alter the SSL".
+    data[:ssl] = ssl unless ssl == {}
 
     unless custom_metadata.nil?
       raise 'custom_metadata must be an object' unless custom_metadata.is_a?(Hash)
