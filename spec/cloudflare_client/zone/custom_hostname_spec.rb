@@ -27,11 +27,11 @@ describe CloudflareClient::Zone::CustomHostname do
       expect { client.create(hostname: nil) }.to raise_error(RuntimeError, 'hostname required')
 
       expect do
-        client.create(hostname: 'footothebar', method: 'snail')
+        client.create(hostname: 'footothebar', ssl: { type: 'dv', method: 'snail' })
       end.to raise_error(RuntimeError, "method must be one of #{described_class::VALID_METHODS}")
 
       expect do
-        client.create(hostname: 'footothebar', type: 'snail')
+        client.create(hostname: 'footothebar', ssl: { type: 'snail', method: 'http' })
       end.to raise_error(RuntimeError, "type must be one of #{described_class::VALID_TYPES}")
     end
   end
@@ -111,28 +111,28 @@ describe CloudflareClient::Zone::CustomHostname do
     let(:type) { 'dv' }
     let(:custom_metadata) { {origin_override: 'footothebar'} }
 
-    it 'udpates a custom hostname' do
-      result = client.update(id: id, method: method, type: type)
+    it 'updates a custom hostname' do
+      result = client.update(id: id, ssl: { method: method, type: type })
       expect(result).to eq(custom_hostname_show1)
 
-      result = client.update(id: id, method: method, type: type, custom_metadata: custom_metadata)
+      result = client.update(id: id, ssl: { method: method, type: type }, custom_metadata: custom_metadata)
       expect(result).to eq(custom_hostname_show2)
     end
 
     it 'fails to update a custom_hostname' do
       expect { client.update }.to raise_error(ArgumentError, 'missing keyword: id')
-      expect { client.update(id: nil, method: method, type: type) }.to raise_error(RuntimeError, 'id required')
+      expect { client.update(id: nil, ssl: { method: method, type: type }) }.to raise_error(RuntimeError, 'id required')
 
       expect do
-        client.update(id: id, method: 'invalid_method', type: type)
+        client.update(id: id, ssl: { method: 'invalid_method', type: type })
       end.to raise_error(RuntimeError, "method must be one of #{described_class::VALID_METHODS}")
 
       expect do
-        client.update(id: id, method: method, type: 'invalid type')
+        client.update(id: id, ssl: { method: method, type: 'invalid type' })
       end.to raise_error(RuntimeError, "type must be one of #{described_class::VALID_TYPES}")
 
       expect do
-        client.update(id: id, method: method, type: type, custom_metadata: 'bob')
+        client.update(id: id, ssl: { method: method, type: type }, custom_metadata: 'bob')
       end.to raise_error(RuntimeError, 'custom_metadata must be an object')
     end
   end
