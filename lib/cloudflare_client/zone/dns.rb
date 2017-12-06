@@ -9,6 +9,8 @@ class CloudflareClient::Zone::DNS < CloudflareClient::Zone::Base
   def create(name:, type:, content:, ttl: nil, proxied: nil)
     raise ("type must be one of #{VALID_TYPES.flatten}") unless VALID_TYPES.include?(type)
     data = {name: name, type: type, content: content}
+    data[:ttl] = ttl unless ttl.nil?
+    data[:proxied] = proxied unless proxied.nil?
     cf_post(path: "/zones/#{zone_id}/dns_records", data: data)
   end
 

@@ -28,7 +28,7 @@ describe CloudflareClient::Zone::DNS do
 
   describe '#create' do
     it 'creates a dns record' do
-      result = client.create(name: 'foobar.com', type: 'CNAME', content: '192.168.1.1')
+      result = client.create(name: 'foobar.com', type: 'CNAME', content: '192.168.1.1', proxied: true)
       expect(result).to eq(successful_dns_create)
     end
 
