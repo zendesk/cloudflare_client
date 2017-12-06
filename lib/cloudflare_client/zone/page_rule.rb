@@ -20,7 +20,7 @@ class CloudflareClient::Zone::PageRule < CloudflareClient::Zone::Base
 
   ##
   # list all the page rules for a zone
-  def list(status: 'disabled', order: 'priority', direction: 'desc', match: 'all')
+  def list(status: 'active', order: 'priority', direction: 'desc', match: 'all')
     valid_value_check(:status, status, VALID_STATUSES)
     valid_value_check(:order, order, VALID_ORDERS)
     valid_value_check(:direction, direction, VALID_DIRECTIONS)

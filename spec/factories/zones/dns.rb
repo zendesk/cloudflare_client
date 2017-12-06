@@ -41,6 +41,7 @@ FactoryGirl.define do
       success true
       errors []
       messages []
+      proxied true
     end
 
     factory :successful_dns_update do
