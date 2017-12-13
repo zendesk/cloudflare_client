@@ -1,9 +1,8 @@
-desc 'Test'
-task :test do
-  sh "rspec"
-end
+require 'bundler/gem_tasks'
+require 'rspec/core/rake_task'
+require 'rubocop/rake_task'
 
-desc 'Rubocop'
-task :rubocop do
-  sh 'rubocop --display-cop-names'
-end
+RSpec::Core::RakeTask.new(:spec)
+RuboCop::RakeTask.new(:rubocop)
+
+task default: :spec
