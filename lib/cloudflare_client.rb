@@ -6,6 +6,7 @@ class CloudflareClient
   require 'date'
   require 'byebug'
   Dir[File.expand_path('../cloudflare_client/*.rb', __FILE__)].each { |f| require f }
+  require 'cloudflare_client/middleware/response/raise_error'
 
   API_BASE             = 'https://api.cloudflare.com/client/v4'.freeze
   VALID_BUNDLE_METHODS = %w[ubiquitous optimal force].freeze
@@ -136,6 +137,7 @@ class CloudflareClient
     client                                      = Faraday.new(url: API_BASE) do |conn|
       conn.request :multipart
       conn.request :url_encoded
+      conn.use Middleware::Response::RaiseError
       conn.adapter :net_http
     end
     client.headers['X-Auth-Key']                = params[:auth_key]
