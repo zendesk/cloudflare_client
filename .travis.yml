@@ -1,0 +1,16 @@
+dist: trusty
+
+sudo: required
+
+language: ruby
+
+branches:
+  only: master
+
+script: 
+  - if [[ "$TASK" == "rspec" ]]; then bundle exec rspec; fi
+  - if [[ "$TASK" == "srcclr" ]]; then curl -sSL https://download.sourceclear.com/ci.sh | bash; fi
+
+env:
+  - TASK=rspec
+  - TASK=srcclr

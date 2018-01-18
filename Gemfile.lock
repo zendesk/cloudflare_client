@@ -1,0 +1,87 @@
+PATH
+  remote: .
+  specs:
+    cloudflare_client_rb (4.2.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (5.1.1)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (~> 0.7)
+      minitest (~> 5.1)
+      tzinfo (~> 1.1)
+    addressable (2.5.1)
+      public_suffix (~> 2.0, >= 2.0.2)
+    ast (2.3.0)
+    byebug (8.2.2)
+    concurrent-ruby (1.0.5)
+    crack (0.4.3)
+      safe_yaml (~> 1.0.0)
+    diff-lcs (1.3)
+    factory_girl (4.8.0)
+      activesupport (>= 3.0.0)
+    faker (1.7.3)
+      i18n (~> 0.5)
+    faraday (0.12.1)
+      multipart-post (>= 1.2, < 3)
+    hashdiff (0.3.4)
+    i18n (0.8.1)
+    minitest (5.10.2)
+    multipart-post (2.0.0)
+    parallel (1.12.1)
+    parser (2.4.0.2)
+      ast (~> 2.3)
+    powerpack (0.1.1)
+    public_suffix (2.0.5)
+    rainbow (3.0.0)
+    rake (12.0.0)
+    rspec (3.6.0)
+      rspec-core (~> 3.6.0)
+      rspec-expectations (~> 3.6.0)
+      rspec-mocks (~> 3.6.0)
+    rspec-core (3.6.0)
+      rspec-support (~> 3.6.0)
+    rspec-expectations (3.6.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.6.0)
+    rspec-mocks (3.6.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.6.0)
+    rspec-support (3.6.0)
+    rubocop (0.52.1)
+      parallel (~> 1.10)
+      parser (>= 2.4.0.2, < 3.0)
+      powerpack (~> 0.1)
+      rainbow (>= 2.2.2, < 4.0)
+      ruby-progressbar (~> 1.7)
+      unicode-display_width (~> 1.0, >= 1.0.1)
+    ruby-progressbar (1.9.0)
+    safe_yaml (1.0.4)
+    single_cov (0.6.1)
+    thread_safe (0.3.6)
+    tzinfo (1.2.3)
+      thread_safe (~> 0.1)
+    unicode-display_width (1.3.0)
+    webmock (2.1.0)
+      addressable (>= 2.3.6)
+      crack (>= 0.3.2)
+      hashdiff
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  byebug
+  cloudflare_client_rb!
+  factory_girl
+  faker
+  faraday
+  rake
+  rspec
+  rubocop
+  single_cov
+  webmock
+
+BUNDLED WITH
+   1.16.0
