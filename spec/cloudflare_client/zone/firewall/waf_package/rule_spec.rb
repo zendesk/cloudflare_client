@@ -14,7 +14,7 @@ describe CloudflareClient::Zone::Firewall::WAFPackage::Rule do
 
   describe '#list' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/waf/packages/#{package_id}/rules?direction=desc&match=all&order=priority&page=1&per_page=50").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/firewall/waf/packages/#{package_id}/rules?direction=desc&match=all&order=priority&page=1&per_page=50").
         to_return(response_body(waf_packages_rule_list))
     end
 
