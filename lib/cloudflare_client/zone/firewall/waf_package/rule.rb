@@ -24,7 +24,7 @@ class CloudflareClient::Zone::Firewall::WAFPackage::Rule < CloudflareClient::Zon
     params[:group_id] unless group_id.nil?
     params[:description] unless description.nil?
 
-    cf_get(path: "/zones/#{zone_id}/waf/packages/#{package_id}/rules", params: params)
+    cf_get(path: "/zones/#{zone_id}/firewall/waf/packages/#{package_id}/rules", params: params)
   end
 
   ##
