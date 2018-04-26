@@ -18,6 +18,7 @@ describe CloudflareClient::Zone::Log do
     let(:start_time) { Time.now.utc.advance(hours: -1).to_i }
     let(:end_time) { Time.now.utc.advance(hours: -1).to_i }
     let(:default_end_time) { Time.now.utc.advance(minutes: -5).to_i }
+    let(:default_start_time) { Time.now.utc.advance(minutes: -20).to_i }
 
     it 'list logs via start_time' do
       # note, these are raw not json encoded
@@ -41,6 +42,14 @@ describe CloudflareClient::Zone::Log do
       it 'list logs via timestamps' do
         # note, these are raw not json encoded
         expect(client.list_by_time(start_time: start_time, end_time: end_time)).to eq(zone_log)
+      end
+    end
+
+    context 'without any ars' do
+      let(:request_query) { {start: default_start_time, end: default_end_time, count: 1000} }
+      it 'uses default timeframe' do
+        # note, these are raw not json encoded
+        expect(client.list_by_time()).to eq(zone_log)
       end
     end
 
