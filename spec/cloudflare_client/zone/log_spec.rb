@@ -13,18 +13,16 @@ describe CloudflareClient::Zone::Log do
   describe '#list_by_time' do
     before { stub_request(:get, request_url).to_return(response_body(zone_log)) }
 
-    let(:request_path) { "/zones/#{zone_id}/logs/requests" }
-    let(:request_query) { {start: start_time} }
+    let(:request_path) { "/zones/#{zone_id}/logs/received" }
+    let(:request_query) { {count: 1000, start: start_time, end: end_time} }
     let(:start_time) { Time.now.utc.advance(hours: -1).to_i }
+    let(:end_time) { Time.now.utc.advance(hours: -1).to_i }
+    let(:default_end_time) { Time.now.utc.advance(minutes: -5).to_i }
+    let(:default_start_time) { Time.now.utc.advance(minutes: -20).to_i }
 
     it 'list logs via start_time' do
       # note, these are raw not json encoded
-      expect(client.list_by_time(start_time: start_time)).to eq(zone_log)
-    end
-
-    it 'fails to get logs via timestamps' do
-      expect { client.list_by_time }.to raise_error(ArgumentError, 'missing keyword: start_time')
-      expect { client.list_by_time(start_time: nil) }.to raise_error(RuntimeError, 'start_time required')
+      expect(client.list_by_time(start_time: start_time, end_time: end_time)).to eq(zone_log)
     end
 
     it 'fails with invalid timestamps' do
@@ -38,7 +36,7 @@ describe CloudflareClient::Zone::Log do
     end
 
     context 'with end_time' do
-      let(:request_query) { {start: start_time, end: end_time} }
+      let(:request_query) { {start: start_time, end: end_time, count: 1000} }
       let(:end_time) { Time.now.utc.to_i }
 
       it 'list logs via timestamps' do
@@ -47,8 +45,16 @@ describe CloudflareClient::Zone::Log do
       end
     end
 
+    context 'without any ars' do
+      let(:request_query) { {start: default_start_time, end: default_end_time, count: 1000} }
+      it 'uses default timeframe' do
+        # note, these are raw not json encoded
+        expect(client.list_by_time()).to eq(zone_log)
+      end
+    end
+
     context 'with count' do
-      let(:request_query) { {start: start_time, count: count} }
+      let(:request_query) { {start: start_time, count: count, end: default_end_time} }
       let(:count) { rand(1..100) }
 
       it 'list logs via start_time and count' do
@@ -77,11 +83,11 @@ describe CloudflareClient::Zone::Log do
   describe '#list_since' do
     before { stub_request(:get, request_url).to_return(response_body(zone_log)) }
 
-    let(:request_path) { "/zones/#{zone_id}/logs/requests/#{ray_id}" }
+    let(:request_path) { "/zones/#{zone_id}/logs/received" }
     let(:request_query) { {start_id: ray_id, end: end_time, count: count} }
     let(:ray_id) { 'some_ray_id' }
     let(:end_time) { Time.now.utc.to_i }
-    let(:count) { rand(1..5) }
+    let(:count) { 500 }
 
     it 'lists logs since a given ray_id' do
       expect(client.list_since(ray_id: ray_id, end_time: end_time, count: count)).to eq(zone_log)
