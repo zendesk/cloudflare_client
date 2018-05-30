@@ -67,7 +67,7 @@ describe CloudflareClient::Zone::Log do
   describe '#show' do
     before { stub_request(:get, request_url).to_return(response_body(zone_log)) }
 
-    let(:request_path) { "/zones/#{zone_id}/logs/requests/#{ray_id}" }
+    let(:request_path) { "/zones/#{zone_id}/logs/rayids/#{ray_id}" }
     let(:ray_id) { 'some_ray_id' }
 
     it 'show a log via ray_id' do
