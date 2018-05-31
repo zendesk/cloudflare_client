@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    cloudflare_client_rb (4.2.2)
+    cloudflare_client_rb (4.2.3)
 
 GEM
   remote: https://rubygems.org/
@@ -84,4 +84,4 @@ DEPENDENCIES
   webmock
 
 BUNDLED WITH
-   1.16.1
+   1.16.2
