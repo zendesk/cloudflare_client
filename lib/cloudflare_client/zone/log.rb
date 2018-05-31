@@ -35,10 +35,13 @@ class CloudflareClient::Zone::Log < CloudflareClient::Zone::Base
 
   ##
   # get a single log entry by it's ray_id
+  #
+  # Now lives under logs/rayids as detailed here:
+  # https://support.cloudflare.com/hc/en-us/articles/115003165991-Enterprise-Log-Share-ELS-Migrating-to-New-Endpoint
   def show(ray_id:)
     id_check(:ray_id, ray_id)
 
-    cf_get(path: "/zones/#{zone_id}/logs/requests/#{ray_id}")
+    cf_get(path: "/zones/#{zone_id}/logs/rayids/#{ray_id}")
   end
 
   ##
