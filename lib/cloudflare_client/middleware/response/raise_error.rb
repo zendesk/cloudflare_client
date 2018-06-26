@@ -4,7 +4,7 @@ class CloudflareClient
     attr_reader :response, :method, :uri, :url
 
     def initialize(message = nil, response = nil, method = nil, uri = nil, url = nil)
-      super("#{message}, #{method.upcase} #{url} #{response.inspect}")
+      super("#{message}, #{method.upcase} #{url} #{response.body}")
       @response = response
       @method = method
       @uri = uri
