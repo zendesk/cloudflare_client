@@ -172,6 +172,14 @@ describe CloudflareClient::Middleware::Response::RaiseError do
     end
   end
 
+  describe "ResponseError" do
+    context "#initialize" do
+      it 'can be instantiated with nil params' do
+        CloudflareClient::ResponseError.new
+      end
+    end
+  end
+
   def response_status(status)
     service.get('/foo') { status }
     connection.get('/foo')
