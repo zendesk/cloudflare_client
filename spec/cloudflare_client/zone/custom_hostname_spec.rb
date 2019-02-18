@@ -44,11 +44,14 @@ describe CloudflareClient::Zone::CustomHostname do
         to_return(response_body(custom_hostname_list2))
       stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/custom_hostnames?direction=desc&hostname=#{hostname}&order=ssl&page=1&per_page=50&ssl=0").
         to_return(response_body(custom_hostname_list3))
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/custom_hostnames?direction=desc&order=ssl&page=1&per_page=50&ssl=0&ssl_status=pending_validation").
+        to_return(response_body(custom_hostname_list4))
     end
 
     let(:custom_hostname_list1) { create(:custom_hostname_list) }
     let(:custom_hostname_list2) { create(:custom_hostname_list) }
     let(:custom_hostname_list3) { create(:custom_hostname_list) }
+    let(:custom_hostname_list4) { create(:custom_hostname_list) }
     let(:id) { '12345' }
     let(:hostname) { 'foobar' }
 
@@ -56,6 +59,7 @@ describe CloudflareClient::Zone::CustomHostname do
       expect(client.list).to eq(custom_hostname_list1)
       expect(client.list(id: id)).to eq(custom_hostname_list2)
       expect(client.list(hostname: hostname)).to eq(custom_hostname_list3)
+      expect(client.list(ssl_status: 'pending_validation')).to eq(custom_hostname_list4)
     end
 
     it 'fails to list custom hostnames' do

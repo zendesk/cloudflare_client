@@ -29,15 +29,16 @@ class CloudflareClient::Zone::CustomHostname < CloudflareClient::Zone::Base
 
   ##
   # list custom_hostnames
-  def list(hostname: nil, id: nil, page: 1, per_page: 50, order: 'ssl', direction: 'desc', ssl: 0)
+  def list(hostname: nil, id: nil, page: 1, per_page: 50, order: 'ssl', direction: 'desc', ssl: 0, ssl_status: nil)
     raise 'cannot use both hostname and id' if hostname && id
     valid_value_check(:order, order, VALID_ORDERS)
     valid_value_check(:direction, direction, VALID_DIRECTIONS)
     valid_value_check(:ssl, ssl, [0, 1])
 
-    params            = {page: page, per_page: per_page, order: order, direction: direction, ssl: ssl}
-    params[:hostname] = hostname if hostname
-    params[:id]       = id if id
+    params              = {page: page, per_page: per_page, order: order, direction: direction, ssl: ssl}
+    params[:ssl_status] = ssl_status if ssl_status
+    params[:hostname]   = hostname if hostname
+    params[:id]         = id if id
 
     cf_get(path: "/zones/#{zone_id}/custom_hostnames", params: params)
   end
