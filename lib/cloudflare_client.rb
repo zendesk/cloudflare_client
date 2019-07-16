@@ -51,10 +51,10 @@ class CloudflareClient
     websockets
   ].freeze
 
-  def initialize(auth_key: nil, email: nil)
+  def initialize(auth_key: nil, email: nil, &block)
     raise('Missing auth_key') if auth_key.nil?
     raise('missing email') if email.nil?
-    @cf_client ||= build_client(auth_key: auth_key, email: email)
+    @cf_client ||= build_client(auth_key: auth_key, email: email, &block)
   end
 
   #TODO: add the time based stuff
@@ -131,19 +131,18 @@ class CloudflareClient
   end
 
   def build_client(params)
-    raise('Missing auth_key') if params[:auth_key].nil?
-    raise('Missing auth email') if params[:email].nil?
     # we need multipart form encoding for some of these operations
     client                                      = Faraday.new(url: API_BASE) do |conn|
       conn.request :multipart
       conn.request :url_encoded
       conn.use Middleware::Response::RaiseError
-      conn.adapter :net_http
     end
     client.headers['X-Auth-Key']                = params[:auth_key]
     client.headers['X-Auth-User-Service-Key	'] = params[:auth_key] #FIXME, is this always the same?
     client.headers['X-Auth-Email']              = params[:email]
     client.headers['Content-Type']              = 'application/json'
+    yield client if block_given?
+    client.adapter :net_http
     client
   end
 

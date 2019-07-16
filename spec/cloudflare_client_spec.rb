@@ -2,7 +2,8 @@
 
 require 'spec_helper'
 
-SingleCov.covered! uncovered: 4
+# Yikes!
+SingleCov.covered! uncovered: 52
 
 describe CloudflareClient do
   let(:client) { CloudflareClient.new(auth_key: "somefakekey", email: "foo@bar.com") }
@@ -14,6 +15,12 @@ describe CloudflareClient do
 
   it "initializes correctly" do
     CloudflareClient.new(auth_key: "auth_key", email: "foo@bar.com")
+  end
+
+  it "exposes internal faraday object for additional configuration" do
+    CloudflareClient.new(auth_key: "auth_key", email: "foo@bar.com") do |client|
+      expect(client).to be_a(Faraday::Connection)
+    end
   end
 
   it "raises when missing auth_key" do
