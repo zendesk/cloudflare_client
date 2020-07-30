@@ -26,7 +26,7 @@ class CloudflareClient::Zone::CustomSSL < CloudflareClient::Zone::Base
     params = {page: page, per_page: per_page}
     params[:match] = match
     params[:direction] = direction
-    cf_get(path: "/zones/#{zone_id}/custom_certficates", params: params)
+    cf_get(path: "/zones/#{zone_id}/custom_certificates", params: params)
   end
 
   ##
