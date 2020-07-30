@@ -44,7 +44,7 @@ describe CloudflareClient::Zone::CustomSSL do
 
   describe '#list' do
     before do
-      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/custom_certficates?direction=asc&match=all&page=1&per_page=50").
+      stub_request(:get, "https://api.cloudflare.com/client/v4/zones/#{zone_id}/custom_certificates?direction=asc&match=all&page=1&per_page=50").
         to_return(response_body(custom_ssl_list))
     end
 
