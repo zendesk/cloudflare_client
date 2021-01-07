@@ -137,10 +137,16 @@ class CloudflareClient
       conn.request :url_encoded
       conn.use Middleware::Response::RaiseError
     end
-    client.headers['X-Auth-Key']                = params[:auth_key]
-    client.headers['X-Auth-User-Service-Key	'] = params[:auth_key] #FIXME, is this always the same?
-    client.headers['X-Auth-Email']              = params[:email]
+
     client.headers['Content-Type']              = 'application/json'
+    if params[:auth_token]
+      client.headers['Authorization'] = "Bearer: #{params[:auth_token]}"
+    else
+      client.headers['X-Auth-Key']                = params[:auth_key]
+      client.headers['X-Auth-User-Service-Key	']  = params[:auth_key] #FIXME, is this always the same?
+      client.headers['X-Auth-Email']              = params[:email]
+    end
+
     yield client if block_given?
     client.adapter :net_http
     client
