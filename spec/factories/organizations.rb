@@ -1,12 +1,12 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :organizations, class: Hash do
     skip_create
     initialize_with(&FactoryHelper.initializer)
 
     factory :organization_show do
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create(:organization_result) }
     end
 

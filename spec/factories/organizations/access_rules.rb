@@ -1,13 +1,13 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :organization_access_rules, class: Hash do
     skip_create
     initialize_with(&FactoryHelper.initializer)
 
     factory :organization_access_rule_list do
       transient { result_count { rand(1..3) } }
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create_list(:organization_access_rule_result, result_count) }
       result_info do
         {
@@ -20,16 +20,16 @@ FactoryGirl.define do
     end
 
     factory :organization_access_rule_show do
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create(:organization_access_rule_result) }
     end
 
     factory :organization_access_rule_delete do
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { {id: SecureRandom.uuid.gsub('-', '')} }
     end
 
@@ -45,14 +45,14 @@ FactoryGirl.define do
     end
 
     factory :organization_access_rule_configuration do
-      target 'ip'
+      target { 'ip' }
       value { Faker::Internet.ip_v4_address }
     end
 
     factory :organization_access_rule_scope do
       id { SecureRandom.uuid.gsub('-', '') }
       name { Faker::Company.name }
-      type 'organization'
+      type { "organization" }
     end
   end
 end

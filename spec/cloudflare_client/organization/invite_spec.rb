@@ -31,7 +31,7 @@ describe CloudflareClient::Organization::Invite do
       expect { client.create(email: nil, roles: roles) }.to raise_error(RuntimeError, 'email must be a String')
 
       expect do
-        client.create(email: Faker::Lorem.characters(91), roles: roles)
+        client.create(email: Faker::Lorem.characters(number: 91), roles: roles)
       end.to raise_error(RuntimeError, 'the length of email must not exceed 90')
 
       expect do
