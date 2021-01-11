@@ -51,9 +51,9 @@ class CloudflareClient
     websockets
   ].freeze
 
-  def initialize(auth_key: nil, email: nil, &block)
-    raise('Missing auth_key') if auth_key.nil?
-    raise('missing email') if email.nil?
+  def initialize(auth_key: nil, email: nil, auth_token: nil, &block)
+    raise('Missing auth_key or auth_token') if auth_key.nil? && auth_token.nil?
+    raise('missing email') if email.nil? && !auth_key.nil?
     @cf_client ||= build_client(auth_key: auth_key, email: email, &block)
   end
 
