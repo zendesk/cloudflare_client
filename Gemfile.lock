@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    cloudflare_client_rb (4.2.8)
+    cloudflare_client_rb (4.2.9)
 
 GEM
   remote: https://rubygems.org/
