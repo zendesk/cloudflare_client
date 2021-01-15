@@ -54,7 +54,7 @@ class CloudflareClient
   def initialize(auth_key: nil, email: nil, auth_token: nil, &block)
     raise('Missing auth_key or auth_token') if auth_key.nil? && auth_token.nil?
     raise('missing email') if email.nil? && !auth_key.nil?
-    @cf_client ||= build_client(auth_key: auth_key, email: email, &block)
+    @cf_client ||= build_client(auth_key: auth_key, email: email, auth_token: auth_token, &block)
   end
 
   #TODO: add the time based stuff
