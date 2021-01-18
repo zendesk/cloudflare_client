@@ -8,4 +8,4 @@ module FactoryHelper
   end
 end
 
-RSpec.configure { FactoryGirl::SyntaxRunner.send(:include, FactoryHelper) }
+RSpec.configure { FactoryBot::SyntaxRunner.send(:include, FactoryHelper) }

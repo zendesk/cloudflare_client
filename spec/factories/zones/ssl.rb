@@ -1,18 +1,18 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :ssl, class: Hash do
     skip_create
     initialize_with(&FactoryHelper.initializer)
 
     factory :ssl_analyze do
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create(:ssl_analyze_result) }
     end
 
     factory :ssl_analyze_result do
       hosts { rand(1..4).times.map { Faker::Internet.domain_name } }
-      signature_algorithm 'SHA256WithRSA'
+      signature_algorithm { 'SHA256WithRSA' }
       expires_on { Time.now.utc.iso8601 }
     end
 
@@ -22,8 +22,8 @@ FactoryGirl.define do
     end
 
     factory :ssl_verification_result do
-      certificate_status 'active'
-      verification_type 'cname'
+      certificate_status { 'active' }
+      verification_type { 'cname' }
       verification_status { Faker::Boolean.boolean }
       verification_info { create(:ssl_verification_info) }
       brand_check { Faker::Boolean.boolean }

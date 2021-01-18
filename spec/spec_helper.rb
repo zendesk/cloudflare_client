@@ -2,7 +2,7 @@ require 'active_support/core_ext/hash'
 require 'active_support/core_ext/time'
 require 'webmock/rspec'
 require 'single_cov'
-require 'factory_girl'
+require 'factory_bot'
 require 'faker'
 
 SingleCov.setup :rspec
@@ -23,6 +23,6 @@ RSpec.configure do |config|
 
   config.shared_context_metadata_behavior = :apply_to_host_groups
 
-  config.include FactoryGirl::Syntax::Methods
-  config.before(:suite) { FactoryGirl.find_definitions }
+  config.include FactoryBot::Syntax::Methods
+  config.before(:suite) { FactoryBot.find_definitions }
 end

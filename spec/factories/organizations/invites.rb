@@ -1,12 +1,12 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :organization_invites, class: Hash do
     skip_create
     initialize_with(&FactoryHelper.initializer)
 
     factory :organization_invite_show do
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create(:organization_invite_result) }
     end
 
@@ -21,14 +21,14 @@ FactoryGirl.define do
       invited_by { Faker::Internet.email }
       invited_on { Time.now.utc.advance(years: -2).iso8601 }
       expires_on { Time.now.utc.advance(years: -2).iso8601 }
-      status 'accepted'
+      status { 'accepted' }
     end
 
     factory :organization_invite_list do
       transient { result_count { rand(1..3) } }
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create_list(:organization_invite_result, result_count) }
       result_info do
         {

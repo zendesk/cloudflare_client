@@ -51,10 +51,10 @@ class CloudflareClient
     websockets
   ].freeze
 
-  def initialize(auth_key: nil, email: nil, &block)
-    raise('Missing auth_key') if auth_key.nil?
-    raise('missing email') if email.nil?
-    @cf_client ||= build_client(auth_key: auth_key, email: email, &block)
+  def initialize(auth_key: nil, email: nil, auth_token: nil, &block)
+    raise('Missing auth_key or auth_token') if auth_key.nil? && auth_token.nil?
+    raise('missing email') if email.nil? && !auth_key.nil?
+    @cf_client ||= build_client(auth_key: auth_key, email: email, auth_token: auth_token, &block)
   end
 
   #TODO: add the time based stuff
@@ -137,10 +137,16 @@ class CloudflareClient
       conn.request :url_encoded
       conn.use Middleware::Response::RaiseError
     end
-    client.headers['X-Auth-Key']                = params[:auth_key]
-    client.headers['X-Auth-User-Service-Key	'] = params[:auth_key] #FIXME, is this always the same?
-    client.headers['X-Auth-Email']              = params[:email]
+
     client.headers['Content-Type']              = 'application/json'
+    if params[:auth_token]
+      client.headers['Authorization'] = "Bearer #{params[:auth_token]}"
+    else
+      client.headers['X-Auth-Key']                = params[:auth_key]
+      client.headers['X-Auth-User-Service-Key	']  = params[:auth_key] #FIXME, is this always the same?
+      client.headers['X-Auth-Email']              = params[:email]
+    end
+
     yield client if block_given?
     client.adapter :net_http
     client

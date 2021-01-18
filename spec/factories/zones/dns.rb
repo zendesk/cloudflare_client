@@ -1,4 +1,4 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :dns, class: Hash do
     skip_create
     initialize_with(&FactoryHelper.initializer)
@@ -15,9 +15,9 @@ FactoryGirl.define do
           total_count: result_count
         }
       end
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
     end
 
     factory :successful_dns_query_result do
@@ -27,7 +27,7 @@ FactoryGirl.define do
       content { Faker::Internet.ip_v4_address }
       proxiable { Faker::Boolean.boolean }
       proxied { Faker::Boolean.boolean }
-      ttl 1
+      ttl { 1 }
       locked { Faker::Boolean.boolean }
       zone_id { SecureRandom.uuid.gsub('-', '') }
       zone_name { Faker::Internet.domain_name }
@@ -38,16 +38,16 @@ FactoryGirl.define do
 
     factory :successful_dns_create do
       result { create(:successful_dns_query_result) }
-      success true
-      errors []
-      messages []
-      proxied true
+      success { true }
+      errors { [] }
+      messages { [] }
+      proxied { true }
     end
 
     factory :successful_dns_update do
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create(:successful_dns_update_result) }
     end
 
@@ -58,7 +58,7 @@ FactoryGirl.define do
       content { Faker::Internet.ip_v4_address }
       proxiable { Faker::Boolean.boolean }
       proxied { Faker::Boolean.boolean }
-      ttl 1
+      ttl { 1 }
       locked { Faker::Boolean.boolean }
       zone_id { SecureRandom.uuid.gsub('-', '') }
       zone_name { Faker::Internet.domain_name }
@@ -68,9 +68,9 @@ FactoryGirl.define do
     end
 
     factory :successful_dns_delete do
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { {id: SecureRandom.uuid.gsub('-', '')} }
     end
   end

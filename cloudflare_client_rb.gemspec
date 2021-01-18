@@ -8,6 +8,6 @@ Gem::Specification.new name, CloudflareClient::VERSION do |s|
   s.email = 'iwaters@zendesk.com'
   s.homepage = "https://github.com/zendesk/#{name}"
   s.files = Dir['lib/**/*.rb']
-  s.license = 'Apache License Version 2.0'
+  s.license = 'Apache-2.0'
   s.required_ruby_version = '>= 2.3.0'
 end

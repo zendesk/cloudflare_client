@@ -1,13 +1,13 @@
-FactoryGirl.define do
+FactoryBot.define do
   factory :custom_hostnames, class: Hash do
     skip_create
     initialize_with(&FactoryHelper.initializer)
 
     factory :custom_hostname_list do
       transient { result_count { rand(1..3) } }
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create_list(:custom_hostname_result, result_count) }
       result_info do
         {
@@ -49,16 +49,16 @@ FactoryGirl.define do
     end
 
     factory :custom_hostname_show do
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create(:custom_hostname_result) }
     end
 
     factory :custom_hostname_show_with_metadata do
-      success true
-      errors []
-      messages []
+      success { true }
+      errors { [] }
+      messages { [] }
       result { create(:custom_hostname_result_with_metadata) }
     end
 
