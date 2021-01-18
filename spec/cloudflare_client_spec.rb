@@ -47,7 +47,7 @@ describe CloudflareClient do
       stub_request(:get, "https://api.cloudflare.com/client/v4/zones/zoneId/custom_hostnames?direction=desc&order=ssl&page=1&per_page=50&ssl=0").
            with(
              headers: {
-             'Authorization'=>'Bearer: somefakekey',
+             'Authorization'=>'Bearer somefakekey',
              }).
            to_return(response_body(custom_hostname_list))
 
