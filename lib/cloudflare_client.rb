@@ -180,10 +180,13 @@ class CloudflareClient
     JSON.parse(result.body, symbolize_names: true)
   end
 
-  def cf_put(path: nil, data: nil)
+  def cf_put(path: nil, data: nil, params: nil)
     result = @cf_client.put do |request|
       request.url(API_BASE + path) unless path.nil?
       request.body = data.to_json unless data.nil?
+      unless params.nil?
+        request.params = params if params.values.any? { |i| !i.nil? }
+      end
     end
     JSON.parse(result.body, symbolize_names: true)
   end
