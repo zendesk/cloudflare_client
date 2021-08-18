@@ -9,8 +9,6 @@ FactoryBot.define do
             messages { [] }
         end
 
-        factory :value_read { Faker::Alphanumeric.alpha(number: 10) }
-
         factory :value_delete do
             success { true }
             errors { [] }

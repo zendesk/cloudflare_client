@@ -49,6 +49,23 @@ describe CloudflareClient::Namespace::Value do
     end
   end
 
+  describe '#read' do
+    before do
+      stub_request(:get, "https://api.cloudflare.com/client/v4/accounts/#{account_id}/storage/kv/namespaces/#{namespace_id}/values/#{key}").
+        to_return(response_body(value_read))
+    end
+
+    let(:value_read) { Faker::Alphanumeric.alpha(number: 10) }
+
+    it 'returns the value associated with the given key in the given namespace' do
+      expect(client.read(key: key)).to eq(value_read)
+    end
+
+    it 'fails to return the value associated with the given key in the given namespace' do
+      expect { client.read }. to raise_error(ArgumentError, 'missing keyword: key')
+    end
+  end
+
   describe '#delete' do
     before do
       stub_request(:delete, "https://api.cloudflare.com/client/v4/accounts/#{account_id}/storage/kv/namespaces/#{namespace_id}/values/#{key}").

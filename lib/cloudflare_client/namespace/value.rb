@@ -16,6 +16,10 @@ class CloudflareClient::Value < CloudflareClient::Namespace
     cf_put(path: "/accounts/#{account_id}/storage/kv/namespaces/#{namespace_id}/values/#{key}", data: data, params: {expiration_ttl: expiration_ttl})
   end
 
+  def read(key:)
+    cf_get(path: "/accounts/#{account_id}/storage/kv/namespaces/#{namespace_id}/values/#{key}", raw: true)
+  end
+
   def delete(key:)
     cf_delete(path: "/accounts/#{account_id}/storage/kv/namespaces/#{namespace_id}/values/#{key}")
   end
