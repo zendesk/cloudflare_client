@@ -49,5 +49,21 @@ describe CloudflareClient::Namespace::Value do
     end
   end
 
+  describe '#delete' do
+    before do
+      stub_request(:delete, "https://api.cloudflare.com/client/v4/accounts/#{account_id}/storage/kv/namespaces/#{namespace_id}/values/#{key}").
+        to_return(response_body(value_delete))
+    end
+
+    let(:value_delete) { create(:value_write) }
+
+    it 'removes a KV pair from the Namespace' do
+      expect(client.delete(key: key)).to eq(value_delete)
+    end
+
+    it 'fails to delete a KV pair from the namesapce' do
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: key')
+    end
+  end
 end
 
