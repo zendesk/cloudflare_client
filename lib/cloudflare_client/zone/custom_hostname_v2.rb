@@ -1,5 +1,5 @@
 require_relative 'custom_hostname'
-#class CloudflareClient::Zone::CustomHostnameV2 < CloudflareClient::Zone::Base
+# https://api.cloudflare.com/#custom-hostname-for-a-zone-list-custom-hostnames
 class CloudflareClient::Zone::CustomHostnameV2 < CloudflareClient::Zone::CustomHostname
 
   def create(hostname:, ssl: DEFAULT_SSL_PROPERTIES, custom_metadata: {}, custom_origin_server: nil)
