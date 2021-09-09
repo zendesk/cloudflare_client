@@ -13,7 +13,7 @@ Basic examples:
 
 ```ruby
 # List zones - https://api.cloudflare.com/#zone-list-zones
-zone_client = CloudflareClient::Zone.new(auth_key: auth_key, email: email, zone_id: zone_id)
+zone_client = CloudflareClient::Zone.new(auth_key: auth_key, email: email)
 pp zone_client.zones
 
 # Example result:
