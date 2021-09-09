@@ -1,3 +1,3 @@
 class CloudflareClient
-  VERSION = "4.2.10"
+  VERSION = "4.5.0"
 end
