@@ -4,6 +4,6 @@ class CloudflareClient::Zone::Base < CloudflareClient::Zone
   def initialize(args)
     @zone_id = args.delete(:zone_id)
     id_check('zone_id', zone_id)
-    super
+    super(**args)
   end
 end

@@ -55,7 +55,7 @@ describe CloudflareClient::Zone::Firewall::WAFPackage do
     end
 
     it 'fails to get package details' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -81,7 +81,7 @@ describe CloudflareClient::Zone::Firewall::WAFPackage do
     end
 
     it 'fails to change the anomaly detection settings of a waf package' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.update(id: nil) }.to raise_error(RuntimeError, 'id required')
 
       expect do

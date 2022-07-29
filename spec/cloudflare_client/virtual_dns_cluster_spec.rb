@@ -88,11 +88,11 @@ describe CloudflareClient::VirtualDnsCluster do
     end
 
     it 'creates a user dns cluster' do
-      expect(client.create(payload)).to eq(virtual_dns_cluster_show)
+      expect(client.create(**payload)).to eq(virtual_dns_cluster_show)
     end
 
     it 'fails to create a dns cluster' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: name, origin_ips')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :name, :origin_ips')
       expect { client.create(name: nil, origin_ips: origin_ips) }.to raise_error(RuntimeError, 'name required')
 
       expect do
@@ -139,7 +139,7 @@ describe CloudflareClient::VirtualDnsCluster do
       let(:payload) { {name: name, origin_ips: origin_ips} }
 
       it 'creates a user dns cluster' do
-        expect(client.create(payload)).to eq(virtual_dns_cluster_show)
+        expect(client.create(**payload)).to eq(virtual_dns_cluster_show)
       end
     end
   end
@@ -157,7 +157,7 @@ describe CloudflareClient::VirtualDnsCluster do
     end
 
     it 'fails to get deatails of a cluster' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
 
@@ -184,7 +184,7 @@ describe CloudflareClient::VirtualDnsCluster do
     end
 
     it 'fails to delete a virtual dns cluster' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
 
@@ -224,11 +224,11 @@ describe CloudflareClient::VirtualDnsCluster do
     end
 
     it 'updates a user dns cluster' do
-      expect(client.update(payload.merge(id: id))).to eq(virtual_dns_cluster_show)
+      expect(client.update(**payload.merge(id: id))).to eq(virtual_dns_cluster_show)
     end
 
     it 'fails to update a dns cluster' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.update(id: nil) }.to raise_error(RuntimeError, 'id required')
 
       expect do
@@ -274,7 +274,7 @@ describe CloudflareClient::VirtualDnsCluster do
       let(:request_path) { "/organizations/#{org_id}/virtual_dns/#{id}" }
 
       it 'updates a user dns cluster' do
-        expect(client.update(payload.merge(id: id))).to eq(virtual_dns_cluster_show)
+        expect(client.update(**payload.merge(id: id))).to eq(virtual_dns_cluster_show)
       end
     end
   end

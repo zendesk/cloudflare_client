@@ -35,11 +35,11 @@ describe CloudflareClient::Certificate do
     end
 
     it 'creates a certificate' do
-      expect(client.create(payload)).to eq(certificate_show)
+      expect(client.create(**payload)).to eq(certificate_show)
     end
 
     it 'fails to create a certificate' do
-      error_message = 'missing keyword: hostnames'
+      error_message = 'missing keyword: :hostnames'
       expect { client.create }.to raise_error(ArgumentError, error_message)
 
       error_message = 'hostnames must be an array of hostnames'
@@ -70,7 +70,7 @@ describe CloudflareClient::Certificate do
     end
 
     it 'fails to show details of a certficate' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -87,7 +87,7 @@ describe CloudflareClient::Certificate do
     end
 
     it 'fails to revoke a certificate' do
-      expect { client.revoke }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.revoke }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.revoke(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

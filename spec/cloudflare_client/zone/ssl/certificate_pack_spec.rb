@@ -67,7 +67,7 @@ describe CloudflareClient::Zone::SSL::CertificatePack do
     end
 
     it 'fails to update a certificate pack' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: id, hosts')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: :id, :hosts')
       expect { client.update(id: nil, hosts: hosts) }.to raise_error(RuntimeError, 'id required')
       expect { client.update(id: id, hosts: []) }.to raise_error(RuntimeError, 'hosts must be an array of hosts')
     end

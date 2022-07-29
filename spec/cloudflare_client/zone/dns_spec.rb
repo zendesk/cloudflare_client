@@ -33,7 +33,7 @@ describe CloudflareClient::Zone::DNS do
     end
 
     it 'raises if args are missing' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: name, type, content')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :name, :type, :content')
     end
 
     it 'raises if in invalid type is given' do
@@ -60,14 +60,14 @@ describe CloudflareClient::Zone::DNS do
     end
 
     it 'raises if dns record id is missing' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'dns record id required')
     end
   end
 
   describe '#update' do
     it 'fails to update a record' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: id, type, name, content')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: :id, :type, :name, :content')
 
       expect do
         client.update(id: nil, name: 'foo', type: 'foo', content: 'foo')
@@ -88,7 +88,7 @@ describe CloudflareClient::Zone::DNS do
 
   describe '#delete' do
     it 'fails to delete a dns record' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
 

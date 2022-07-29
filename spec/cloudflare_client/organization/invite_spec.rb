@@ -27,7 +27,7 @@ describe CloudflareClient::Organization::Invite do
     end
 
     it 'fails to create an organization invite' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: email, roles')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :email, :roles')
       expect { client.create(email: nil, roles: roles) }.to raise_error(RuntimeError, 'email must be a String')
 
       expect do
@@ -84,7 +84,7 @@ describe CloudflareClient::Organization::Invite do
     end
 
     it 'fails to list details of an organization invite' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -104,7 +104,7 @@ describe CloudflareClient::Organization::Invite do
     end
 
     it 'fails to update the roles for an organization invite' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: id, roles')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: :id, :roles')
       expect { client.update(id: nil, roles: roles) }.to raise_error(RuntimeError, 'id required')
 
       expect do
@@ -131,7 +131,7 @@ describe CloudflareClient::Organization::Invite do
     end
 
     it 'fails to delete an org invite' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

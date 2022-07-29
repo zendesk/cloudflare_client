@@ -6,7 +6,7 @@ class CloudflareClient::Namespace < CloudflareClient
   def initialize(args)
     @account_id = args.delete(:account_id)
     id_check(:account_id, account_id)
-    super
+    super(**args)
   end
 
 end

@@ -36,7 +36,7 @@ describe CloudflareClient::Organization::Member do
     end
 
     it 'fails to get details for an org member' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -57,7 +57,7 @@ describe CloudflareClient::Organization::Member do
     end
 
     it 'fails to updates org member roles' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: id, roles')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: :id, :roles')
       expect { client.update(id: nil, roles: nil) }.to raise_error(RuntimeError, 'id required')
       expect { client.update(id: user_id, roles: nil) }.to raise_error(RuntimeError, 'roles must be an array of roles')
     end
@@ -76,7 +76,7 @@ describe CloudflareClient::Organization::Member do
     end
 
     it 'fails to remove an org member' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

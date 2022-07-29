@@ -50,11 +50,11 @@ describe CloudflareClient::Zone::Subscription do
     end
 
     it 'creates a zone subscription' do
-      expect(client.create(payload)).to eq(subscription_show)
+      expect(client.create(**payload)).to eq(subscription_show)
     end
 
     it 'fails to create a zone subscription' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: price, currency, id, frequency')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :price, :currency, :id, :frequency')
 
       expect do
         client.create(price: nil, currency: currency, id: id, frequency: frequency)

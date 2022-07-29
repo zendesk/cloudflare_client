@@ -20,13 +20,13 @@ describe CloudflareClient::Zone::CustomSSL do
     let(:payload) { {certificate: 'blahblah', private_key: 'pkstring', bundle_method: 'force'} }
 
     it 'creates custom ssl for a zone' do
-      result = client.create(payload)
+      result = client.create(**payload)
 
       expect(result).to eq(custom_ssl_show)
     end
 
     it 'fails to create custom ssl for a zone' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: certificate, private_key')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :certificate, :private_key')
 
       expect do
         client.create(private_key: nil, certificate: 'bar')
@@ -87,7 +87,7 @@ describe CloudflareClient::Zone::CustomSSL do
     end
 
     it 'fails to get details for a custom configuration' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: configuration_id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :configuration_id')
       expect { client.show(configuration_id: nil) }.to raise_error(RuntimeError, 'ssl configuration id required')
     end
   end
@@ -118,7 +118,7 @@ describe CloudflareClient::Zone::CustomSSL do
     end
 
     it 'fails to update a custom ssl config' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.update(id: nil) }.to raise_error(RuntimeError, 'id required')
 
       expect do
@@ -168,7 +168,7 @@ describe CloudflareClient::Zone::CustomSSL do
     end
 
     it 'fails to delete a custom ssl configuration' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

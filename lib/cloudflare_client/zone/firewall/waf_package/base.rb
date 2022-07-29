@@ -4,6 +4,6 @@ class CloudflareClient::Zone::Firewall::WAFPackage::Base < CloudflareClient::Zon
   def initialize(args)
     @package_id = args.delete(:package_id)
     id_check('package_id', package_id)
-    super
+    super(**args)
   end
 end

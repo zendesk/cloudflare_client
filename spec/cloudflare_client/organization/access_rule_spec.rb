@@ -38,7 +38,7 @@ describe CloudflareClient::Organization::AccessRule do
     let(:per_page) { 50 }
 
     it 'lists organization level firewall rules' do
-      expect(client.list(request_query)).to eq(organization_access_rule_list)
+      expect(client.list(**request_query)).to eq(organization_access_rule_list)
     end
 
     it 'fails to list organization level firewall rules' do
@@ -80,11 +80,11 @@ describe CloudflareClient::Organization::AccessRule do
     let(:payload) { {mode: mode, configuration: configuration} }
 
     it 'creates an org level access rules' do
-      expect(client.create(payload)).to eq(organization_access_rule_show)
+      expect(client.create(**payload)).to eq(organization_access_rule_show)
     end
 
     it 'fails to create an org level access rule' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: mode, configuration')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :mode, :configuration')
 
       expect do
         client.create(mode: mode, configuration: 'foo')
@@ -100,7 +100,7 @@ describe CloudflareClient::Organization::AccessRule do
       let(:payload) { {mode: mode, configuration: configuration, notes: notes} }
 
       it 'creates an org level access rules' do
-        expect(client.create(payload)).to eq(organization_access_rule_show)
+        expect(client.create(**payload)).to eq(organization_access_rule_show)
       end
     end
   end
@@ -119,7 +119,7 @@ describe CloudflareClient::Organization::AccessRule do
     end
 
     it 'fails to delete an org level access rule' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

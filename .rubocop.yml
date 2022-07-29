@@ -1,3 +1,6 @@
+AllCops:
+    NewCops: enable
+
 LineLength:
   Max: 120
 
@@ -38,7 +41,7 @@ Style/WordArray:
   Enabled: false
 
 Lint/EndAlignment:
-  AlignWith: variable
+  EnforcedStyleAlignWith: variable
 
 Style/StringLiteralsInInterpolation:
   Enabled: false
@@ -49,11 +52,11 @@ Style/NumericLiterals:
 Style/FirstParameterIndentation:
   Enabled: false
 
-Style/IndentHash:
-  Enabled: false
+# Style/IndentHash:
+#   Enabled: false
 
-Style/AlignParameters:
-  EnforcedStyle: with_fixed_indentation
+# Style/AlignParameters:
+#   EnforcedStyle: with_fixed_indentation
 
 Style/MultilineOperationIndentation:
   Enabled: false
@@ -120,7 +123,7 @@ Lint/AssignmentInCondition:
 Style/SingleLineBlockParams:
   Enabled: false
 
-Style/TrailingCommaInLiteral:
+Style/TrailingCommaInArrayLiteral:
   Enabled: false
 
 Style/PerlBackrefs:
@@ -135,10 +138,10 @@ Lint/ShadowingOuterLocalVariable:
 Style/FrozenStringLiteralComment:
   Enabled: false
 
-Lint/HandleExceptions:
+Lint/SuppressedException:
   Enabled: false
 
 AllCops:
-  TargetRubyVersion: 2.3
+  TargetRubyVersion: 3.1
   Exclude:
     - vendor/**/*
