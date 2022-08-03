@@ -6,12 +6,6 @@ class CloudflareClient
     VALID_ZONE_STATUSES = %w[active pending initializing moved deleted deactivated].freeze
 
     ##
-    # Zone based operations
-    def initialize(*args)
-      super
-    end
-
-    ##
     # list_zones will either list all zones or search for zones based on params
     # results are paginated!
     # list_zones(name: name_of_zone, status: active|pending, page: page_no)

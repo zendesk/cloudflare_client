@@ -22,7 +22,7 @@ class CloudflareClient::VirtualDnsCluster < CloudflareClient
       @uri_prefix = "/organizations/#{org_id}"
     end
 
-    super
+    super(**args)
   end
 
   ##

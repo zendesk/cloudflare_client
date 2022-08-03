@@ -1,9 +1,4 @@
 class CloudflareClient::Railgun < CloudflareClient
-  ##
-  # Railgun methods
-  def initialize(*args)
-    super
-  end
 
   ##
   # create(name: 'name of railgun')

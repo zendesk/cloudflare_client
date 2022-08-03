@@ -45,7 +45,7 @@ describe CloudflareClient::Zone::RateLimit do
     end
 
     it 'fails to create a zone rate limit' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: match, threshold, period, action')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :match, :threshold, :period, :action')
 
       expect do
         client.create(match: 'foo', action: {}, threshold: 1, period: 2)
@@ -95,7 +95,7 @@ describe CloudflareClient::Zone::RateLimit do
     end
 
     it 'fails to return details for a zone rate limit' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -129,11 +129,11 @@ describe CloudflareClient::Zone::RateLimit do
     end
 
     it 'updates a zone rate limit' do
-      expect(client.update(payload)).to eq(rate_limit_show)
+      expect(client.update(**payload)).to eq(rate_limit_show)
     end
 
     it 'fails to update a zone rate limit' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: id, match, action, threshold, period')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: :id, :match, :action, :threshold, :period')
 
       expect do
         client.update(id: nil, match: nil, action: nil, threshold: nil, period: nil)
@@ -176,7 +176,7 @@ describe CloudflareClient::Zone::RateLimit do
     end
 
     it 'fails to delete a zone rate limit' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

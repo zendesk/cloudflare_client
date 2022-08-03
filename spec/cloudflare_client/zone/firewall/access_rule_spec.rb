@@ -81,7 +81,7 @@ describe CloudflareClient::Zone::Firewall::AccessRule do
     end
 
     it 'fails to create a firewall access rule' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: mode, configuration')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :mode, :configuration')
 
       expect do
         client.create(mode: 'foo', configuration: 'foo')
@@ -116,7 +116,7 @@ describe CloudflareClient::Zone::Firewall::AccessRule do
     end
 
     it 'fails to updates a firewall access rule' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.update(id: nil) }.to raise_error(RuntimeError, 'id required')
 
       expect do
@@ -140,7 +140,7 @@ describe CloudflareClient::Zone::Firewall::AccessRule do
     end
 
     it 'fails to delete a firewall access rule' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
 
       expect do

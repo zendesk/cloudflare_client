@@ -7,7 +7,7 @@ class CloudflareClient::VirtualDnsCluster::Analytic < CloudflareClient::VirtualD
   def initialize(args)
     @virtual_dns_id = args.delete(:virtual_dns_id)
     id_check(:virtual_dns_id, virtual_dns_id)
-    super
+    super(**args)
   end
 
   def report(dimensions:, metrics:, since_ts:, until_ts:, filters: nil, sort: nil, limit: nil)

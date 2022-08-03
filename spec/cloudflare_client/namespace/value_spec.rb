@@ -17,10 +17,10 @@ describe CloudflareClient::Namespace::Value do
   describe '#write' do
     before do
       stub_request(:put, "https://api.cloudflare.com/client/v4/accounts/#{account_id}/storage/kv/namespaces/#{namespace_id}/values/#{key}").
-        with(body: "\"Some Value\"").
+        with(body: "Some Value").
         to_return(response_body(value_write))
       stub_request(:put, "https://api.cloudflare.com/client/v4/accounts/#{account_id}/storage/kv/namespaces/#{namespace_id}/values/#{key}?expiration_ttl=#{expiration_ttl}").
-        with(body: "\"Another Value\"", query: {expiration_ttl: 500}).
+        with(body: "Another Value", query: {expiration_ttl: 500}).
         to_return(response_body(value_write))
       stub_request(:put, "https://api.cloudflare.com/client/v4/accounts/#{account_id}/storage/kv/namespaces/#{namespace_id}/values/#{key}").
         with(body: "{\"value\":\"More Value\",\"metadata\":\"{\\\"someMetadataKey\\\": \\\"someMetadataValue\\\"}\"}").
@@ -42,8 +42,8 @@ describe CloudflareClient::Namespace::Value do
     end
 
     it 'fails to write a value identified by a key' do
-      expect { client.write(key: 'key') }.to raise_error(ArgumentError, 'missing keyword: value')
-      expect { client.write(value: 'value') }.to raise_error(ArgumentError, 'missing keyword: key')
+      expect { client.write(key: 'key') }.to raise_error(ArgumentError, 'missing keyword: :value')
+      expect { client.write(value: 'value') }.to raise_error(ArgumentError, 'missing keyword: :key')
 
       expect { client.write(key: 'key', value: 'value', expiration_ttl: '500') }.to raise_error(RuntimeError, "expiration_ttl must be an integer")
     end
@@ -62,7 +62,7 @@ describe CloudflareClient::Namespace::Value do
     end
 
     it 'fails to return the value associated with the given key in the given namespace' do
-      expect { client.read }. to raise_error(ArgumentError, 'missing keyword: key')
+      expect { client.read }. to raise_error(ArgumentError, 'missing keyword: :key')
     end
   end
 
@@ -79,7 +79,7 @@ describe CloudflareClient::Namespace::Value do
     end
 
     it 'fails to delete a KV pair from the namesapce' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: key')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :key')
     end
   end
 end

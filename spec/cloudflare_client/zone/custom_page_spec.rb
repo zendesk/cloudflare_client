@@ -60,7 +60,7 @@ describe CloudflareClient::Zone::CustomPage do
     end
 
     it 'fails to update a custom page' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: id, url, state')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keywords: :id, :url, :state')
       expect { client.update(id: nil, url: url, state: state) }.to raise_error(RuntimeError, 'id required')
       expect { client.update(id: custom_page_id, url: nil, state: state) }.to raise_error(RuntimeError, 'url required')
 

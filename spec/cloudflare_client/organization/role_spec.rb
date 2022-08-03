@@ -37,7 +37,7 @@ describe CloudflareClient::Organization::Role do
     end
 
     it 'fails to get details of an organization role' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

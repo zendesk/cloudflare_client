@@ -4,7 +4,7 @@ class CloudflareClient::Value < CloudflareClient::Namespace
   def initialize(args)
     @namespace_id = args.delete(:namespace_id)
     id_check(:namespace_id, namespace_id)
-    super
+    super(**args)
   end
 
   def write(key:, value:, expiration_ttl: nil, metadata: nil)

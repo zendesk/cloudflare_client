@@ -22,7 +22,7 @@ describe CloudflareClient::Railgun do
     end
 
     it 'fails to create a railgun with missing name' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keyword: name')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keyword: :name')
       expect { client.create(name: nil) }.to raise_error(RuntimeError, 'Railgun name cannot be nil')
     end
   end
@@ -57,7 +57,7 @@ describe CloudflareClient::Railgun do
     end
 
     it 'fails to get railgun details' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'must provide the id of the railgun')
     end
   end
@@ -75,7 +75,7 @@ describe CloudflareClient::Railgun do
     end
 
     it 'fails to get zones for a railgun' do
-      expect { client.zones }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.zones }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.zones(id: nil) }.to raise_error(RuntimeError, 'must provide the id of the railgun')
     end
   end
@@ -95,7 +95,7 @@ describe CloudflareClient::Railgun do
     end
 
     it 'fails to enable the status of a railgun' do
-      expect { client.enable }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.enable }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.enable(id: nil) }.to raise_error(RuntimeError, 'must provide the id of the railgun')
     end
   end
@@ -115,7 +115,7 @@ describe CloudflareClient::Railgun do
     end
 
     it 'fails to disable the status of a railgun' do
-      expect { client.disable }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.disable }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.disable(id: nil) }.to raise_error(RuntimeError, 'must provide the id of the railgun')
     end
   end
@@ -133,7 +133,7 @@ describe CloudflareClient::Railgun do
     end
 
     it 'fails to delete a railgun' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'must provide the id of the railgun')
     end
   end

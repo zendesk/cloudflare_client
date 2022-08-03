@@ -75,7 +75,7 @@ describe CloudflareClient::Zone::Log do
     end
 
     it 'fails to show a log by ray_id' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: ray_id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :ray_id')
       expect { client.show(ray_id: nil) }.to raise_error(RuntimeError, 'ray_id required')
     end
   end
@@ -94,7 +94,7 @@ describe CloudflareClient::Zone::Log do
     end
 
     it 'fails to list logs since a given ray_id' do
-      expect { client.list_since }.to raise_error(ArgumentError, 'missing keyword: ray_id')
+      expect { client.list_since }.to raise_error(ArgumentError, 'missing keyword: :ray_id')
 
       expect do
         client.list_since(ray_id: ray_id, end_time: 'foo')

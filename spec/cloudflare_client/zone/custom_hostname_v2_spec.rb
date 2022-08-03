@@ -23,7 +23,7 @@ describe CloudflareClient::Zone::CustomHostnameV2 do
     end
 
     it 'fails to create a custom_hostname' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keyword: hostname')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keyword: :hostname')
       expect { client.create(hostname: nil) }.to raise_error(RuntimeError, 'hostname required')
 
       expect do
@@ -89,7 +89,7 @@ describe CloudflareClient::Zone::CustomHostnameV2 do
     end
 
     it 'fails to get details for a custom hostname' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -127,7 +127,7 @@ describe CloudflareClient::Zone::CustomHostnameV2 do
     end
 
     it 'fails to update a custom_hostname' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.update(id: nil, ssl: { method: method, type: type }) }.to raise_error(RuntimeError, 'id required')
 
       expect do
@@ -158,7 +158,7 @@ describe CloudflareClient::Zone::CustomHostnameV2 do
     end
 
     it 'fails to delete a custom_hostname' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

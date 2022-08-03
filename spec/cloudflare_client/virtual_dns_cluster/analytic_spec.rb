@@ -104,7 +104,7 @@ describe CloudflareClient::VirtualDnsCluster::Analytic do
     it 'fails to retrieve summarized metrics over a time period' do
       expect do
         client.report
-      end.to raise_error(ArgumentError, 'missing keywords: dimensions, metrics, since_ts, until_ts')
+      end.to raise_error(ArgumentError, 'missing keywords: :dimensions, :metrics, :since_ts, :until_ts')
 
       expect do
         client.report(dimensions: 'foo', metrics: metrics, since_ts: since_ts, until_ts: until_ts)

@@ -37,7 +37,7 @@ describe CloudflareClient::Zone::RailgunConnections do
     end
 
     it 'fails to get railgun connection details' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'railgun id required')
     end
   end
@@ -55,7 +55,7 @@ describe CloudflareClient::Zone::RailgunConnections do
     end
 
     it 'fails to test a railgun connection' do
-      expect { client.test }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.test }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.test(id: nil) }.to raise_error(RuntimeError, 'railgun id required')
     end
   end
@@ -74,7 +74,7 @@ describe CloudflareClient::Zone::RailgunConnections do
     end
 
     it 'fails to connect a railgun' do
-      expect { client.connect }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.connect }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.connect(id: nil) }.to raise_error(RuntimeError, 'railgun id required')
     end
   end
@@ -93,7 +93,7 @@ describe CloudflareClient::Zone::RailgunConnections do
     end
 
     it 'fails to disconnect a railgun' do
-      expect { client.disconnect }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.disconnect }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.disconnect(id: nil) }.to raise_error(RuntimeError, 'railgun id required')
     end
   end

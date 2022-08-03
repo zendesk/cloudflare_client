@@ -133,7 +133,7 @@ class CloudflareClient
   def build_client(params)
     # we need multipart form encoding for some of these operations
     client                                      = Faraday.new(url: API_BASE) do |conn|
-      conn.request :multipart
+      # conn.request :multipart
       conn.request :url_encoded
       conn.use Middleware::Response::RaiseError
     end
@@ -183,7 +183,9 @@ class CloudflareClient
   def cf_put(path: nil, data: nil, params: nil)
     result = @cf_client.put do |request|
       request.url(API_BASE + path) unless path.nil?
-      request.body = data.to_json unless data.nil?
+      unless data.nil?
+        request.body = data.kind_of?(String) ? data : data.to_json
+      end
       unless params.nil?
         request.params = params if params.values.any? { |i| !i.nil? }
       end
@@ -192,7 +194,7 @@ class CloudflareClient
   end
 
   def cf_patch(path: nil, data: {})
-    result               = @cf_client.patch do |request|
+    result = @cf_client.patch do |request|
       request.url(API_BASE + path) unless path.nil?
       request.body = data.to_json unless data.empty?
     end

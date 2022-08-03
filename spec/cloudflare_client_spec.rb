@@ -63,6 +63,7 @@ describe CloudflareClient do
              }).
            to_return(response_body(custom_hostname_list))
 
+      
       CloudflareClient::Zone::CustomHostname.new(auth_key: 'somefakekey', email: 'somefakeemail', zone_id: 'zoneId').list
     end
   end

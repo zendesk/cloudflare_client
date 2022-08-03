@@ -21,7 +21,7 @@ describe CloudflareClient::Organization::Railgun do
     end
 
     it 'fails to create an org railgun' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keyword: name')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keyword: :name')
       expect { client.create(name: nil) }.to raise_error(RuntimeError, 'name required')
     end
   end
@@ -37,7 +37,7 @@ describe CloudflareClient::Organization::Railgun do
     let(:direction) { 'desc' }
 
     it 'lists an orgs railguns' do
-      expect(client.list(request_query)).to eq(organization_railgun_list)
+      expect(client.list(**request_query)).to eq(organization_railgun_list)
     end
 
     it 'fails to list an orgs railguns' do
@@ -71,7 +71,7 @@ describe CloudflareClient::Organization::Railgun do
     end
 
     it 'fails to get details for a railgun' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -88,7 +88,7 @@ describe CloudflareClient::Organization::Railgun do
     end
 
     it 'fails to get zones connected to an org railgun' do
-      expect { client.zones }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.zones }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.zones(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -110,7 +110,7 @@ describe CloudflareClient::Organization::Railgun do
     end
 
     it 'fails to enable a railgun' do
-      expect { client.enable }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.enable }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.enable(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -132,7 +132,7 @@ describe CloudflareClient::Organization::Railgun do
     end
 
     it 'fails to disable a railgun' do
-      expect { client.disable }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.disable }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.disable(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -149,7 +149,7 @@ describe CloudflareClient::Organization::Railgun do
     end
 
     it 'fails to delete an org railgun' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

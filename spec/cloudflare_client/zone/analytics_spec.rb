@@ -80,7 +80,7 @@ describe CloudflareClient::Zone::Analytics do
     end
 
     it 'returns dns analytics by time' do
-      expect(client.dns_by_time(options)).to eq(successful_dns_analytics_table)
+      expect(client.dns_by_time(**options)).to eq(successful_dns_analytics_table)
     end
 
     it 'fails to return dns bytime analytics' do

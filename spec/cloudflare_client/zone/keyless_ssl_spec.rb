@@ -29,7 +29,7 @@ describe CloudflareClient::Zone::KeylessSSL do
     end
 
     it 'fails to create a keyless ssl config' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: host, port, certificate')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :host, :port, :certificate')
       expect { client.create(host: nil, port: 1234, certificate: 'bar') }.to raise_error(RuntimeError, 'host required')
 
       expect do
@@ -77,7 +77,7 @@ describe CloudflareClient::Zone::KeylessSSL do
     end
 
     it 'fails to list details of a keless_ssl_config' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -102,7 +102,7 @@ describe CloudflareClient::Zone::KeylessSSL do
     end
 
     it 'fails to update a keyless_ssl_config' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.update(id: nil) }.to raise_error(RuntimeError, 'id required')
       expect { client.update(id: id, enabled: 'foo') }.to raise_error(RuntimeError, 'enabled must be true||false')
     end
@@ -138,7 +138,7 @@ describe CloudflareClient::Zone::KeylessSSL do
     end
 
     it 'fails to delete a keyless ssl config' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

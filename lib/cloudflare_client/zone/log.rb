@@ -10,10 +10,10 @@ class CloudflareClient::Zone::Log < CloudflareClient::Zone::Base
     timestamp_check(:end_time, end_time) unless end_time.nil?
 
     params = Hash.new
-
+    minute = 60
 
     if start_time.nil?
-      params[:start] = (Time.now - 20.minute).to_i
+      params[:start] = (Time.now - (20 * minute)).to_i
     else
       timestamp_check(:start_time, start_time)
       params[:start] = start_time
@@ -21,7 +21,7 @@ class CloudflareClient::Zone::Log < CloudflareClient::Zone::Base
 
 
     if end_time.nil?
-      params[:end] = (Time.now - 5.minute).to_i
+      params[:end] = (Time.now - (5 * minute)).to_i
     else
       timestamp_check(:end_time, end_time)
       params[:end] = end_time

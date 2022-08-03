@@ -64,7 +64,7 @@ describe CloudflareClient::Zone do
     it 'fails to create a zone when missing a name' do
       expect do
         client.create_zone(organization: organization)
-      end.to raise_error(ArgumentError, 'missing keyword: name')
+      end.to raise_error(ArgumentError, 'missing keyword: :name')
 
       expect do
         client.create_zone(name: nil, organization: organization)
@@ -84,7 +84,7 @@ describe CloudflareClient::Zone do
     end
 
     it 'fails to request a zone activation check' do
-      expect { client.zone_activation_check }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.zone_activation_check }.to raise_error(ArgumentError, 'missing keyword: :zone_id')
       expect { client.zone_activation_check(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
     end
   end
@@ -101,7 +101,7 @@ describe CloudflareClient::Zone do
     end
 
     it 'it fails to get an existing zone' do
-      expect { client.zone }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.zone }.to raise_error(ArgumentError, 'missing keyword: :zone_id')
       expect { client.zone(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
     end
   end
@@ -122,7 +122,7 @@ describe CloudflareClient::Zone do
     end
 
     it 'fails to edit an existing zone' do
-      expect { client.edit_zone }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.edit_zone }.to raise_error(ArgumentError, 'missing keyword: :zone_id')
       expect { client.edit_zone(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
     end
   end
@@ -141,7 +141,7 @@ describe CloudflareClient::Zone do
     end
 
     it 'fails to purge the cache on a zone' do
-      expect { client.purge_zone_cache }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.purge_zone_cache }.to raise_error(ArgumentError, 'missing keyword: :zone_id')
 
       expect { client.purge_zone_cache(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
 
@@ -181,7 +181,7 @@ describe CloudflareClient::Zone do
     end
 
     it 'fails to delete a zone' do
-      expect { client.delete_zone }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.delete_zone }.to raise_error(ArgumentError, 'missing keyword: :zone_id')
       expect { client.delete_zone(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
     end
   end
@@ -198,7 +198,7 @@ describe CloudflareClient::Zone do
     end
 
     it 'fails to get all settings for a zone ' do
-      expect { client.zone_settings }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.zone_settings }.to raise_error(ArgumentError, 'missing keyword: :zone_id')
       expect { client.zone_settings(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
     end
   end
@@ -216,8 +216,8 @@ describe CloudflareClient::Zone do
     end
 
     it 'fails to get settings for a zone' do
-      expect { client.zone_setting }.to raise_error(ArgumentError, 'missing keywords: zone_id, name')
-
+      expect { client.zone_setting }.to raise_error(ArgumentError, 'missing keywords: :zone_id, :name')
+      
       expect do
         client.zone_setting(zone_id: nil, name: 'response_buffering')
       end.to raise_error(RuntimeError, 'zone_id required')
@@ -241,7 +241,7 @@ describe CloudflareClient::Zone do
     end
 
     it 'fails to update zone setting' do
-      expect { client.update_zone_settings }.to raise_error(ArgumentError, 'missing keyword: zone_id')
+      expect { client.update_zone_settings }.to raise_error(ArgumentError, 'missing keyword: :zone_id')
 
       expect { client.update_zone_settings(zone_id: nil) }.to raise_error(RuntimeError, 'zone_id required')
 

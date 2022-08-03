@@ -28,7 +28,7 @@ describe CloudflareClient::Zone::PageRule do
     end
 
     it 'fails to create a custom page rule' do
-      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: targets, actions')
+      expect { client.create }.to raise_error(ArgumentError, 'missing keywords: :targets, :actions')
 
       expect do
         client.create(targets: 'foo', actions: actions)
@@ -102,7 +102,7 @@ describe CloudflareClient::Zone::PageRule do
     end
 
     it 'fails to get details for a page rule' do
-      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.show }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.show(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end
@@ -128,7 +128,7 @@ describe CloudflareClient::Zone::PageRule do
     end
 
     it 'fails to udpate a zone page rule' do
-      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.update }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.update(id: nil) }.to raise_error(RuntimeError, 'id required')
 
       expect do
@@ -167,7 +167,7 @@ describe CloudflareClient::Zone::PageRule do
     end
 
     it 'fails to delete a zone page rule' do
-      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: id')
+      expect { client.delete }.to raise_error(ArgumentError, 'missing keyword: :id')
       expect { client.delete(id: nil) }.to raise_error(RuntimeError, 'id required')
     end
   end

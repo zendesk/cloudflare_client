@@ -8,7 +8,7 @@ class CloudflareClient::Organization < CloudflareClient
   def initialize(args)
     @org_id = args.delete(:org_id)
     id_check(:org_id, org_id)
-    super
+    super(**args)
   end
 
   ##
